@@ -1,19 +1,38 @@
-import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "@/generated/prisma/client";
-import path from "node:path";
 
-const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
+  pgPool?: Pool;
+};
 
 function createClient() {
-  const raw = process.env.DATABASE_URL ?? "file:./dev.db";
-  const filePath = raw.startsWith("file:")
-    ? raw.replace(/^file:/, "")
-    : raw;
-  // Keep DB under the web project root (avoid tracing the whole filesystem).
-  const resolved = path.isAbsolute(filePath)
-    ? filePath
-    : path.join(/* turbopackIgnore: true */ process.cwd(), filePath);
-  const adapter = new PrismaBetterSqlite3({ url: `file:${resolved}` });
+  const connectionString = process.env.DATABASE_URL;
+  if (!connectionString) {
+    throw new Error(
+      "DATABASE_URL is missing. Use a Postgres URL from Neon, Supabase, or Vercel Postgres.",
+    );
+  }
+
+  const pool =
+    globalForPrisma.pgPool ??
+    new Pool({
+      connectionString,
+      // Neon / most hosted Postgres use TLS in production
+      ssl:
+        process.env.NODE_ENV === "production" ||
+        connectionString.includes("sslmode=require") ||
+        connectionString.includes("neon.tech")
+          ? { rejectUnauthorized: false }
+          : undefined,
+    });
+
+  if (process.env.NODE_ENV !== "production") {
+    globalForPrisma.pgPool = pool;
+  }
+
+  const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }
 

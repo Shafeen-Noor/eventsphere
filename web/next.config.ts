@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ["@prisma/client", "better-sqlite3", "sharp"],
+  serverExternalPackages: ["@prisma/client", "pg", "sharp"],
 };
 
 export default nextConfig;
