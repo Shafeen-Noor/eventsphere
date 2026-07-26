@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  displayName  String
+  email        String?  @unique
+  passwordHash String?
+  createdAt    DateTime @default(now())
+
+  sessions    Session[]
+  memberships Membership[]
+  ownedEvents Event[]      @relation("EventOwner")
+  media       Media[]
+  likes       MediaLike[]
+  comments    MediaComment[]
+  reports     MediaReport[]
+  rsvps       Rsvp[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model Event {
+  id                  String    @id @default(cuid())
+  slug                String    @unique
+  title               String
+  description         String    @default("")
+  useCase             String    @default("friends")
+  state               String    @default("scheduled")
+  coverKey            String?
+  locationName        String    @default("")
+  startAt             DateTime?
+  endAt               DateTime?
+  expiresAt           DateTime
+  retentionHours      Int       @default(48)
+  passcodeHash        String?
+  rsvpEnabled         Boolean   @default(false)
+  commentsEnabled     Boolean   @default(true)
+  uploadsEnabled      Boolean   @default(true)
+  requireRsvpToUpload Boolean   @default(true)
+  allowPlusOnes       Boolean   @default(true)
+  maxPlusOnes         Int       @default(2)
+  uploadMode          String    @default("both")
+  useGuestPrivileges  Boolean   @default(false)
+  atmosphere          String    @default("bday")
+  themeColor          String    @default("#698ea2")
+  downloadPolicy      String    @default("members")
+  downloadsEnabled    Boolean   @default(true)
+  downloadOpensAt     DateTime?
+  ownerId             String
+  owner               User      @relation("EventOwner", fields: [ownerId], references: [id])
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  memberships Membership[]
+  media       Media[]
+  rsvps       Rsvp[]
+}
+
+model Membership {
+  id          String   @id @default(cuid())
+  eventId     String
+  userId      String
+  role        String   @default("guest")
+  status      String   @default("active")
+  canUpload   Boolean  @default(true)
+  canDownload Boolean  @default(true)
+  joinedAt    DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+  @@index([userId])
+}
+
+model Rsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  status    String   @default("going")
+  plusOnes  Int      @default(0)
+  note      String   @default("")
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([eventId, userId])
+}
+
+model Media {
+  id          String   @id @default(cuid())
+  eventId     String
+  uploaderId  String
+  type        String   @default("image")
+  state       String   @default("published")
+  storageKey  String
+  thumbKey    String?
+  contentType String
+  byteSize    Int
+  checksum    String?
+  width       Int?
+  height      Int?
+  caption     String   @default("")
+  createdAt   DateTime @default(now())
+
+  event    Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  uploader User           @relation(fields: [uploaderId], references: [id], onDelete: Cascade)
+  likes    MediaLike[]
+  comments MediaComment[]
+  reports  MediaReport[]
+
+  @@unique([eventId, checksum])
+  @@index([eventId, createdAt])
+}
+
+model MediaLike {
+  mediaId   String
+  userId    String
+  createdAt DateTime @default(now())
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([mediaId, userId])
+}
+
+model MediaComment {
+  id        String   @id @default(cuid())
+  mediaId   String
+  userId    String
+  body      String
+  createdAt DateTime @default(now())
+
+  media Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId, createdAt])
+}
+
+model MediaReport {
+  id         String   @id @default(cuid())
+  mediaId    String
+  reporterId String
+  reason     String
+  notes      String   @default("")
+  status     String   @default("open")
+  createdAt  DateTime @default(now())
+
+  media    Media @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+  reporter User  @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([mediaId])
+}

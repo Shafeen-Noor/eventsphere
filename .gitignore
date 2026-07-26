@@ -1,0 +1,14 @@
+.DS_Store
+**/.DS_Store
+web/node_modules/
+web/.next/
+web/dev.db
+web/dev.db-journal
+web/.env
+web/.env.local
+web/.env.*.local
+web/.agents/
+web/.claude/
+web/src/generated/
+web/.windsurf/
+web/skills-lock.json

@@ -1,0 +1,276 @@
+@import "tailwindcss";
+
+/* Sunburn base palette (site chrome) */
+:root {
+  --bg: #fde5d6;
+  --bg-elevated: #ffffff;
+  --fg: #152935;
+  --muted: #698ea2;
+  --line: rgba(21, 41, 53, 0.12);
+  --accent: #698ea2;
+  --accent-soft: rgba(105, 142, 162, 0.16);
+  --terracotta: #e4a576;
+  --sage: #ccd5d2;
+  --peach: #fde5d6;
+  --navy: #152935;
+  --danger: #c45c4a;
+  --ok: #4f7d62;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-fg: var(--fg);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-terracotta: var(--terracotta);
+  --color-sage: var(--sage);
+  --color-peach: var(--peach);
+  --color-navy: var(--navy);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(180deg, var(--terracotta) 0 6px, transparent 6px),
+    linear-gradient(180deg, var(--sage) 0%, var(--peach) 42%, #fff8f2 100%);
+  color: var(--fg);
+  font-family: var(--font-sans), sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: var(--terracotta);
+  color: var(--navy);
+}
+
+.container {
+  width: min(1080px, calc(100% - 2rem));
+  margin-inline: auto;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 6px;
+  padding: 0.8rem 1.25rem;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.btn-ghost {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--fg);
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: rgba(21, 41, 53, 0.04);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field label {
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.75);
+  color: var(--fg);
+  padding: 0.85rem 1rem;
+  outline: none;
+}
+
+.field input:focus,
+.field textarea:focus,
+.field select:focus {
+  border-color: rgba(105, 142, 162, 0.7);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.78);
+  backdrop-filter: blur(10px);
+  border-radius: 18px;
+}
+
+.fade-up {
+  animation: fadeUp 520ms ease both;
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Atmosphere shells */
+.atmosphere {
+  position: relative;
+  isolation: isolate;
+}
+
+.atmosphere-layer {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+  border-radius: 22px;
+}
+
+.atmosphere > .atmosphere-content {
+  position: relative;
+  z-index: 1;
+}
+
+.floaty {
+  position: absolute;
+  opacity: 0.55;
+  animation: floaty 7s ease-in-out infinite;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(6deg);
+  }
+}
+
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes drift {
+  0% {
+    transform: translateX(-10%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(110%) rotate(20deg);
+  }
+}
+
+/* Gallery layout variants */
+.gallery-ig {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 2px;
+}
+
+@media (max-width: 640px) {
+  .gallery-ig {
+    gap: 1px;
+  }
+}
+
+.gallery-polaroid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
+}
+
+.gallery-film {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x mandatory;
+}
+
+.gallery-mosaic {
+  columns: 2;
+  column-gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .gallery-mosaic {
+    columns: 3;
+  }
+}
+
+.gallery-disco {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .gallery-disco {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
