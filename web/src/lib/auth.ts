@@ -1,10 +1,12 @@
 import { cookies } from "next/headers";
-import { createHash, randomBytes, scrypt, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomInt, scrypt, timingSafeEqual } from "node:crypto";
 import { promisify } from "node:util";
 import { prisma } from "@/lib/db";
+import { assertSelectablePlan, type HostType, type PlanId } from "@/lib/plans";
 
 const COOKIE = "es_session";
 const SESSION_DAYS = 30;
+const OTP_TTL_MS = 15 * 60 * 1000;
 const scryptAsync = promisify(scrypt);
 
 function hashToken(token: string) {
@@ -28,6 +30,10 @@ export async function verifyPassword(password: string, stored: string) {
 
 export function isAccountUser(user: { email: string | null; passwordHash: string | null }) {
   return Boolean(user.email && user.passwordHash);
+}
+
+export function isEmailVerified(user: { emailVerifiedAt: Date | null }) {
+  return Boolean(user.emailVerifiedAt);
 }
 
 export async function createSession(userId: string) {
@@ -104,6 +110,22 @@ export async function requireAccount() {
   return user;
 }
 
+export async function requireVerifiedAccount() {
+  const user = await requireAccount();
+  if (!isEmailVerified(user)) {
+    throw new Response(
+      JSON.stringify({
+        error: {
+          code: "EMAIL_UNVERIFIED",
+          message: "Verify your email with the OTP code to continue.",
+        },
+      }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  return user;
+}
+
 /**
  * Guest identity: cookie + display name only (no password).
  * Used when joining via invite link/QR.
@@ -130,13 +152,74 @@ export async function ensureUser(displayName: string, email?: string | null) {
   return user;
 }
 
+function generateOtpCode() {
+  return String(randomInt(0, 10000)).padStart(4, "0");
+}
+
+export async function issueEmailOtp(userId: string) {
+  const code = generateOtpCode();
+  const otpHash = hashToken(code);
+  const otpExpiresAt = new Date(Date.now() + OTP_TTL_MS);
+  await prisma.user.update({
+    where: { id: userId },
+    data: { otpHash, otpExpiresAt, emailVerifiedAt: null },
+  });
+  // Email delivery isn't wired yet — callers surface demoCode in the verify UI.
+  console.info(`[eventsphere] OTP for user ${userId}: ${code}`);
+  return { code, expiresAt: otpExpiresAt };
+}
+
+export async function verifyEmailOtp(userId: string, code: string) {
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user?.otpHash || !user.otpExpiresAt) {
+    throw new Response(
+      JSON.stringify({
+        error: { code: "OTP_MISSING", message: "Request a new verification code." },
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  if (user.otpExpiresAt.getTime() < Date.now()) {
+    throw new Response(
+      JSON.stringify({
+        error: { code: "OTP_EXPIRED", message: "That code expired. Request a new one." },
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  const incoming = hashToken(code.trim());
+  if (incoming !== user.otpHash) {
+    throw new Response(
+      JSON.stringify({
+        error: { code: "OTP_INVALID", message: "Incorrect code. Try again." },
+      }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+  return prisma.user.update({
+    where: { id: userId },
+    data: {
+      emailVerifiedAt: new Date(),
+      otpHash: null,
+      otpExpiresAt: null,
+    },
+  });
+}
+
 export async function registerAccount(input: {
   displayName: string;
   email: string;
   password: string;
+  organizationName?: string | null;
+  hostType?: HostType | null;
+  plan?: PlanId | string;
+  skipOtp?: boolean;
 }) {
   const email = input.email.trim().toLowerCase();
   const displayName = input.displayName.trim();
+  const organizationName = input.organizationName?.trim() || null;
+  const hostType = input.hostType || null;
+  const plan = assertSelectablePlan(input.plan || "free");
 
   const taken = await prisma.user.findUnique({ where: { email } });
   if (taken?.passwordHash) {
@@ -153,33 +236,46 @@ export async function registerAccount(input: {
 
   const passwordHash = await hashPassword(input.password);
   const current = await getCurrentUser();
+  const profile = {
+    displayName,
+    email,
+    passwordHash,
+    organizationName,
+    hostType,
+    plan,
+  };
 
+  let user;
   // Upgrade a guest session into a full account when possible.
   if (current && !current.passwordHash && (!current.email || current.email === email)) {
-    const user = await prisma.user.update({
+    user = await prisma.user.update({
       where: { id: current.id },
-      data: { displayName, email, passwordHash },
+      data: profile,
     });
-    return user;
-  }
-
-  if (taken && !taken.passwordHash) {
-    // Rare: email reserved on a guest stub — claim it.
-    const user = await prisma.user.update({
+  } else if (taken && !taken.passwordHash) {
+    user = await prisma.user.update({
       where: { id: taken.id },
-      data: { displayName, passwordHash },
+      data: profile,
     });
     await clearSession();
     await createSession(user.id);
-    return user;
+  } else {
+    user = await prisma.user.create({ data: profile });
+    await clearSession();
+    await createSession(user.id);
   }
 
-  const user = await prisma.user.create({
-    data: { displayName, email, passwordHash },
-  });
-  await clearSession();
-  await createSession(user.id);
-  return user;
+  if (input.skipOtp) {
+    user = await prisma.user.update({
+      where: { id: user.id },
+      data: { emailVerifiedAt: new Date(), otpHash: null, otpExpiresAt: null },
+    });
+    return { user, demoCode: null as string | null };
+  }
+
+  const { code } = await issueEmailOtp(user.id);
+  user = await prisma.user.findUniqueOrThrow({ where: { id: user.id } });
+  return { user, demoCode: code };
 }
 
 export async function loginAccount(input: { email: string; password: string }) {
@@ -231,11 +327,19 @@ export function publicUserDto(user: {
   displayName: string;
   email: string | null;
   passwordHash: string | null;
+  organizationName?: string | null;
+  hostType?: string | null;
+  plan?: string | null;
+  emailVerifiedAt?: Date | null;
 }) {
   return {
     id: user.id,
     displayName: user.displayName,
     email: user.email,
     hasAccount: isAccountUser(user),
+    organizationName: user.organizationName ?? null,
+    hostType: user.hostType ?? null,
+    plan: user.plan || "free",
+    emailVerified: Boolean(user.emailVerifiedAt),
   };
 }

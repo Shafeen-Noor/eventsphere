@@ -11,7 +11,10 @@ export async function POST(req: Request) {
   try {
     const body = schema.parse(await req.json());
     const user = await loginAccount(body);
-    return jsonOk({ user: publicUserDto(user) });
+    return jsonOk({
+      user: publicUserDto(user),
+      needsVerification: !user.emailVerifiedAt,
+    });
   } catch (err) {
     return handleRouteError(err);
   }

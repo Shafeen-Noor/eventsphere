@@ -33,6 +33,19 @@ const patchSchema = z.object({
   passcode: z.string().trim().min(4).max(12).nullable().optional(),
   extendHours: z.number().int().min(1).max(168).optional(),
   state: z.enum(["live", "ended", "scheduled"]).optional(),
+  highlightsPublished: z.boolean().optional(),
+  publishMessage: z.string().trim().max(400).optional(),
+  mapsUrl: z.string().trim().max(500).optional(),
+  inviteCopy: z.string().trim().max(400).optional(),
+  inviteStickers: z.string().trim().max(120).optional(),
+  guestVisibility: z.enum(["own_only", "approved_public", "all_members"]).optional(),
+  requireApproval: z.boolean().optional(),
+  maxGuests: z.number().int().min(1).max(1000).optional(),
+  maxMedia: z.number().int().min(1).max(20000).optional(),
+  maxMediaPerGuest: z.number().int().min(1).max(500).optional(),
+  uploadWindowHours: z.number().int().min(1).max(168).nullable().optional(),
+  uploadsOpenAt: z.string().datetime().nullable().optional(),
+  uploadsCloseAt: z.string().datetime().nullable().optional(),
 });
 
 export async function GET(_req: Request, ctx: Ctx) {
@@ -132,6 +145,26 @@ export async function PATCH(req: Request, ctx: Ctx) {
         : null;
     }
     if (body.state !== undefined) data.state = body.state;
+    if (body.highlightsPublished !== undefined) {
+      data.highlightsPublished = body.highlightsPublished;
+      if (body.highlightsPublished) data.publishedAt = new Date();
+    }
+    if (body.publishMessage !== undefined) data.publishMessage = body.publishMessage;
+    if (body.mapsUrl !== undefined) data.mapsUrl = body.mapsUrl;
+    if (body.inviteCopy !== undefined) data.inviteCopy = body.inviteCopy;
+    if (body.inviteStickers !== undefined) data.inviteStickers = body.inviteStickers;
+    if (body.guestVisibility !== undefined) data.guestVisibility = body.guestVisibility;
+    if (body.requireApproval !== undefined) data.requireApproval = body.requireApproval;
+    if (body.maxGuests !== undefined) data.maxGuests = body.maxGuests;
+    if (body.maxMedia !== undefined) data.maxMedia = body.maxMedia;
+    if (body.maxMediaPerGuest !== undefined) data.maxMediaPerGuest = body.maxMediaPerGuest;
+    if (body.uploadWindowHours !== undefined) data.uploadWindowHours = body.uploadWindowHours;
+    if (body.uploadsOpenAt !== undefined) {
+      data.uploadsOpenAt = body.uploadsOpenAt ? new Date(body.uploadsOpenAt) : null;
+    }
+    if (body.uploadsCloseAt !== undefined) {
+      data.uploadsCloseAt = body.uploadsCloseAt ? new Date(body.uploadsCloseAt) : null;
+    }
     if (body.passcode !== undefined) {
       data.passcodeHash = body.passcode ? hashPasscode(body.passcode) : null;
     }

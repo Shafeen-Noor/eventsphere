@@ -37,18 +37,61 @@ export async function GET(req: Request, ctx: Ctx) {
     const filter = url.searchParams.get("filter") || "all";
     const sort = url.searchParams.get("sort") || "newest";
 
+    const closed =
+      isEventExpired(event.expiresAt) || event.state === "ended";
+
     const where: {
       eventId: string;
-      state: string;
+      state?: string | { in: string[] };
       type?: string;
       uploaderId?: string;
+      isHighlight?: boolean;
+      OR?: Array<Record<string, unknown>>;
     } = {
       eventId: event.id,
-      state: "published",
     };
+
+    if (filter === "pending" && isOrg) {
+      where.state = "pending_approval";
+    } else if (isOrg) {
+      where.state = { in: ["published", "pending_approval"] };
+    } else {
+      where.state = "published";
+    }
+
     if (filter === "photos") where.type = "image";
     if (filter === "videos") where.type = "video";
     if (filter === "mine") where.uploaderId = user.id;
+    if (filter === "highlights") where.isHighlight = true;
+
+    // Guest visibility rules
+    if (!isOrg) {
+      const visibility = event.guestVisibility || "own_only";
+      if (filter !== "mine" && filter !== "highlights") {
+        if (visibility === "own_only") {
+          if (event.highlightsPublished) {
+            where.OR = [
+              { uploaderId: user.id },
+              { isHighlight: true, state: "published" },
+            ];
+            delete where.state;
+          } else {
+            where.uploaderId = user.id;
+          }
+        } else if (visibility === "approved_public") {
+          // published only (already set); all approved
+        }
+        // all_members: see all published
+      }
+      if (closed && event.highlightsPublished && filter === "all") {
+        where.OR = [
+          { uploaderId: user.id, state: "published" },
+          { isHighlight: true, state: "published" },
+        ];
+        delete where.state;
+        delete where.uploaderId;
+      }
+    }
 
     const media = await prisma.media.findMany({
       where,
@@ -75,6 +118,7 @@ export async function GET(req: Request, ctx: Ctx) {
           id: m.id,
           type: m.type,
           caption: m.caption,
+          state: m.state,
           width: m.width,
           height: m.height,
           byteSize: m.byteSize,
@@ -87,20 +131,33 @@ export async function GET(req: Request, ctx: Ctx) {
           isMine: m.uploaderId === user.id,
           canDelete: m.uploaderId === user.id || isOrg,
           canDownload: download.allowed,
+          isHighlight: m.isHighlight,
           url: preview,
           originalUrl: original,
         };
       }),
     );
 
+    const pendingCount = isOrg
+      ? await prisma.media.count({
+          where: { eventId: event.id, state: "pending_approval" },
+        })
+      : 0;
+
     return jsonOk({
       media: items,
       expiresAt: event.expiresAt.toISOString(),
-      expired: isEventExpired(event.expiresAt),
+      expired: closed,
       commentsEnabled: event.commentsEnabled,
       canDownload: download.allowed,
       downloadBlockedReason: download.reason,
       atmosphere: event.atmosphere,
+      highlightsPublished: event.highlightsPublished,
+      canCurateHighlights: isOrg,
+      pendingCount,
+      guestVisibility: event.guestVisibility,
+      requireApproval: event.requireApproval,
+      publishMessage: event.publishMessage,
       serverTime: new Date().toISOString(),
     });
   } catch (err) {

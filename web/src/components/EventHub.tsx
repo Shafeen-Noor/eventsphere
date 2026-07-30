@@ -38,6 +38,7 @@ type EventDto = {
   downloadPolicy: string;
   downloadsEnabled: boolean;
   downloadOpensAt: string | null;
+  highlightsPublished: boolean;
 };
 
 type Tab = "gallery" | "people" | "rsvp" | "settings";
@@ -66,6 +67,9 @@ export function EventHub({
   const [uploadsEnabled, setUploadsEnabled] = useState(event.uploadsEnabled);
   const [togglingUploads, setTogglingUploads] = useState(false);
   const [live, setLive] = useState(event.hasStarted);
+  const [highlightsPublished, setHighlightsPublished] = useState(
+    event.highlightsPublished,
+  );
 
   useEffect(() => setUploadsEnabled(event.uploadsEnabled), [event.uploadsEnabled]);
   useEffect(() => setRsvpStatus(initialRsvpStatus), [initialRsvpStatus]);
@@ -125,7 +129,7 @@ export function EventHub({
   ]);
 
   const tabs: { id: Tab; label: string; show: boolean }[] = [
-    { id: "gallery", label: "Gallery", show: live || isOrganizer },
+    { id: "gallery", label: expired ? "Highlights" : "Gallery", show: live || isOrganizer || expired },
     { id: "people", label: "People", show: true },
     { id: "rsvp", label: "RSVP", show: event.rsvpEnabled },
     { id: "settings", label: "Settings", show: isOrganizer },
@@ -326,12 +330,16 @@ export function EventHub({
               onUploaded={() => setRefreshKey((k) => k + 1)}
             />
           ) : null}
-          {live ? (
+          {live || expired ? (
             <Gallery
               slug={event.slug}
               refreshKey={refreshKey}
               commentsEnabled={event.commentsEnabled}
               atmosphere={event.atmosphere}
+              eventClosed={expired}
+              isOrganizer={isOrganizer}
+              highlightsPublished={highlightsPublished}
+              onHighlightsPublished={setHighlightsPublished}
             />
           ) : (
             <div className="panel p-5 text-sm text-[var(--muted)]">

@@ -2,12 +2,26 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { CreateEventForm } from "@/components/CreateEventForm";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCurrentUser, isAccountUser, publicUserDto } from "@/lib/auth";
+import {
+  getCurrentUser,
+  isAccountUser,
+  isEmailVerified,
+  publicUserDto,
+} from "@/lib/auth";
 
-export default async function CreatePage() {
+type Props = { searchParams: Promise<{ mode?: string }> };
+
+export default async function CreatePage({ searchParams }: Props) {
+  const { mode: rawMode } = await searchParams;
+  const mode = rawMode === "instant" ? "instant" : "subscription";
+  const next = `/create?mode=${mode}`;
+
   const user = await getCurrentUser();
   if (!user || !isAccountUser(user)) {
-    redirect("/signup?next=/create");
+    redirect(`/signup?next=${encodeURIComponent(next)}`);
+  }
+  if (!isEmailVerified(user)) {
+    redirect(`/verify?next=${encodeURIComponent(next)}`);
   }
 
   return (
@@ -20,7 +34,7 @@ export default async function CreatePage() {
         }
       />
       <div className="container pb-20 pt-4">
-        <CreateEventForm host={publicUserDto(user)} />
+        <CreateEventForm host={publicUserDto(user)} mode={mode} />
       </div>
     </main>
   );

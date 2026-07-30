@@ -46,9 +46,7 @@ body {
 
 body {
   margin: 0;
-  background:
-    linear-gradient(180deg, var(--terracotta) 0 6px, transparent 6px),
-    linear-gradient(180deg, var(--sage) 0%, var(--peach) 42%, #fff8f2 100%);
+  background: #f3ebe3;
   color: var(--fg);
   font-family: var(--font-sans), sans-serif;
 }
@@ -116,6 +114,17 @@ select {
   background: rgba(21, 41, 53, 0.04);
 }
 
+.btn-accent {
+  background: #e4a576;
+  color: #152935;
+  font-weight: 700;
+  border-color: transparent;
+}
+
+.btn-accent:hover:not(:disabled) {
+  filter: brightness(0.97);
+}
+
 .field {
   display: flex;
   flex-direction: column;
@@ -133,7 +142,7 @@ select {
   width: 100%;
   border-radius: 10px;
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.75);
+  background: #ffffff;
   color: var(--fg);
   padding: 0.85rem 1rem;
   outline: none;
@@ -148,9 +157,9 @@ select {
 
 .panel {
   border: 1px solid var(--line);
-  background: rgba(255, 255, 255, 0.78);
-  backdrop-filter: blur(10px);
+  background: #ffffff;
   border-radius: 18px;
+  box-shadow: 0 8px 24px rgba(21, 41, 53, 0.06);
 }
 
 .fade-up {

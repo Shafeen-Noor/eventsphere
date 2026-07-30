@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { getCurrentUser, requireAccount } from "@/lib/auth";
+import { getCurrentUser, requireVerifiedAccount } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hashPasscode, publicEventDto } from "@/lib/events";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
+import { assertSelectablePlan, getPlan, PLANS } from "@/lib/plans";
 import { slugifyTitle } from "@/lib/slug";
 
 const createSchema = z.object({
@@ -11,7 +12,18 @@ const createSchema = z.object({
   hostName: z.string().trim().min(1).max(40).optional(),
   useCase: z.enum(["friends", "celebration"]).default("friends"),
   locationName: z.string().trim().max(120).optional().default(""),
+  mapsUrl: z.string().trim().max(500).optional().default(""),
+  inviteCopy: z.string().trim().max(400).optional().default(""),
+  inviteStickers: z.string().trim().max(120).optional().default(""),
   retentionHours: z.number().int().min(1).max(720).optional(),
+  uploadWindowHours: z.number().int().min(1).max(168).optional().nullable(),
+  maxGuests: z.number().int().min(1).max(1000).optional(),
+  maxMedia: z.number().int().min(1).max(20000).optional(),
+  maxMediaPerGuest: z.number().int().min(1).max(500).optional(),
+  guestVisibility: z
+    .enum(["own_only", "approved_public", "all_members"])
+    .optional(),
+  requireApproval: z.boolean().optional(),
   passcode: z.string().trim().min(4).max(12).optional().nullable(),
   rsvpEnabled: z.boolean().optional(),
   commentsEnabled: z.boolean().optional().default(true),
@@ -26,6 +38,9 @@ const createSchema = z.object({
   downloadsEnabled: z.boolean().optional().default(true),
   startAt: z.string().datetime().optional().nullable(),
   endAt: z.string().datetime().optional().nullable(),
+  billingMode: z.enum(["subscription", "instant"]).optional().default("subscription"),
+  planTier: z.enum(["free", "pro", "professional"]).optional(),
+  confirmInstantPayment: z.boolean().optional().default(false),
 });
 
 export async function GET() {
@@ -61,7 +76,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
-    let user = await requireAccount();
+    let user = await requireVerifiedAccount();
     if (body.hostName && body.hostName !== user.displayName) {
       user = await prisma.user.update({
         where: { id: user.id },
@@ -69,12 +84,32 @@ export async function POST(req: Request) {
       });
     }
 
-    const retentionHours =
-      body.retentionHours ??
-      (body.useCase === "celebration" ? 168 : 48);
+    const billingMode = body.billingMode;
+    const planTier =
+      billingMode === "instant"
+        ? assertSelectablePlan(body.planTier || "free")
+        : assertSelectablePlan(user.plan || "free");
+    const plan = getPlan(planTier);
+
+    const instantFeeCents =
+      billingMode === "instant" ? PLANS[planTier].instant.priceCents : 0;
+
+    if (billingMode === "instant" && instantFeeCents > 0 && !body.confirmInstantPayment) {
+      return jsonError(
+        "PAYMENT_REQUIRED",
+        "Confirm the one-time payment to create this Pro event.",
+        402,
+      );
+    }
+
+    let retentionHours =
+      body.retentionHours ?? plan.limits.maxDurationHours;
+    retentionHours = Math.min(retentionHours, plan.limits.maxDurationHours);
+
     const now = new Date();
-    const rsvpEnabled =
-      body.rsvpEnabled ?? body.useCase === "celebration";
+    const rsvpEnabled = plan.limits.canUseRsvp
+      ? (body.rsvpEnabled ?? body.useCase === "celebration")
+      : false;
 
     if (rsvpEnabled && !body.startAt) {
       return jsonError(
@@ -98,6 +133,51 @@ export async function POST(req: Request) {
       retentionBase.getTime() + retentionHours * 60 * 60 * 1000,
     );
 
+    let uploadWindowHours: number | null = null;
+    let uploadsOpenAt: Date | null = startAt;
+    let uploadsCloseAt: Date | null = null;
+    if (plan.limits.canSetUploadWindow && body.uploadWindowHours) {
+      uploadWindowHours = Math.min(
+        body.uploadWindowHours,
+        plan.limits.maxDurationHours,
+      );
+      const open = startAt ?? now;
+      uploadsOpenAt = open;
+      uploadsCloseAt = new Date(open.getTime() + uploadWindowHours * 60 * 60 * 1000);
+      if (uploadsCloseAt > expiresAt) uploadsCloseAt = expiresAt;
+    } else {
+      // Free: rigid 24h — upload window = full event life
+      uploadWindowHours = retentionHours;
+      uploadsOpenAt = startAt ?? now;
+      uploadsCloseAt = expiresAt;
+    }
+
+    const maxGuests = Math.min(
+      body.maxGuests ?? plan.limits.maxGuests,
+      plan.limits.maxGuests,
+    );
+    const maxMedia = Math.min(
+      body.maxMedia ?? plan.limits.maxMedia,
+      plan.limits.maxMedia,
+    );
+    const maxMediaPerGuest = Math.min(
+      body.maxMediaPerGuest ?? plan.limits.maxMediaPerGuestDefault,
+      plan.limits.maxMedia,
+    );
+
+    const guestVisibility = plan.limits.canSetGuestVisibility
+      ? body.guestVisibility || "own_only"
+      : "own_only";
+    const requireApproval = plan.limits.canRequireApproval
+      ? Boolean(body.requireApproval)
+      : false;
+
+    const mapsUrl = plan.limits.canAddMaps ? body.mapsUrl || "" : "";
+    const inviteCopy = plan.limits.canCustomizeInvite ? body.inviteCopy || "" : "";
+    const inviteStickers = plan.limits.canCustomizeInvite
+      ? body.inviteStickers || ""
+      : "";
+
     const event = await prisma.event.create({
       data: {
         title: body.title,
@@ -105,6 +185,9 @@ export async function POST(req: Request) {
         slug: slugifyTitle(body.title),
         useCase: body.useCase,
         locationName: body.locationName || "",
+        mapsUrl,
+        inviteCopy,
+        inviteStickers,
         state: startAt && startAt.getTime() > now.getTime() ? "scheduled" : "live",
         retentionHours,
         expiresAt,
@@ -115,14 +198,25 @@ export async function POST(req: Request) {
         commentsEnabled: body.commentsEnabled,
         uploadsEnabled: true,
         requireRsvpToUpload: rsvpEnabled,
-        allowPlusOnes: body.allowPlusOnes,
-        maxPlusOnes: body.maxPlusOnes,
+        allowPlusOnes: plan.limits.canUseRsvp ? body.allowPlusOnes : false,
+        maxPlusOnes: plan.limits.canUseRsvp ? body.maxPlusOnes : 0,
         uploadMode: body.uploadMode,
         useGuestPrivileges: false,
         atmosphere: body.atmosphere,
         downloadPolicy: body.downloadPolicy,
         downloadsEnabled: body.downloadsEnabled,
         themeColor: "#698ea2",
+        billingMode,
+        planTier,
+        instantFeeCents,
+        maxGuests,
+        maxMedia,
+        maxMediaPerGuest,
+        uploadWindowHours,
+        uploadsOpenAt,
+        uploadsCloseAt,
+        guestVisibility,
+        requireApproval,
         ownerId: user.id,
         memberships: {
           create: {

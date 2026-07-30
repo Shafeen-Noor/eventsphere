@@ -6,6 +6,7 @@ import {
   isEventExpired,
   publicEventDto,
 } from "@/lib/events";
+import { getPlan } from "@/lib/plans";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
 
 const schema = z.object({
@@ -13,6 +14,9 @@ const schema = z.object({
   passcode: z.string().trim().optional().nullable(),
   rsvpStatus: z.enum(["going", "maybe", "declined"]).optional().nullable(),
   plusOnes: z.number().int().min(0).max(10).optional().default(0),
+  contactEmail: z.string().trim().email().max(120).optional().nullable().or(z.literal("")),
+  contactWhatsapp: z.string().trim().max(32).optional().nullable().or(z.literal("")),
+  notificationsOptIn: z.boolean().optional().default(true),
 });
 
 type Ctx = { params: Promise<{ slug: string }> };
@@ -35,7 +39,44 @@ export async function POST(req: Request, ctx: Ctx) {
       }
     }
 
+    const plan = getPlan(event.planTier);
     const user = await ensureUser(body.displayName);
+
+    const existing = await prisma.membership.findUnique({
+      where: { eventId_userId: { eventId: event.id, userId: user.id } },
+    });
+
+    if (!existing || existing.status !== "active") {
+      const guestCount = await prisma.membership.count({
+        where: {
+          eventId: event.id,
+          status: "active",
+          role: { notIn: ["organizer", "co_organizer"] },
+        },
+      });
+      const isOwner = event.ownerId === user.id;
+      if (!isOwner && guestCount >= event.maxGuests) {
+        return jsonError(
+          "GUEST_CAP",
+          `This event is full (${event.maxGuests} guests).`,
+          403,
+        );
+      }
+    }
+
+    const collectContacts = plan.limits.canCollectContacts;
+    const contactEmail =
+      collectContacts && body.contactEmail ? body.contactEmail : null;
+    const contactWhatsapp =
+      collectContacts && body.contactWhatsapp ? body.contactWhatsapp : null;
+
+    if (collectContacts && !contactEmail && !contactWhatsapp) {
+      return jsonError(
+        "CONTACT_REQUIRED",
+        "Add an email or WhatsApp number so the host can send updates.",
+        422,
+      );
+    }
 
     const membership = await prisma.membership.upsert({
       where: { eventId_userId: { eventId: event.id, userId: user.id } },
@@ -46,8 +87,16 @@ export async function POST(req: Request, ctx: Ctx) {
         status: "active",
         canUpload: true,
         canDownload: true,
+        contactEmail,
+        contactWhatsapp,
+        notificationsOptIn: body.notificationsOptIn ?? true,
       },
-      update: { status: "active" },
+      update: {
+        status: "active",
+        ...(contactEmail !== null ? { contactEmail } : {}),
+        ...(contactWhatsapp !== null ? { contactWhatsapp } : {}),
+        notificationsOptIn: body.notificationsOptIn ?? true,
+      },
     });
 
     let rsvp = null;

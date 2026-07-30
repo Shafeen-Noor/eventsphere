@@ -1,17 +1,21 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { redirect } from "next/navigation";
 import { AuthForm } from "@/components/AuthForm";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCurrentUser, isAccountUser } from "@/lib/auth";
-import { redirect } from "next/navigation";
+import { getCurrentUser, isAccountUser, isEmailVerified } from "@/lib/auth";
 
 type Props = { searchParams: Promise<{ next?: string }> };
 
 export default async function LoginPage({ searchParams }: Props) {
   const { next } = await searchParams;
+  const dest = next?.startsWith("/") ? next : "/";
   const user = await getCurrentUser();
   if (user && isAccountUser(user)) {
-    redirect(next?.startsWith("/") ? next : "/");
+    if (!isEmailVerified(user)) {
+      redirect(`/verify?next=${encodeURIComponent(dest)}`);
+    }
+    redirect(dest);
   }
 
   return (

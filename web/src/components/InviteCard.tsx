@@ -10,12 +10,16 @@ type Props = {
   description: string;
   hostName: string;
   locationName: string;
+  mapsUrl?: string;
+  inviteCopy?: string;
+  inviteStickers?: string;
   startAt: string | null;
   atmosphere: string;
   requiresPasscode: boolean;
   rsvpEnabled: boolean;
   allowPlusOnes: boolean;
   maxPlusOnes: number;
+  collectContacts?: boolean;
 };
 
 export function InviteCard({
@@ -24,12 +28,16 @@ export function InviteCard({
   description,
   hostName,
   locationName,
+  mapsUrl = "",
+  inviteCopy = "",
+  inviteStickers = "",
   startAt,
   atmosphere,
   requiresPasscode,
   rsvpEnabled,
   allowPlusOnes,
   maxPlusOnes,
+  collectContacts = false,
 }: Props) {
   const router = useRouter();
   const theme = getAtmosphere(atmosphere);
@@ -37,6 +45,8 @@ export function InviteCard({
 
   const [displayName, setDisplayName] = useState("");
   const [passcode, setPasscode] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
+  const [contactWhatsapp, setContactWhatsapp] = useState("");
   const [status, setStatus] = useState<"going" | "maybe" | "declined">("going");
   const [plusOnes, setPlusOnes] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -71,6 +81,9 @@ export function InviteCard({
           passcode: passcode || null,
           rsvpStatus: rsvpEnabled ? status : null,
           plusOnes: rsvpEnabled && allowPlusOnes && status === "going" ? plusOnes : 0,
+          contactEmail: collectContacts ? contactEmail || null : null,
+          contactWhatsapp: collectContacts ? contactWhatsapp || null : null,
+          notificationsOptIn: true,
         }),
       });
       const data = await res.json();
@@ -93,10 +106,11 @@ export function InviteCard({
           boxShadow: "0 24px 60px rgba(21,41,53,0.14)",
         }}
       >
-        <div
-          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-30"
-          style={{ background: dark ? "#e4a576" : "#698ea2" }}
-        />
+        {inviteStickers ? (
+          <p className="text-2xl mb-2" aria-hidden>
+            {inviteStickers}
+          </p>
+        ) : null}
         <p className="text-sm uppercase tracking-[0.2em] opacity-70">
           You’re invited · {theme.label}
         </p>
@@ -107,6 +121,16 @@ export function InviteCard({
           Hosted by {hostName}
           {locationName ? ` · ${locationName}` : ""}
         </p>
+        {mapsUrl ? (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="mt-3 inline-flex underline opacity-90"
+          >
+            Open in Google Maps
+          </a>
+        ) : null}
         {whenLabel ? (
           <p
             className="mt-5 inline-flex rounded-full px-4 py-2 text-sm"
@@ -117,7 +141,8 @@ export function InviteCard({
             {whenLabel}
           </p>
         ) : null}
-        {description ? <p className="mt-5 max-w-lg opacity-85">{description}</p> : null}
+        {inviteCopy ? <p className="mt-5 max-w-lg text-lg opacity-90">{inviteCopy}</p> : null}
+        {description ? <p className="mt-4 max-w-lg opacity-85">{description}</p> : null}
       </div>
 
       <form onSubmit={onSubmit} className="panel p-6 sm:p-8 space-y-5 max-w-md w-full fade-up">
@@ -126,9 +151,11 @@ export function InviteCard({
             {rsvpEnabled ? "Will you be there?" : "Join this event"}
           </h2>
           <p className="mt-2 text-[var(--muted)]">
-            {rsvpEnabled
-              ? "Confirm your name and RSVP. The shared gallery opens when the event begins."
-              : "Enter your name to join the shared gallery."}
+            {collectContacts
+              ? "Add your name plus email or WhatsApp for invite updates."
+              : rsvpEnabled
+                ? "Confirm your name and RSVP."
+                : "Enter your name to join the shared gallery."}
           </p>
         </div>
 
@@ -143,6 +170,30 @@ export function InviteCard({
             placeholder="Riley"
           />
         </div>
+
+        {collectContacts ? (
+          <>
+            <div className="field">
+              <label htmlFor="email">Email</label>
+              <input
+                id="email"
+                type="email"
+                value={contactEmail}
+                onChange={(e) => setContactEmail(e.target.value)}
+                placeholder="you@email.com"
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="wa">WhatsApp number</label>
+              <input
+                id="wa"
+                value={contactWhatsapp}
+                onChange={(e) => setContactWhatsapp(e.target.value)}
+                placeholder="+1 555 000 0000"
+              />
+            </div>
+          </>
+        ) : null}
 
         {requiresPasscode ? (
           <div className="field">
@@ -172,8 +223,8 @@ export function InviteCard({
                   type="button"
                   className="btn px-4 py-2 text-sm"
                   style={{
-                    background: status === opt.id ? "var(--accent)" : "transparent",
-                    color: status === opt.id ? "#1a1208" : "var(--fg)",
+                    background: status === opt.id ? "var(--accent)" : "#ffffff",
+                    color: status === opt.id ? "#ffffff" : "var(--fg)",
                     border: "1px solid var(--line)",
                   }}
                   onClick={() => setStatus(opt.id)}

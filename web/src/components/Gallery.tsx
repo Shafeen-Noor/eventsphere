@@ -17,6 +17,8 @@ type MediaItem = {
   isMine: boolean;
   canDelete: boolean;
   canDownload: boolean;
+  isHighlight?: boolean;
+  state?: string;
   uploader: { id: string; displayName: string };
   createdAt: string;
 };
@@ -34,19 +36,31 @@ export function Gallery({
   refreshKey,
   commentsEnabled,
   atmosphere,
+  eventClosed = false,
+  isOrganizer = false,
+  highlightsPublished = false,
+  onHighlightsPublished,
 }: {
   slug: string;
   refreshKey: number;
   commentsEnabled: boolean;
   atmosphere: string;
+  eventClosed?: boolean;
+  isOrganizer?: boolean;
+  highlightsPublished?: boolean;
+  onHighlightsPublished?: (published: boolean) => void;
 }) {
   const theme = getAtmosphere(atmosphere);
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(eventClosed && highlightsPublished && !isOrganizer ? "highlights" : "all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canDownload, setCanDownload] = useState(false);
   const [downloadBlockedReason, setDownloadBlockedReason] = useState<string | null>(null);
+  const [canCurate, setCanCurate] = useState(false);
+  const [published, setPublished] = useState(highlightsPublished);
+  const [publishing, setPublishing] = useState(false);
+  const [pendingCount, setPendingCount] = useState(0);
   const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
   const [commentText, setCommentText] = useState("");
@@ -65,6 +79,9 @@ export function Gallery({
       setMedia(data.media);
       setCanDownload(Boolean(data.canDownload));
       setDownloadBlockedReason(data.downloadBlockedReason || null);
+      setCanCurate(Boolean(data.canCurateHighlights));
+      setPublished(Boolean(data.highlightsPublished));
+      setPendingCount(Number(data.pendingCount || 0));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load gallery");
     } finally {
@@ -140,6 +157,50 @@ export function Gallery({
     setMedia((prev) => prev.filter((m) => m.id !== item.id));
   }
 
+  async function toggleHighlight(item: MediaItem) {
+    const res = await fetch(`/api/media/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isHighlight: !item.isHighlight }),
+    });
+    if (!res.ok) return;
+    setMedia((prev) =>
+      prev.map((m) =>
+        m.id === item.id ? { ...m, isHighlight: !item.isHighlight } : m,
+      ),
+    );
+  }
+
+  async function setMediaState(item: MediaItem, state: "published" | "rejected") {
+    const res = await fetch(`/api/media/${item.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ state }),
+    });
+    if (!res.ok) return;
+    if (state === "rejected") {
+      setMedia((prev) => prev.filter((m) => m.id !== item.id));
+    } else {
+      setMedia((prev) =>
+        prev.map((m) => (m.id === item.id ? { ...m, state: "published" } : m)),
+      );
+    }
+    setPendingCount((n) => Math.max(0, n - 1));
+  }
+
+  async function publishHighlights(next: boolean) {
+    setPublishing(true);
+    const res = await fetch(`/api/events/${slug}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ highlightsPublished: next }),
+    });
+    setPublishing(false);
+    if (!res.ok) return;
+    setPublished(next);
+    onHighlightsPublished?.(next);
+  }
+
   async function downloadOne(item: MediaItem) {
     if (!item.originalUrl) return;
     const a = document.createElement("a");
@@ -199,13 +260,60 @@ export function Gallery({
 
   return (
     <div className="space-y-4">
+      {eventClosed ? (
+        <div className="rounded-2xl bg-[rgba(21,41,53,0.06)] px-4 py-6 text-center">
+          <h2 className="font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
+            Event closed
+          </h2>
+          <p className="mt-2 text-sm text-[var(--muted)]">
+            {isOrganizer
+              ? "Host curates · then publishes highlights to guests"
+              : published
+                ? `Your highlights from this event`
+                : "Waiting for the host to publish highlights"}
+          </p>
+        </div>
+      ) : null}
+
+      {canCurate ? (
+        <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
+          <p className="text-sm text-[var(--muted)]">
+            Star photos to include them, then publish highlights for guests.
+          </p>
+          <button
+            type="button"
+            className="btn btn-primary text-sm"
+            disabled={publishing}
+            onClick={() => publishHighlights(!published)}
+          >
+            {publishing
+              ? "Saving…"
+              : published
+                ? "Unpublish highlights"
+                : "Publish highlights"}
+          </button>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
           {[
-            ["all", "All"],
-            ["photos", "Photos"],
-            ["videos", "Videos"],
-            ["mine", "Mine"],
+            ["all", isOrganizer || !published ? "All" : "Highlights"],
+            ...(isOrganizer
+              ? [
+                  ["pending", `Pending${pendingCount ? ` (${pendingCount})` : ""}`],
+                  ["highlights", "Highlights"],
+                  ["photos", "Photos"],
+                  ["videos", "Videos"],
+                  ["mine", "Mine"],
+                ]
+              : !eventClosed
+                ? [
+                    ["photos", "Photos"],
+                    ["videos", "Videos"],
+                    ["mine", "Mine"],
+                  ]
+                : [["highlights", "Highlights"]]),
           ].map(([id, label]) => (
             <button
               key={id}
@@ -314,6 +422,37 @@ export function Gallery({
                   >
                     {item.likedByMe ? "♥" : "♡"} {item.likeCount}
                   </button>
+                  {canCurate ? (
+                    <button
+                      type="button"
+                      onClick={() => toggleHighlight(item)}
+                      className="inline-flex items-center gap-1 font-medium"
+                      style={{ color: item.isHighlight ? "#c98b5e" : "inherit" }}
+                      title={item.isHighlight ? "Remove from highlights" : "Add to highlights"}
+                    >
+                      {item.isHighlight ? "★" : "☆"}
+                    </button>
+                  ) : item.isHighlight ? (
+                    <span className="text-[var(--muted)]">★</span>
+                  ) : null}
+                  {canCurate && item.state === "pending_approval" ? (
+                    <>
+                      <button
+                        type="button"
+                        className="font-medium text-[var(--ok)]"
+                        onClick={() => setMediaState(item, "published")}
+                      >
+                        Approve
+                      </button>
+                      <button
+                        type="button"
+                        className="font-medium text-[var(--danger)]"
+                        onClick={() => setMediaState(item, "rejected")}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  ) : null}
                   {commentsEnabled ? (
                     <button
                       type="button"

@@ -8,11 +8,17 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  displayName  String
-  email        String?  @unique
-  passwordHash String?
-  createdAt    DateTime @default(now())
+  id               String    @id @default(cuid())
+  displayName      String
+  email            String?   @unique
+  passwordHash     String?
+  organizationName String?
+  hostType         String?
+  plan             String    @default("free")
+  emailVerifiedAt  DateTime?
+  otpHash          String?
+  otpExpiresAt     DateTime?
+  createdAt        DateTime  @default(now())
 
   sessions    Session[]
   memberships Membership[]
@@ -60,6 +66,23 @@ model Event {
   downloadPolicy      String    @default("members")
   downloadsEnabled    Boolean   @default(true)
   downloadOpensAt     DateTime?
+  billingMode         String    @default("subscription")
+  planTier            String    @default("free")
+  instantFeeCents     Int       @default(0)
+  highlightsPublished Boolean   @default(false)
+  maxGuests           Int       @default(10)
+  maxMedia            Int       @default(100)
+  maxMediaPerGuest    Int       @default(10)
+  uploadWindowHours   Int?
+  uploadsOpenAt       DateTime?
+  uploadsCloseAt      DateTime?
+  mapsUrl             String    @default("")
+  inviteCopy          String    @default("")
+  inviteStickers      String    @default("")
+  guestVisibility     String    @default("own_only")
+  requireApproval     Boolean   @default(false)
+  publishMessage      String    @default("")
+  publishedAt         DateTime?
   ownerId             String
   owner               User      @relation("EventOwner", fields: [ownerId], references: [id])
   createdAt           DateTime  @default(now())
@@ -71,14 +94,17 @@ model Event {
 }
 
 model Membership {
-  id          String   @id @default(cuid())
-  eventId     String
-  userId      String
-  role        String   @default("guest")
-  status      String   @default("active")
-  canUpload   Boolean  @default(true)
-  canDownload Boolean  @default(true)
-  joinedAt    DateTime @default(now())
+  id               String   @id @default(cuid())
+  eventId          String
+  userId           String
+  role             String   @default("guest")
+  status           String   @default("active")
+  canUpload        Boolean  @default(true)
+  canDownload      Boolean  @default(true)
+  contactEmail     String?
+  contactWhatsapp  String?
+  notificationsOptIn Boolean @default(true)
+  joinedAt         DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -117,6 +143,7 @@ model Media {
   width       Int?
   height      Int?
   caption     String   @default("")
+  isHighlight Boolean  @default(false)
   createdAt   DateTime @default(now())
 
   event    Event          @relation(fields: [eventId], references: [id], onDelete: Cascade)

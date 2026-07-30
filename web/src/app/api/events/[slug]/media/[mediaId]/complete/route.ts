@@ -38,10 +38,15 @@ export async function POST(_req: Request, ctx: Ctx) {
       contentType: media.contentType,
     });
 
+    const isOrg =
+      membership.role === "organizer" || membership.role === "co_organizer";
+    const nextState =
+      !isOrg && event.requireApproval ? "pending_approval" : "published";
+
     const updated = await prisma.media.update({
       where: { id: media.id },
       data: {
-        state: "published",
+        state: nextState,
         thumbKey: thumb?.thumbKey ?? null,
         width: thumb?.width ?? media.width,
         height: thumb?.height ?? media.height,
@@ -56,11 +61,13 @@ export async function POST(_req: Request, ctx: Ctx) {
         id: updated.id,
         type: updated.type,
         caption: updated.caption,
+        state: updated.state,
         url: await createDownloadUrl(updated.thumbKey || updated.storageKey),
         originalUrl: await createDownloadUrl(updated.storageKey),
         uploader: updated.uploader,
         createdAt: updated.createdAt.toISOString(),
       },
+      pendingApproval: nextState === "pending_approval",
     });
   } catch (err) {
     return handleRouteError(err);

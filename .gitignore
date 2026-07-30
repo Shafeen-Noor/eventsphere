@@ -12,3 +12,4 @@ web/.claude/
 web/src/generated/
 web/.windsurf/
 web/skills-lock.json
+.vercel

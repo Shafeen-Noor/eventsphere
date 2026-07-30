@@ -79,12 +79,16 @@ export default async function EventPage({ params }: Props) {
               description={event.description}
               hostName={event.owner.displayName}
               locationName={event.locationName}
+              mapsUrl={event.mapsUrl}
+              inviteCopy={event.inviteCopy}
+              inviteStickers={event.inviteStickers}
               startAt={event.startAt?.toISOString() ?? null}
               atmosphere={event.atmosphere}
               requiresPasscode={Boolean(event.passcodeHash)}
               rsvpEnabled={event.rsvpEnabled}
               allowPlusOnes={event.allowPlusOnes}
               maxPlusOnes={event.maxPlusOnes}
+              collectContacts={event.planTier === "pro" || event.planTier === "professional"}
             />
           )
         ) : showWaitingRoom ? (

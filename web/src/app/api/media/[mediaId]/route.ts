@@ -7,9 +7,19 @@ import { deleteObject } from "@/lib/storage";
 
 type Ctx = { params: Promise<{ mediaId: string }> };
 
-const patchSchema = z.object({
-  caption: z.string().trim().max(500),
-});
+const patchSchema = z
+  .object({
+    caption: z.string().trim().max(500).optional(),
+    isHighlight: z.boolean().optional(),
+    state: z.enum(["published", "pending_approval", "rejected", "removed"]).optional(),
+  })
+  .refine(
+    (v) =>
+      v.caption !== undefined ||
+      v.isHighlight !== undefined ||
+      v.state !== undefined,
+    { message: "Nothing to update." },
+  );
 
 export async function PATCH(req: Request, ctx: Ctx) {
   try {
@@ -18,20 +28,34 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (!user) return jsonError("AUTH_REQUIRED", "Sign in to continue.", 401);
 
     const media = await prisma.media.findUnique({ where: { id: mediaId } });
-    if (!media || media.state !== "published") {
+    if (!media || media.state === "removed") {
       return jsonError("MEDIA_NOT_FOUND", "This photo is no longer available.", 404);
     }
     await assertEventMember(media.eventId, user.id);
-    if (media.uploaderId !== user.id) {
+
+    const body = patchSchema.parse(await req.json());
+    if (body.isHighlight !== undefined || body.state !== undefined) {
+      await assertOrganizer(media.eventId, user.id);
+    } else if (media.uploaderId !== user.id) {
       await assertOrganizer(media.eventId, user.id);
     }
 
-    const body = patchSchema.parse(await req.json());
     const updated = await prisma.media.update({
       where: { id: mediaId },
-      data: { caption: body.caption },
+      data: {
+        ...(body.caption !== undefined ? { caption: body.caption } : {}),
+        ...(body.isHighlight !== undefined ? { isHighlight: body.isHighlight } : {}),
+        ...(body.state !== undefined ? { state: body.state } : {}),
+      },
     });
-    return jsonOk({ media: { id: updated.id, caption: updated.caption } });
+    return jsonOk({
+      media: {
+        id: updated.id,
+        caption: updated.caption,
+        isHighlight: updated.isHighlight,
+        state: updated.state,
+      },
+    });
   } catch (err) {
     return handleRouteError(err);
   }

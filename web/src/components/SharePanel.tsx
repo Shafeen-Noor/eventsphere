@@ -32,7 +32,7 @@ export function SharePanel({
           <QRCodeSVG value={joinUrl} size={148} />
         </div>
         <div className="flex-1 w-full space-y-3">
-          <code className="block break-all rounded-xl border border-[var(--line)] bg-white/70 px-3 py-2 text-sm">
+          <code className="block break-all rounded-xl border border-[var(--line)] bg-white px-3 py-2 text-sm">
             {joinUrl}
           </code>
           <button type="button" className="btn btn-primary w-full sm:w-auto" onClick={copy}>

@@ -1,15 +1,27 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AuthControls } from "@/components/AuthControls";
 import { EventList } from "@/components/EventList";
 import { SiteHeader } from "@/components/SiteHeader";
-import { getCurrentUser, isAccountUser, publicUserDto } from "@/lib/auth";
+import {
+  getCurrentUser,
+  isAccountUser,
+  isEmailVerified,
+  publicUserDto,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isEventExpired } from "@/lib/events";
+import { planLabel } from "@/lib/plans";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
   const publicUser = user ? publicUserDto(user) : null;
   const hasAccount = Boolean(user && isAccountUser(user));
+  const verified = Boolean(user && isEmailVerified(user));
+
+  if (hasAccount && user && !verified) {
+    redirect("/verify?next=/");
+  }
 
   const memberships = user
     ? await prisma.membership.findMany({
@@ -33,33 +45,43 @@ export default async function HomePage() {
     isOwner: event.ownerId === user!.id,
   }));
 
+  const createHref = hasAccount ? "/create?mode=subscription" : "/signup?next=/create?mode=subscription";
+  const instantHref = hasAccount
+    ? "/create?mode=instant"
+    : "/signup?next=/create?mode=instant";
+
   return (
     <main>
       <SiteHeader right={<AuthControls user={publicUser} />} />
 
       <section className="container grid gap-10 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
         <div className="fade-up">
-          <p className="text-sm uppercase tracking-[0.2em] text-[var(--accent)]">EventSphere</p>
+          <p className="text-sm uppercase tracking-[0.2em] text-[var(--accent)]">Landing</p>
           <h1 className="mt-4 font-[family-name:var(--font-display)] text-5xl leading-[1.05] sm:text-6xl lg:text-7xl">
-            Every event.
+            Event
             <br />
-            One digital home.
+            Sphere
           </h1>
           <p className="mt-5 max-w-xl text-lg text-[var(--muted)]">
-            Hosts create an account. Guests join with a link or QR — no signup required.
-            Each person only sees the events they’ve joined.
+            Best memories belong to everyone.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Link
-              href={hasAccount ? "/create" : "/signup?next=/create"}
-              className="btn btn-primary"
-            >
-              {hasAccount ? "Create event" : "Create account & event"}
+            {hasAccount ? (
+              <Link href={createHref} className="btn btn-ghost">
+                + Create a new event
+              </Link>
+            ) : (
+              <Link href="/signup?next=/" className="btn btn-ghost">
+                Create account
+              </Link>
+            )}
+            <Link href={instantHref} className="btn btn-primary">
+              Create an instant event
             </Link>
-            <a href="#my-events" className="btn btn-ghost">
-              My events
-            </a>
           </div>
+          <p className="mt-3 text-sm text-[var(--muted)]">
+            Account → empty event list · Instant → one-time fee
+          </p>
         </div>
 
         <div className="panel relative min-h-[320px] overflow-hidden p-6 fade-up">
@@ -73,22 +95,33 @@ export default async function HomePage() {
           <div className="relative space-y-4">
             <p className="font-[family-name:var(--font-display)] text-2xl">How access works</p>
             <ul className="space-y-3 text-[var(--muted)]">
-              <li>Your account only lists events you host or joined</li>
-              <li>Invite link / QR keeps galleries private</li>
-              <li>Guests RSVP with a name — no account needed</li>
-              <li>Sign in on any device to manage your events</li>
+              <li>Subscribe for an empty My events dashboard</li>
+              <li>Or pay once for a single instant event</li>
+              <li>Guests join with a link or QR — no account needed</li>
+              <li>Gallery unlocks at your start time</li>
             </ul>
           </div>
         </div>
       </section>
 
       <section id="my-events" className="container pb-20">
-        <div className="mb-4 flex items-end justify-between gap-3">
-          <h2 className="font-[family-name:var(--font-display)] text-3xl">My events</h2>
-          <Link
-            href={hasAccount ? "/create" : "/signup?next=/create"}
-            className="text-sm text-[var(--accent)]"
-          >
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="flex flex-wrap items-center gap-3">
+              <h2 className="font-[family-name:var(--font-display)] text-3xl">My events</h2>
+              {hasAccount ? (
+                <span className="inline-flex items-center rounded-full bg-[rgba(105,142,162,0.16)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--navy)]">
+                  {planLabel(user?.plan)} plan
+                </span>
+              ) : null}
+            </div>
+            {hasAccount && user ? (
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {[user.organizationName, user.email].filter(Boolean).join(" · ")}
+              </p>
+            ) : null}
+          </div>
+          <Link href={createHref} className="text-sm text-[var(--accent)]">
             + New event
           </Link>
         </div>
@@ -106,13 +139,23 @@ export default async function HomePage() {
             </div>
           </div>
         ) : events.length === 0 ? (
-          <div className="panel p-8 text-[var(--muted)] space-y-3">
-            <p>No events yet.</p>
-            {!hasAccount ? (
-              <p className="text-sm">
-                Create an account to host events you can reopen on any device.
-              </p>
-            ) : null}
+          <div className="panel flex flex-col items-center justify-center gap-3 border border-dashed border-[rgba(21,41,53,0.2)] bg-white/55 p-10 text-center">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[rgba(105,142,162,0.2)] font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
+              ∅
+            </div>
+            <h3 className="font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
+              No events yet
+            </h3>
+            <p className="max-w-sm text-sm text-[var(--muted)]">
+              Your list is empty. Create your first shared gallery for a wedding, party, or brand
+              event.
+            </p>
+            <Link href={createHref} className="btn btn-primary mt-2">
+              + Create a new event
+            </Link>
+            <p className="text-xs text-[var(--muted)]">
+              Included in your subscription — no per-event checkout
+            </p>
           </div>
         ) : (
           <div className="space-y-3">

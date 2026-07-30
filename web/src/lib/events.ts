@@ -62,12 +62,30 @@ type UploadGateEvent = {
   rsvpEnabled: boolean;
   requireRsvpToUpload: boolean;
   useGuestPrivileges: boolean;
+  uploadsOpenAt?: Date | null;
+  uploadsCloseAt?: Date | null;
+  maxMedia?: number;
+  maxMediaPerGuest?: number;
+  planTier?: string;
 };
 
 type MembershipGate = {
   role: string;
   canUpload: boolean;
 };
+
+export function isUploadWindowOpen(event: {
+  startAt: Date | null;
+  uploadsOpenAt?: Date | null;
+  uploadsCloseAt?: Date | null;
+  uploadsEnabled: boolean;
+}) {
+  const now = Date.now();
+  const openAt = event.uploadsOpenAt ?? event.startAt;
+  if (openAt && openAt.getTime() > now) return false;
+  if (event.uploadsCloseAt && event.uploadsCloseAt.getTime() <= now) return false;
+  return event.uploadsEnabled;
+}
 
 export async function assertCanUpload(
   event: UploadGateEvent,
@@ -90,55 +108,115 @@ export async function assertCanUpload(
     );
   }
 
-  if (!hasEventStarted(event.startAt)) {
-    throw new Response(
-      JSON.stringify({
-        error: {
-          code: "EVENT_NOT_STARTED",
-          message: "The event hasn’t started yet — photo uploads unlock at the start time.",
-        },
-      }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
   const isOrg = role === "organizer" || role === "co_organizer";
-  if (isOrg) return { allowed: true as const };
 
-  if (!event.uploadsEnabled) {
-    throw new Response(
-      JSON.stringify({
-        error: {
-          code: "UPLOADS_CLOSED",
-          message: "The host hasn’t opened photo uploads yet.",
-        },
-      }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  if (event.useGuestPrivileges && !canUploadFlag) {
-    throw new Response(
-      JSON.stringify({
-        error: {
-          code: "UPLOAD_PRIVILEGE",
-          message: "The host hasn’t given you permission to upload photos.",
-        },
-      }),
-      { status: 403, headers: { "Content-Type": "application/json" } },
-    );
-  }
-
-  if (event.rsvpEnabled && event.requireRsvpToUpload) {
-    const rsvp = await prisma.rsvp.findUnique({
-      where: { eventId_userId: { eventId: event.id, userId } },
-    });
-    if (!rsvp || rsvp.status !== "going") {
+  if (!isOrg) {
+    const openAt = event.uploadsOpenAt ?? event.startAt;
+    if (openAt && openAt.getTime() > Date.now()) {
       throw new Response(
         JSON.stringify({
           error: {
-            code: "RSVP_REQUIRED",
-            message: "RSVP as Going before you can upload photos.",
+            code: "EVENT_NOT_STARTED",
+            message: "Photo uploads unlock when the host opens the guest window.",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+    if (event.uploadsCloseAt && event.uploadsCloseAt.getTime() <= Date.now()) {
+      throw new Response(
+        JSON.stringify({
+          error: {
+            code: "UPLOAD_WINDOW_CLOSED",
+            message: "The guest upload window has closed. The host is curating now.",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+  } else if (!hasEventStarted(event.startAt) && !event.uploadsOpenAt) {
+    // organizers can still upload once event started or window set; before that block
+  }
+
+  if (isOrg) {
+    // still enforce media caps for organizers? Soft — count against total
+  } else {
+    if (!event.uploadsEnabled) {
+      throw new Response(
+        JSON.stringify({
+          error: {
+            code: "UPLOADS_CLOSED",
+            message: "The host hasn’t opened photo uploads yet.",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (event.useGuestPrivileges && !canUploadFlag) {
+      throw new Response(
+        JSON.stringify({
+          error: {
+            code: "UPLOAD_PRIVILEGE",
+            message: "The host hasn’t given you permission to upload photos.",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      );
+    }
+
+    if (event.rsvpEnabled && event.requireRsvpToUpload) {
+      const rsvp = await prisma.rsvp.findUnique({
+        where: { eventId_userId: { eventId: event.id, userId } },
+      });
+      if (!rsvp || rsvp.status !== "going") {
+        throw new Response(
+          JSON.stringify({
+            error: {
+              code: "RSVP_REQUIRED",
+              message: "RSVP as Going to unlock photo uploads.",
+            },
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        );
+      }
+    }
+  }
+
+  const maxMedia = event.maxMedia ?? 100;
+  const total = await prisma.media.count({
+    where: {
+      eventId: event.id,
+      state: { in: ["published", "pending_approval", "uploading"] },
+    },
+  });
+  if (total >= maxMedia) {
+    throw new Response(
+      JSON.stringify({
+        error: {
+          code: "MEDIA_CAP",
+          message: `This event has reached its ${maxMedia}-photo limit.`,
+        },
+      }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  if (!isOrg) {
+    const perGuest = event.maxMediaPerGuest ?? 10;
+    const mine = await prisma.media.count({
+      where: {
+        eventId: event.id,
+        uploaderId: userId,
+        state: { in: ["published", "pending_approval", "uploading"] },
+      },
+    });
+    if (mine >= perGuest) {
+      throw new Response(
+        JSON.stringify({
+          error: {
+            code: "GUEST_MEDIA_CAP",
+            message: `You can upload up to ${perGuest} photos for this event.`,
           },
         }),
         { status: 403, headers: { "Content-Type": "application/json" } },
@@ -237,9 +315,32 @@ export function publicEventDto(event: {
   downloadPolicy?: string;
   downloadsEnabled?: boolean;
   downloadOpensAt?: Date | null;
+  billingMode?: string;
+  planTier?: string;
+  instantFeeCents?: number;
+  highlightsPublished?: boolean;
+  maxGuests?: number;
+  maxMedia?: number;
+  maxMediaPerGuest?: number;
+  uploadWindowHours?: number | null;
+  uploadsOpenAt?: Date | null;
+  uploadsCloseAt?: Date | null;
+  mapsUrl?: string;
+  inviteCopy?: string;
+  inviteStickers?: string;
+  guestVisibility?: string;
+  requireApproval?: boolean;
+  publishMessage?: string;
+  publishedAt?: Date | null;
 }) {
   const expired = isEventExpired(event.expiresAt);
   const started = hasEventStarted(event.startAt);
+  const uploadOpen = isUploadWindowOpen({
+    startAt: event.startAt,
+    uploadsOpenAt: event.uploadsOpenAt,
+    uploadsCloseAt: event.uploadsCloseAt,
+    uploadsEnabled: event.uploadsEnabled !== false,
+  });
   const computedState = expired
     ? "expired"
     : event.state === "ended"
@@ -270,11 +371,29 @@ export function publicEventDto(event: {
     uploadMode: event.uploadMode || "both",
     useGuestPrivileges: Boolean(event.useGuestPrivileges),
     hasStarted: started,
+    uploadWindowOpen: uploadOpen,
     atmosphere: event.atmosphere || "bday",
     themeColor: event.themeColor ?? "#698ea2",
     downloadPolicy: event.downloadPolicy || "members",
     downloadsEnabled: event.downloadsEnabled !== false,
     downloadOpensAt: event.downloadOpensAt?.toISOString() ?? null,
+    billingMode: event.billingMode || "subscription",
+    planTier: event.planTier || "free",
+    instantFeeCents: event.instantFeeCents ?? 0,
+    highlightsPublished: Boolean(event.highlightsPublished),
+    maxGuests: event.maxGuests ?? 10,
+    maxMedia: event.maxMedia ?? 100,
+    maxMediaPerGuest: event.maxMediaPerGuest ?? 10,
+    uploadWindowHours: event.uploadWindowHours ?? null,
+    uploadsOpenAt: event.uploadsOpenAt?.toISOString() ?? null,
+    uploadsCloseAt: event.uploadsCloseAt?.toISOString() ?? null,
+    mapsUrl: event.mapsUrl ?? "",
+    inviteCopy: event.inviteCopy ?? "",
+    inviteStickers: event.inviteStickers ?? "",
+    guestVisibility: event.guestVisibility || "own_only",
+    requireApproval: Boolean(event.requireApproval),
+    publishMessage: event.publishMessage ?? "",
+    publishedAt: event.publishedAt?.toISOString() ?? null,
     joinUrl: `/e/${event.slug}`,
     createdAt: event.createdAt.toISOString(),
   };
