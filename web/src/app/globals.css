@@ -1,26 +1,27 @@
 @import "tailwindcss";
 
-/* Hybrid: Neon Reception (4) + Polaroid Picnic (2) + Editorial Lens (3) */
+/* Champagne Paper — beige product site with soft celebration motifs */
 :root {
-  --bg: #f3efe6;
-  --bg-elevated: #fbf8f1;
-  --fg: #12101a;
-  --muted: #6a6358;
-  --line: #e0d6c6;
-  --accent: #c9a227;
-  --accent-soft: #f5ecd0;
-  --spark: #e11d8a;
-  --cobalt: #2f4f8a;
-  --butter: #f0e3a4;
-  --terracotta: #c9a227;
+  --bg: #e8e3da;
+  --bg-elevated: #f3efe7;
+  --fg: #2a241f;
+  --muted: #73685c;
+  --line: #d6cec2;
+  --accent: #5c4a3a;
+  --accent-soft: #ebe4d8;
+  --spark: #9a5b4a;
+  --cobalt: #5c4a3a;
+  --butter: #e6d7a8;
+  --champagne: #c4a574;
+  --terracotta: #5c4a3a;
   --sage: #d8d0c2;
-  --peach: #f3efe6;
-  --navy: #0e0c12;
+  --peach: #e8e3da;
+  --navy: #2a241f;
   --danger: #b91c1c;
   --ok: #3f6b4a;
-  --hero: #0a0810;
-  --hero-fg: #fbf8f1;
-  --hero-accent: #e8c96a;
+  --hero: #e8e3da;
+  --hero-fg: #2a241f;
+  --hero-accent: #5c4a3a;
 }
 
 @theme inline {
@@ -70,8 +71,8 @@ select {
 }
 
 ::selection {
-  background: var(--accent);
-  color: #ffffff;
+  background: rgba(196, 165, 116, 0.45);
+  color: var(--fg);
 }
 
 .container {
@@ -104,7 +105,7 @@ select {
 
 .btn-primary {
   background: var(--accent);
-  color: #0e0c12;
+  color: #f7f2ea;
 }
 
 .btn-primary:hover:not(:disabled) {
@@ -194,14 +195,13 @@ select {
 
 .hero-block {
   background:
-    radial-gradient(ellipse 55% 45% at 88% 8%, rgba(225, 29, 138, 0.28), transparent 55%),
-    radial-gradient(ellipse 50% 40% at 12% 90%, rgba(201, 162, 39, 0.22), transparent 50%),
-    radial-gradient(ellipse 35% 35% at 55% 40%, rgba(47, 79, 138, 0.2), transparent 60%),
-    linear-gradient(165deg, #07060a 0%, #0e0c12 42%, #1a1524 100%);
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(196, 165, 116, 0.18), transparent 55%),
+    radial-gradient(ellipse 45% 35% at 0% 100%, rgba(154, 91, 74, 0.08), transparent 50%),
+    var(--bg);
   color: var(--hero-fg);
 }
 
-/* Neon Reception hero — ink + champagne gold + magenta only */
+/* Neon Reception hero — kept for reference, unused on marketing */
 .neon-reception-hero.hero-block {
   background:
     radial-gradient(ellipse 50% 42% at 82% 18%, rgba(225, 29, 138, 0.32), transparent 58%),
@@ -1732,6 +1732,217 @@ select {
   .neon-spray-dot,
   .neon-seal-glow,
   .neon-reel-track {
+    animation: none !important;
+  }
+}
+
+/* ——— Champagne Paper marketing ——— */
+.champagne-paper {
+  --champagne: #c4a574;
+}
+
+.cp-hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-hero-motifs {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.cp-polaroid {
+  position: absolute;
+  width: 108px;
+  background: #fff;
+  padding: 8px 8px 26px;
+  border-radius: 3px;
+  box-shadow: 0 16px 36px rgba(42, 36, 31, 0.12);
+  animation: cpFloat 7.5s ease-in-out infinite;
+}
+
+.cp-polaroid-shot {
+  height: 84px;
+  border-radius: 2px;
+}
+
+.cp-tone-a .cp-polaroid-shot {
+  background: linear-gradient(135deg, #d9cbb4, #a8895c);
+}
+
+.cp-tone-b .cp-polaroid-shot {
+  background: linear-gradient(145deg, #cfc4b6, #7a6554);
+}
+
+.cp-tone-c .cp-polaroid-shot {
+  background: linear-gradient(150deg, #e6d7a8, #c4a574 55%, #8a6f45);
+}
+
+.cp-polaroid-caption {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 8px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 0.68rem;
+  color: #7a7066;
+  text-align: center;
+}
+
+.cp-p1 {
+  left: 0;
+  top: 12%;
+  transform: rotate(-11deg);
+  --cp-rot: -11deg;
+}
+
+.cp-p2 {
+  right: 0;
+  top: 10%;
+  transform: rotate(9deg);
+  --cp-rot: 9deg;
+  animation-delay: 0.6s;
+}
+
+.cp-p3 {
+  left: 4%;
+  bottom: 8%;
+  transform: rotate(6deg);
+  --cp-rot: 6deg;
+  animation-delay: 1.1s;
+  opacity: 0.92;
+}
+
+.cp-p4 {
+  left: -8%;
+  top: 18%;
+  width: 92px;
+  transform: rotate(-14deg);
+  --cp-rot: -14deg;
+  z-index: 2;
+  animation-delay: 0.3s;
+}
+
+.cp-p5 {
+  right: -6%;
+  bottom: 12%;
+  width: 86px;
+  transform: rotate(12deg);
+  --cp-rot: 12deg;
+  z-index: 2;
+  animation-delay: 0.9s;
+}
+
+.cp-icon {
+  position: absolute;
+  font-size: 1.4rem;
+  opacity: 0.5;
+  filter: drop-shadow(0 6px 12px rgba(42, 36, 31, 0.1));
+  animation: cpSoft 5s ease-in-out infinite;
+}
+
+.cp-cam {
+  right: 12%;
+  bottom: 22%;
+}
+
+.cp-pop {
+  left: 10%;
+  top: 42%;
+  animation-delay: 0.7s;
+}
+
+.cp-champ {
+  right: 8%;
+  top: 38%;
+  animation-delay: 1.2s;
+}
+
+.cp-invite-stage {
+  z-index: 1;
+}
+
+.cp-feat-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--line);
+  font-size: 1.2rem;
+}
+
+.cp-cta-band {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 2rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--bg-elevated);
+}
+
+.tier-card.featured {
+  border-color: var(--accent);
+  box-shadow: 0 14px 36px rgba(42, 36, 31, 0.08);
+}
+
+.cobalt-rule {
+  background: linear-gradient(90deg, var(--champagne), var(--accent));
+}
+
+@keyframes cpFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(var(--cp-rot, 0deg));
+  }
+  50% {
+    transform: translateY(-10px) rotate(var(--cp-rot, 0deg));
+  }
+}
+
+@keyframes cpSoft {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 0.7;
+  }
+}
+
+@media (max-width: 899px) {
+  .cp-p1,
+  .cp-p2,
+  .cp-p3 {
+    display: none;
+  }
+
+  .cp-p4 {
+    left: -4%;
+  }
+
+  .cp-p5 {
+    right: -2%;
+  }
+
+  .cp-cam,
+  .cp-pop,
+  .cp-champ {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-polaroid,
+  .cp-icon {
     animation: none !important;
   }
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, DM_Sans } from "next/font/google";
+import { DM_Sans, Literata } from "next/font/google";
 import "./globals.css";
 
-const display = Cormorant_Garamond({
+const display = Literata({
   variable: "--font-display",
   subsets: ["latin"],
   weight: ["500", "600", "700"],

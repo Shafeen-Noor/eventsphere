@@ -142,12 +142,12 @@ export default async function HomePage() {
             variant="hero"
             right={
               <div className="flex items-center gap-3">
-                <Link href="/login" className="neon-nav-signin">
+                <Link href="/login" className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--fg)]">
                   Sign in
                 </Link>
                 <Link
                   href="/signup?path=subscribe&next=/create?mode=subscription"
-                  className="btn bang-cta neon-cta-gold"
+                  className="btn btn-primary"
                 >
                   Subscribe to Pro
                 </Link>
