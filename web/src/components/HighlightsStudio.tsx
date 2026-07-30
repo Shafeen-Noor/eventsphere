@@ -27,9 +27,10 @@ export function HighlightsStudio({
   published,
   onPublished,
   wallOnly = false,
+  celebrateSignal = 0,
 }: {
   slug: string;
-  shots: Shot[];
+  shots?: Shot[];
   canEdit: boolean;
   initialTemplate?: string;
   initialFilter?: string;
@@ -37,8 +38,11 @@ export function HighlightsStudio({
   onPublished?: (v: boolean) => void;
   /** Guest view: just the collage wall, no studio chrome */
   wallOnly?: boolean;
+  /** Bump to replay the publish toast (guest live update) */
+  celebrateSignal?: number;
 }) {
-  const [shots, setShots] = useState<Shot[]>(seedShots);
+  const [shots, setShots] = useState<Shot[]>(seedShots || []);
+  const [loadingWall, setLoadingWall] = useState(wallOnly);
   const [template, setTemplate] = useState<HighlightTemplateId>(
     (initialTemplate as HighlightTemplateId) || "ig8",
   );
@@ -50,31 +54,72 @@ export function HighlightsStudio({
   const [celebrate, setCelebrate] = useState(false);
 
   useEffect(() => {
-    setShots(seedShots);
-  }, [seedShots]);
+    setTemplate((initialTemplate as HighlightTemplateId) || "ig8");
+  }, [initialTemplate]);
+
+  useEffect(() => {
+    setFilter((initialFilter as HighlightFilterId) || "none");
+  }, [initialFilter]);
+
+  // Host studio: keep local list in sync with gallery stars.
+  // Guest wall: never reset from parent — parent often passes a fresh [].
+  useEffect(() => {
+    if (wallOnly) return;
+    if (seedShots) setShots(seedShots);
+  }, [seedShots, wallOnly]);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (wallOnly) setLoadingWall(true);
       const res = await fetch(
         `/api/events/${slug}/media?filter=${canEdit && !wallOnly ? "all" : "highlights"}&sort=newest`,
       );
       const data = await res.json();
       if (!cancelled && res.ok) {
-        setShots(
-          (data.media || []).map((m: Shot) => ({
+        const next = (data.media || [])
+          .filter((m: Shot & { isHighlight?: boolean }) =>
+            canEdit && !wallOnly ? Boolean(m.isHighlight) : true,
+          )
+          .map((m: Shot) => ({
             id: m.id,
             url: m.url,
             type: m.type,
             isHighlight: Boolean(m.isHighlight),
-          })),
-        );
+          }));
+        // For host studio fetch=all, keep isHighlight flags; for wall use all returned
+        if (canEdit && !wallOnly) {
+          setShots(
+            (data.media || []).map((m: Shot) => ({
+              id: m.id,
+              url: m.url,
+              type: m.type,
+              isHighlight: Boolean(m.isHighlight),
+            })),
+          );
+        } else {
+          setShots(next);
+        }
+        if (data.highlightTemplate) {
+          setTemplate(data.highlightTemplate as HighlightTemplateId);
+        }
+        if (data.highlightFilter) {
+          setFilter(data.highlightFilter as HighlightFilterId);
+        }
       }
+      if (!cancelled && wallOnly) setLoadingWall(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [slug, canEdit, published, wallOnly]);
+  }, [slug, canEdit, published, wallOnly, celebrateSignal]);
+
+  useEffect(() => {
+    if (!celebrateSignal) return;
+    setCelebrate(true);
+    const t = window.setTimeout(() => setCelebrate(false), 3800);
+    return () => window.clearTimeout(t);
+  }, [celebrateSignal]);
 
   const starred = useMemo(() => {
     const list = canEdit && !wallOnly ? shots.filter((s) => s.isHighlight) : shots;
@@ -106,14 +151,29 @@ export function HighlightsStudio({
       onPublished?.(nextPublish);
       if (nextPublish) {
         setCelebrate(true);
-        window.setTimeout(() => setCelebrate(false), 3200);
+        window.setTimeout(() => setCelebrate(false), 3800);
       }
     }
     setMessage(nextPublish ? "Highlight collage published" : "Collage saved");
   }
 
+  if (wallOnly && loadingWall) {
+    return (
+      <div className="hl-wall panel p-6 text-center text-sm text-[var(--muted)]">
+        Loading highlight wall…
+      </div>
+    );
+  }
+
+  if (wallOnly && !starred.length) {
+    return (
+      <div className="hl-wall panel p-6 text-center text-sm text-[var(--muted)]">
+        The host published a highlight wall, but no photos are in it yet.
+      </div>
+    );
+  }
+
   if (!starred.length && !canEdit) return null;
-  if (wallOnly && !starred.length) return null;
 
   const collage = (
     <div className={`hl-collage-frame ${celebrate ? "hl-celebrate" : ""}`}>

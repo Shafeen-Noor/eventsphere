@@ -60,6 +60,27 @@ export async function GET(req: Request, ctx: Ctx) {
       where.uploaderId = user.id;
       where.state = { in: ["published", "pending_approval"] };
     } else if (filter === "highlights") {
+      // Guests only see the collage after the host publishes it.
+      if (!isOrg && !event.highlightsPublished) {
+        return jsonOk({
+          media: [],
+          expiresAt: event.expiresAt.toISOString(),
+          expired: closed,
+          commentsEnabled: event.commentsEnabled,
+          canDownload: download.allowed,
+          downloadBlockedReason: download.reason,
+          atmosphere: event.atmosphere,
+          highlightsPublished: false,
+          highlightTemplate: event.highlightTemplate || "ig8",
+          highlightFilter: event.highlightFilter || "none",
+          canCurateHighlights: false,
+          pendingCount: 0,
+          guestVisibility: event.guestVisibility,
+          requireApproval: event.requireApproval,
+          publishMessage: event.publishMessage,
+          serverTime: new Date().toISOString(),
+        });
+      }
       where.isHighlight = true;
       where.state = "published";
     } else {

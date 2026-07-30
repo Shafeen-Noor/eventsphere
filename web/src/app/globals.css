@@ -1155,7 +1155,24 @@ select {
   letter-spacing: 0.04em;
   padding: 0.55rem 1rem;
   border-radius: 999px;
-  animation: hlToast 3s ease both;
+  animation: hlToast 3.6s ease both;
+}
+
+.hl-guest-banner {
+  position: sticky;
+  top: 0.75rem;
+  z-index: 20;
+  margin: 0 auto;
+  width: fit-content;
+  max-width: calc(100% - 1rem);
+  background: var(--navy);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  padding: 0.75rem 1.25rem;
+  border-radius: 999px;
+  animation: hlPopIn 500ms cubic-bezier(0.2, 0.85, 0.2, 1);
+  text-align: center;
 }
 
 @keyframes hlPopIn {

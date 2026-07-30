@@ -1,7 +1,7 @@
 "use client";
 
 import JSZip from "jszip";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { HighlightsStudio } from "@/components/HighlightsStudio";
 import { getAtmosphere } from "@/lib/atmospheres";
 import { HIGHLIGHT_MAX } from "@/lib/highlights";
@@ -70,6 +70,9 @@ export function Gallery({
   const [zipping, setZipping] = useState(false);
   const [lightbox, setLightbox] = useState<MediaItem | null>(null);
   const [starCount, setStarCount] = useState(0);
+  const [celebrateSignal, setCelebrateSignal] = useState(0);
+  const [guestBanner, setGuestBanner] = useState(false);
+  const wasPublishedRef = useRef(highlightsPublished);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -82,11 +85,18 @@ export function Gallery({
       const data = await res.json();
       const starsData = await starsRes.json();
       if (!res.ok) throw new Error(data?.error?.message || "Could not load gallery");
+      const nextPublished = Boolean(data.highlightsPublished);
+      if (nextPublished && !wasPublishedRef.current && !data.canCurateHighlights) {
+        setCelebrateSignal((n) => n + 1);
+        setGuestBanner(true);
+        window.setTimeout(() => setGuestBanner(false), 4200);
+      }
+      wasPublishedRef.current = nextPublished;
       setMedia(data.media);
       setCanDownload(Boolean(data.canDownload));
       setDownloadBlockedReason(data.downloadBlockedReason || null);
       setCanCurate(Boolean(data.canCurateHighlights));
-      setPublished(Boolean(data.highlightsPublished));
+      setPublished(nextPublished);
       setPendingCount(Number(data.pendingCount || 0));
       setHighlightTemplate(data.highlightTemplate || "ig8");
       setHighlightFilter(data.highlightFilter || "none");
@@ -105,9 +115,10 @@ export function Gallery({
   }, [load, refreshKey]);
 
   useEffect(() => {
+    // Poll often so guests see a newly published wall without refreshing.
     const id = setInterval(() => {
       if (!document.hidden) load();
-    }, 15000);
+    }, 4000);
     return () => clearInterval(id);
   }, [load]);
 
@@ -329,15 +340,21 @@ export function Gallery({
         </div>
       ) : null}
 
+      {guestBanner ? (
+        <div className="hl-guest-banner" role="status">
+          The host just published the highlight wall
+        </div>
+      ) : null}
+
       {published && !canCurate ? (
         <HighlightsStudio
           slug={slug}
-          shots={[]}
           canEdit={false}
           wallOnly
           initialTemplate={highlightTemplate}
           initialFilter={highlightFilter}
           published={published}
+          celebrateSignal={celebrateSignal}
         />
       ) : null}
 
