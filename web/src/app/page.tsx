@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { AuthControls } from "@/components/AuthControls";
 import { EventList } from "@/components/EventList";
 import { SiteHeader } from "@/components/SiteHeader";
+import { UpgradeProButton } from "@/components/UpgradeProButton";
 import {
   getCurrentUser,
   isAccountUser,
@@ -47,39 +48,120 @@ export default async function HomePage() {
 
   const isProSub = hasAccount && user?.plan === "pro";
 
+  // Logged-in: personal dashboard only — no marketing content
+  if (hasAccount && user) {
+    return (
+      <main>
+        <SiteHeader
+          marketing={false}
+          right={<AuthControls user={publicUser} />}
+        />
+
+        <section className="container py-10 sm:py-14">
+          <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--muted)]">
+                Your workspace
+              </p>
+              <h1 className="section-title mt-2 text-3xl sm:text-4xl">
+                Hi, {user.displayName}
+              </h1>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                {[planLabel(user.plan), user.organizationName, user.email]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {!isProSub ? <UpgradeProButton label="Upgrade to Pro" /> : null}
+              <Link
+                href={isProSub ? "/create?mode=subscription" : "/create?mode=onetime"}
+                className="btn btn-ghost"
+              >
+                + New event
+              </Link>
+            </div>
+          </div>
+
+          {!isProSub ? (
+            <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--accent-soft)] px-5 py-4">
+              <p className="font-semibold text-[var(--navy)]">You’re on a personal account</p>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                Upgrade to Pro ($29/mo) for multiple events, or create a single Pro event for $49.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <UpgradeProButton />
+                <Link href="/create?mode=onetime" className="btn btn-ghost">
+                  One Pro event — $49
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <h2 className="section-title text-2xl">My events</h2>
+          </div>
+
+          {events.length === 0 ? (
+            <div className="panel flex flex-col items-center gap-3 p-10 text-center">
+              <h3 className="section-title text-2xl">No events yet</h3>
+              <p className="max-w-md text-sm text-[var(--muted)]">
+                {isProSub
+                  ? "Create your first shared gallery."
+                  : "Start with one Pro event, or upgrade to run multiple this month."}
+              </p>
+              <div className="mt-2 flex flex-wrap justify-center gap-2">
+                {isProSub ? (
+                  <Link href="/create?mode=subscription" className="btn btn-primary">
+                    Create event
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/create?mode=onetime" className="btn btn-primary">
+                      One Pro event
+                    </Link>
+                    <UpgradeProButton label="Upgrade to Pro" className="btn btn-ghost" />
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <EventList events={events} />
+          )}
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main>
       <div className="hero-block">
         <SiteHeader
           variant="hero"
           right={
-            hasAccount ? (
-              <AuthControls user={publicUser} />
-            ) : (
-              <div className="flex items-center gap-3">
-                <Link href="/login" className="text-sm font-semibold text-white/80 hover:text-white">
-                  Sign in
-                </Link>
-                <Link
-                  href="/signup?path=subscribe&next=/create?mode=subscription"
-                  className="btn btn-primary"
-                >
-                  Subscribe to Pro
-                </Link>
-              </div>
-            )
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="text-sm font-semibold text-white/80 hover:text-white">
+                Sign in
+              </Link>
+              <Link
+                href="/signup?path=subscribe&next=/create?mode=subscription"
+                className="btn btn-primary"
+              >
+                Subscribe to Pro
+              </Link>
+            </div>
           }
         />
 
         <section className="container grid gap-10 pb-16 pt-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:pb-20 lg:pt-16">
           <div className="fade-up max-w-2xl">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200/90">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--hero-accent)]">
               Shared event galleries
             </p>
             <h1 className="section-title mt-4 text-5xl text-white sm:text-6xl lg:text-7xl">
               EventSphere
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-300">
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
               Guests scan a QR, upload from the browser, and every memory lands in one private
               gallery — no app installs, no AirDrop chaos.
             </p>
@@ -94,16 +176,16 @@ export default async function HomePage() {
                 Run one Pro event
               </Link>
             </div>
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="mt-4 text-sm text-white/50">
               Free needs no account. Pro is one paid event or a monthly subscription.
             </p>
           </div>
 
           <div className="fade-up rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-100/80">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--hero-accent)]">
               Built for the room
             </p>
-            <ul className="mt-5 space-y-4 text-slate-200">
+            <ul className="mt-5 space-y-4 text-white/80">
               <li>QR + link invite — guests join with a name</li>
               <li>Timed upload windows so the night doesn’t spill forever</li>
               <li>Host approval, private albums, and curated highlights on Pro</li>
@@ -112,61 +194,6 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
-
-      {hasAccount ? (
-        <section id="my-events" className="container py-14">
-          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <div className="flex flex-wrap items-center gap-3">
-                <h2 className="section-title text-3xl">My events</h2>
-                <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--navy)]">
-                  {planLabel(user?.plan)} plan
-                </span>
-              </div>
-              {user ? (
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  {[user.organizationName, user.email].filter(Boolean).join(" · ")}
-                </p>
-              ) : null}
-            </div>
-            <Link
-              href={isProSub ? "/create?mode=subscription" : "/create?mode=onetime"}
-              className="text-sm font-semibold text-[var(--accent)]"
-            >
-              + New event
-            </Link>
-          </div>
-          {events.length === 0 ? (
-            <div className="panel flex flex-col items-center gap-3 p-10 text-center">
-              <h3 className="section-title text-2xl">No events yet</h3>
-              <p className="max-w-md text-sm text-[var(--muted)]">
-                {isProSub
-                  ? "Your subscription is ready. Create your first shared gallery."
-                  : "Create a one-time Pro event, or subscribe to run multiple events this month."}
-              </p>
-              <div className="mt-2 flex flex-wrap justify-center gap-2">
-                <Link href="/create?mode=onetime" className="btn btn-primary">
-                  One Pro event
-                </Link>
-                {!isProSub ? (
-                  <Link
-                    href="/signup?path=subscribe&next=/create?mode=subscription"
-                    className="btn btn-ghost"
-                  >
-                    Subscribe to Pro
-                  </Link>
-                ) : (
-                  <Link href="/create?mode=subscription" className="btn btn-ghost">
-                    Create event
-                  </Link>
-                )}
-              </div>
-            </div>
-          ) : (
-            <EventList events={events} />
-          )}
-        </section>
-      ) : null}
 
       <section id="how-it-works" className="container py-16">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
@@ -202,7 +229,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="border-y border-[var(--line)] bg-white py-16">
+      <section className="border-y border-[var(--line)] bg-[var(--bg-elevated)] py-16">
         <div className="container">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
             Why hosts switch
@@ -364,7 +391,7 @@ export default async function HomePage() {
         </p>
       </section>
 
-      <section className="border-y border-[var(--line)] bg-white py-16">
+      <section className="border-y border-[var(--line)] bg-[var(--bg-elevated)] py-16">
         <div className="container max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">FAQ</p>
           <h2 className="section-title mt-3 text-3xl sm:text-4xl">Straight answers</h2>
@@ -400,7 +427,7 @@ export default async function HomePage() {
         <div className="container flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <h2 className="section-title text-3xl sm:text-4xl">Ready for tonight’s event?</h2>
-            <p className="mt-3 max-w-xl text-slate-300">
+            <p className="mt-3 max-w-xl text-white/65">
               Launch a free gallery in under a minute, or unlock Pro controls for the celebration
               that needs curation.
             </p>
@@ -419,7 +446,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-[var(--line)] bg-white py-8">
+      <footer className="border-t border-[var(--line)] bg-[var(--bg-elevated)] py-8">
         <div className="container flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--muted)]">
           <p>© {new Date().getFullYear()} EventSphere</p>
           <div className="flex gap-4">
