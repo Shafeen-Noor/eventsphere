@@ -1,5 +1,5 @@
 export type PlanId = "free" | "pro" | "professional";
-export type BillingMode = "subscription" | "instant";
+export type BillingMode = "free" | "onetime" | "subscription";
 export type HostType = "planner" | "venue" | "individual";
 export type GuestVisibility = "own_only" | "approved_public" | "all_members";
 

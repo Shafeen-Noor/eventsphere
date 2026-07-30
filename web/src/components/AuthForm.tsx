@@ -3,25 +3,40 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
-import { PlanPicker } from "@/components/PlanPicker";
-import { HOST_TYPES, type HostType, type PlanId } from "@/lib/plans";
+import { HOST_TYPES, type HostType } from "@/lib/plans";
 
 type Mode = "login" | "signup";
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const search = useSearchParams();
-  const next = search.get("next") || "/";
-  const instantPath = next.includes("mode=instant");
+  const path = search.get("path");
+  const nextParam = search.get("next");
+
+  const isOnetime =
+    path === "onetime" ||
+    Boolean(nextParam?.includes("mode=onetime")) ||
+    Boolean(nextParam?.includes("mode=instant"));
+  const isSubscribe =
+    path === "subscribe" || Boolean(nextParam?.includes("mode=subscription"));
+
+  const defaultNext = isOnetime
+    ? "/create?mode=onetime"
+    : isSubscribe
+      ? "/create?mode=subscription"
+      : "/";
+  const next = nextParam || defaultNext;
 
   const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [hostType, setHostType] = useState<HostType>("individual");
-  const [plan, setPlan] = useState<PlanId>("free");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Accounts exist for Pro paths only — Free never requires signup.
+  const accountPlan = isSubscribe ? "pro" : "free";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +56,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
                   password,
                   organizationName: organizationName.trim() || null,
                   hostType,
-                  plan: instantPath ? "free" : plan,
+                  plan: accountPlan,
                 }
               : { email, password },
           ),
@@ -60,7 +75,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
       }
 
       if (mode === "login" && data.user && !data.user.emailVerified) {
-        router.push(`/verify?next=${encodeURIComponent(next.startsWith("/") ? next : "/")}`);
+        router.push(
+          `/verify?next=${encodeURIComponent(next.startsWith("/") ? next : "/")}`,
+        );
         router.refresh();
         return;
       }
@@ -73,24 +90,48 @@ export function AuthForm({ mode }: { mode: Mode }) {
     }
   }
 
+  const title =
+    mode === "signup"
+      ? isOnetime
+        ? "Account for one Pro event"
+        : isSubscribe
+          ? "Subscribe to Pro"
+          : "Create your host account"
+      : "Welcome back";
+
+  const subtitle =
+    mode === "signup"
+      ? isOnetime
+        ? "Verify once, then create a single Pro event for $49. Free events never need an account."
+        : isSubscribe
+          ? "Monthly Pro for hosts who run more than one event. Free galleries stay account-free."
+          : "Accounts unlock Pro. Free events start without signup."
+      : "Sign in to manage your Pro events.";
+
   return (
     <form onSubmit={onSubmit} className="panel p-6 sm:p-8 space-y-5 max-w-lg w-full fade-up">
       <div>
         <h1 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl text-[var(--navy)]">
-          {mode === "signup"
-            ? instantPath
-              ? "Quick account for your event"
-              : "Who’s hosting?"
-            : "Welcome back"}
+          {title}
         </h1>
-        <p className="mt-2 text-[var(--muted)]">
-          {mode === "signup"
-            ? instantPath
-              ? "Create a host account, then pick a one-time event plan on the next screen."
-              : "Password + org details, then pick Free or Pro. Professional is coming soon."
-            : "Sign in to see and manage only your events."}
-        </p>
+        <p className="mt-2 text-[var(--muted)]">{subtitle}</p>
       </div>
+
+      {mode === "signup" && (isOnetime || isSubscribe) ? (
+        <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--muted)]">
+          {isOnetime ? (
+            <>
+              <p className="font-semibold text-[var(--navy)]">One Pro event — $49</p>
+              <p className="mt-1">Payment is simulated until Stripe is connected.</p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-[var(--navy)]">Pro subscription — $29/mo</p>
+              <p className="mt-1">Create multiple Pro events each month after verify.</p>
+            </>
+          )}
+        </div>
+      ) : null}
 
       {mode === "signup" ? (
         <div className="field">
@@ -139,7 +180,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {mode === "signup" ? (
         <>
           <div className="field">
-            <label htmlFor="org">Organization</label>
+            <label htmlFor="org">Organization (optional)</label>
             <input
               id="org"
               value={organizationName}
@@ -164,15 +205,6 @@ export function AuthForm({ mode }: { mode: Mode }) {
               ))}
             </select>
           </div>
-
-          {!instantPath ? (
-            <div className="space-y-2">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
-                Subscription plan
-              </p>
-              <PlanPicker mode="subscription" value={plan} onChange={setPlan} />
-            </div>
-          ) : null}
         </>
       ) : null}
 
@@ -188,6 +220,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
             : "Sign in"}
       </button>
 
+      {mode === "signup" ? (
+        <p className="text-center text-sm text-[var(--muted)]">
+          Just need a small gallery?{" "}
+          <Link href="/create?mode=free" className="text-[var(--navy)] underline">
+            Start free — no account
+          </Link>
+        </p>
+      ) : null}
+
       <p className="text-sm text-[var(--muted)] text-center">
         {mode === "signup" ? (
           <>
@@ -201,12 +242,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
           </>
         ) : (
           <>
-            New here?{" "}
+            Need Pro?{" "}
             <Link
-              href={`/signup?next=${encodeURIComponent(next)}`}
+              href={`/signup?path=subscribe&next=${encodeURIComponent(next)}`}
               className="text-[var(--navy)] underline"
             >
-              Create an account
+              Subscribe
             </Link>
           </>
         )}

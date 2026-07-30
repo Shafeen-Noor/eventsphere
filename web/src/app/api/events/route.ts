@@ -1,9 +1,13 @@
 import { z } from "zod";
-import { getCurrentUser, requireVerifiedAccount } from "@/lib/auth";
+import {
+  ensureUser,
+  getCurrentUser,
+  requireVerifiedAccount,
+} from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { hashPasscode, publicEventDto } from "@/lib/events";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
-import { assertSelectablePlan, getPlan, PLANS } from "@/lib/plans";
+import { getPlan, PLANS } from "@/lib/plans";
 import { slugifyTitle } from "@/lib/slug";
 
 const createSchema = z.object({
@@ -38,7 +42,10 @@ const createSchema = z.object({
   downloadsEnabled: z.boolean().optional().default(true),
   startAt: z.string().datetime().optional().nullable(),
   endAt: z.string().datetime().optional().nullable(),
-  billingMode: z.enum(["subscription", "instant"]).optional().default("subscription"),
+  billingMode: z
+    .enum(["free", "onetime", "subscription", "instant"])
+    .optional()
+    .default("subscription"),
   planTier: z.enum(["free", "pro", "professional"]).optional(),
   confirmInstantPayment: z.boolean().optional().default(false),
 });
@@ -76,34 +83,62 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
-    let user = await requireVerifiedAccount();
-    if (body.hostName && body.hostName !== user.displayName) {
-      user = await prisma.user.update({
-        where: { id: user.id },
-        data: { displayName: body.hostName },
-      });
+
+    // Normalize legacy "instant" → "onetime"
+    const billingMode =
+      body.billingMode === "instant" ? "onetime" : body.billingMode;
+
+    let user;
+    if (billingMode === "free") {
+      const hostName = body.hostName?.trim();
+      if (!hostName) {
+        return jsonError(
+          "VAL_HOST_NAME",
+          "Add a host name guests will see on the invite.",
+          422,
+        );
+      }
+      // Free never requires an account — guest cookie identity is enough.
+      user = await ensureUser(hostName);
+    } else {
+      user = await requireVerifiedAccount();
+      if (body.hostName && body.hostName !== user.displayName) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { displayName: body.hostName },
+        });
+      }
     }
 
-    const billingMode = body.billingMode;
-    const planTier =
-      billingMode === "instant"
-        ? assertSelectablePlan(body.planTier || "free")
-        : assertSelectablePlan(user.plan || "free");
+    let planTier: "free" | "pro";
+    let instantFeeCents = 0;
+
+    if (billingMode === "free") {
+      planTier = "free";
+    } else if (billingMode === "onetime") {
+      planTier = "pro";
+      instantFeeCents = PLANS.pro.instant.priceCents;
+      if (!body.confirmInstantPayment) {
+        return jsonError(
+          "PAYMENT_REQUIRED",
+          "Confirm the one-time payment to create this Pro event.",
+          402,
+        );
+      }
+    } else {
+      if (user.plan !== "pro") {
+        return jsonError(
+          "SUBSCRIPTION_REQUIRED",
+          "A Pro subscription is required to create events this way.",
+          402,
+        );
+      }
+      planTier = "pro";
+    }
+
     const plan = getPlan(planTier);
 
-    const instantFeeCents =
-      billingMode === "instant" ? PLANS[planTier].instant.priceCents : 0;
-
-    if (billingMode === "instant" && instantFeeCents > 0 && !body.confirmInstantPayment) {
-      return jsonError(
-        "PAYMENT_REQUIRED",
-        "Confirm the one-time payment to create this Pro event.",
-        402,
-      );
-    }
-
-    let retentionHours =
-      body.retentionHours ?? plan.limits.maxDurationHours;
+    let retentionHours = body.retentionHours ?? plan.limits.maxDurationHours;
     retentionHours = Math.min(retentionHours, plan.limits.maxDurationHours);
 
     const now = new Date();
@@ -146,7 +181,6 @@ export async function POST(req: Request) {
       uploadsCloseAt = new Date(open.getTime() + uploadWindowHours * 60 * 60 * 1000);
       if (uploadsCloseAt > expiresAt) uploadsCloseAt = expiresAt;
     } else {
-      // Free: rigid 24h — upload window = full event life
       uploadWindowHours = retentionHours;
       uploadsOpenAt = startAt ?? now;
       uploadsCloseAt = expiresAt;
@@ -205,7 +239,7 @@ export async function POST(req: Request) {
         atmosphere: body.atmosphere,
         downloadPolicy: body.downloadPolicy,
         downloadsEnabled: body.downloadsEnabled,
-        themeColor: "#698ea2",
+        themeColor: "#0e7490",
         billingMode,
         planTier,
         instantFeeCents,

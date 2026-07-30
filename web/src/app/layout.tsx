@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
+import { DM_Sans, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const display = Fraunces({
+const display = Space_Grotesk({
   variable: "--font-display",
   subsets: ["latin"],
 });
 
-const sans = Manrope({
+const sans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "EventSphere — one digital home for every event",
+  title: "EventSphere — shared galleries for every celebration",
   description:
-    "Shared event galleries with AWS-backed storage. Collect memories in one place — no more AirDrop chaos.",
+    "QR guest uploads, host approval, and curated highlights. Start free with no account, or go Pro for one event or a monthly subscription.",
 };
 
 export default function RootLayout({

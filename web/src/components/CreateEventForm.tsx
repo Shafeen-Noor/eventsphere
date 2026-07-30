@@ -2,18 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { PlanPicker } from "@/components/PlanPicker";
 import { ThemePreview } from "@/components/ThemePreview";
 import { ATMOSPHERES, type AtmosphereId } from "@/lib/atmospheres";
-import {
-  guestLimitLabel,
-  getPlan,
-  PLANS,
-  type PlanId,
-} from "@/lib/plans";
+import { getPlan, type PlanId } from "@/lib/plans";
 
 type UseCase = "friends" | "celebration";
-type BillingMode = "subscription" | "instant";
+export type CreateMode = "free" | "onetime" | "subscription";
 
 function toLocalInputValue(d: Date) {
   const pad = (n: number) => String(n).padStart(2, "0");
@@ -29,20 +23,20 @@ export function CreateEventForm({
     email: string | null;
     plan: string;
     organizationName: string | null;
+    hasAccount?: boolean;
   };
-  mode: BillingMode;
+  mode: CreateMode;
 }) {
   const router = useRouter();
-  const isInstant = mode === "instant";
-  const subscriptionPlan = (host.plan || "free") as PlanId;
-  const [eventPlan, setEventPlan] = useState<PlanId>("free");
-  const activePlanId = isInstant ? eventPlan : subscriptionPlan;
+  const isFree = mode === "free";
+  const isOnetime = mode === "onetime";
+  const isPro = !isFree;
+  const activePlanId: PlanId = isFree ? "free" : "pro";
   const plan = getPlan(activePlanId);
-  const isPro = activePlanId === "pro";
 
   const [useCase, setUseCase] = useState<UseCase>("celebration");
   const [title, setTitle] = useState("");
-  const [hostName, setHostName] = useState(host.displayName);
+  const [hostName, setHostName] = useState(host.displayName || "");
   const [description, setDescription] = useState("");
   const [locationName, setLocationName] = useState("");
   const [mapsUrl, setMapsUrl] = useState("");
@@ -51,8 +45,7 @@ export function CreateEventForm({
   const [passcode, setPasscode] = useState("");
   const [startAt, setStartAt] = useState(() => {
     const d = new Date();
-    d.setDate(d.getDate() + 2);
-    d.setHours(21, 0, 0, 0);
+    d.setHours(d.getHours() + 2, 0, 0, 0);
     return toLocalInputValue(d);
   });
   const [durationHours, setDurationHours] = useState(plan.limits.maxDurationHours);
@@ -78,7 +71,6 @@ export function CreateEventForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync caps when plan changes
   useEffect(() => {
     setDurationHours(plan.limits.maxDurationHours);
     setMaxGuests(plan.limits.maxGuests);
@@ -89,14 +81,23 @@ export function CreateEventForm({
     setRsvpEnabled(isPro);
   }, [activePlanId, isPro, plan.limits]);
 
-  const retentionHours = durationHours;
-  const instantFee = isInstant ? PLANS[eventPlan].instant.priceCents : 0;
+  const headline = isFree
+    ? "Start a free event"
+    : isOnetime
+      ? "Create one Pro event"
+      : "Create a new event";
+  const subcopy = isFree
+    ? "No account needed. 10 guests · 100 photos · 24 hours. Guests join by name."
+    : isOnetime
+      ? "One-time $49 for this event’s Pro controls — not a monthly subscription."
+      : "Included in your Pro subscription. No per-event checkout.";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
+      if (!hostName.trim()) throw new Error("Add a host name guests will see.");
       const wantsRsvp = isPro && useCase === "celebration" ? rsvpEnabled : false;
       const res = await fetch("/api/events", {
         method: "POST",
@@ -110,8 +111,8 @@ export function CreateEventForm({
           inviteCopy: isPro ? inviteCopy : "",
           inviteStickers: isPro ? inviteStickers : "",
           useCase,
-          retentionHours,
-          uploadWindowHours: isPro ? uploadWindowHours : retentionHours,
+          retentionHours: durationHours,
+          uploadWindowHours: isPro ? uploadWindowHours : durationHours,
           maxGuests,
           maxMedia,
           maxMediaPerGuest,
@@ -129,12 +130,14 @@ export function CreateEventForm({
           startAt: startAt ? new Date(startAt).toISOString() : null,
           billingMode: mode,
           planTier: activePlanId,
-          confirmInstantPayment: isInstant && instantFee > 0,
+          confirmInstantPayment: isOnetime,
         }),
       });
       const data = await res.json();
-      if (res.status === 401) {
-        router.push(`/signup?next=${encodeURIComponent(`/create?mode=${mode}`)}`);
+      if (res.status === 401 && !isFree) {
+        router.push(
+          `/signup?path=${isOnetime ? "onetime" : "subscribe"}&next=${encodeURIComponent(`/create?mode=${mode}`)}`,
+        );
         return;
       }
       if (res.status === 403 && data?.error?.code === "EMAIL_UNVERIFIED") {
@@ -149,68 +152,61 @@ export function CreateEventForm({
     }
   }
 
-  const ctaLabel = isInstant
-    ? instantFee > 0
-      ? `Pay ${PLANS[eventPlan].instant.priceLabel.replace(" once", "")} · create event`
-      : "Create free event"
-    : "Create event";
+  const cta = isFree
+    ? "Create free event"
+    : isOnetime
+      ? "Pay $49 · create event"
+      : "Create event";
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.95fr)] lg:items-start">
       <form onSubmit={onSubmit} className="panel p-6 sm:p-8 space-y-5 fade-up">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
-            {isInstant ? "Instant event · one-time only" : "New event · subscription"}
+            {isFree ? "Free · no account" : isOnetime ? "Pro · one-time" : "Pro · subscription"}
           </p>
           <h1 className="mt-2 font-[family-name:var(--font-display)] text-3xl sm:text-4xl text-[var(--navy)]">
-            {isInstant ? "Create this event" : "Create a new event"}
+            {headline}
           </h1>
-          <p className="mt-2 text-[var(--muted)]">
-            {isInstant
-              ? "Free is $0. Pro is a one-time fee for this event — not a subscription. Professional is coming soon."
-              : "Uses your plan limits. No extra payment for this event."}
-          </p>
+          <p className="mt-2 text-[var(--muted)]">{subcopy}</p>
         </div>
 
-        {!isInstant ? (
-          <div className="rounded-xl border border-[rgba(79,125,98,0.35)] bg-[#e7f0ea] px-4 py-3 text-sm text-[var(--muted)]">
-            <p className="font-semibold text-[var(--ok)]">
-              Included with {plan.label}
+        {isOnetime ? (
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] px-4 py-3">
+            <p className="font-semibold text-[var(--navy)]">One-time payment</p>
+            <p className="mt-1 text-sm text-[var(--muted)]">
+              Checkout is simulated until Stripe is connected. You get full Pro controls for this
+              single event.
             </p>
+            <p className="mt-2 font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
+              $49
+            </p>
+          </div>
+        ) : null}
+
+        {!isFree ? (
+          <div className="rounded-xl border border-[var(--line)] bg-[#ecfdf5] px-4 py-3 text-sm text-[var(--muted)]">
+            <p className="font-semibold text-[var(--ok)]">Pro limits</p>
             <p className="mt-1">
-              Up to {guestLimitLabel(plan.limits.maxGuests)} · {plan.limits.maxMedia}{" "}
-              photos · {plan.limits.maxDurationHours}h max
+              Up to {plan.limits.maxGuests} guests · {plan.limits.maxMedia} media ·{" "}
+              {plan.limits.maxDurationHours}h max event life
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
-              One-time event plan
-            </p>
-            <PlanPicker mode="instant" value={eventPlan} onChange={setEventPlan} />
-            {instantFee > 0 ? (
-              <div className="rounded-xl border border-[var(--line)] bg-[rgba(228,165,118,0.16)] px-4 py-3">
-                <p className="font-semibold text-[var(--navy)]">One-time payment</p>
-                <p className="mt-1 text-sm text-[var(--muted)]">
-                  Not a subscription. You pay once for this single event’s Pro features.
-                  Checkout is simulated until Stripe is connected.
-                </p>
-                <p className="mt-2 font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
-                  {PLANS[eventPlan].instant.priceLabel.replace(" once", "")}
-                </p>
-              </div>
-            ) : null}
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
+            Free is locked to 10 guests, 100 photos, and 24 hours. Upgrade later from the event if
+            you need Pro.
           </div>
         )}
 
         <div className="grid gap-3 sm:grid-cols-2">
           {(
             [
-              { id: "friends" as const, title: "Friends", blurb: "Trips & dinners · 48h" },
+              { id: "friends" as const, title: "Friends", blurb: "Trips & dinners" },
               {
                 id: "celebration" as const,
                 title: "Celebrations",
-                blurb: "Birthdays & weddings · 7 days + RSVP",
+                blurb: "Birthdays & weddings",
               },
             ] as const
           ).map((option) => (
@@ -220,8 +216,8 @@ export function CreateEventForm({
               onClick={() => setUseCase(option.id)}
               className="rounded-xl border p-4 text-left transition"
               style={{
-                borderColor: useCase === option.id ? "var(--terracotta)" : "var(--line)",
-                background: useCase === option.id ? "rgba(228,165,118,0.18)" : "white",
+                borderColor: useCase === option.id ? "var(--accent)" : "var(--line)",
+                background: useCase === option.id ? "var(--accent-soft)" : "white",
               }}
             >
               <p className="font-[family-name:var(--font-display)] text-xl">{option.title}</p>
@@ -231,7 +227,7 @@ export function CreateEventForm({
         </div>
 
         <div>
-          <p className="text-sm text-[var(--muted)] mb-2">Atmosphere theme</p>
+          <p className="mb-2 text-sm text-[var(--muted)]">Atmosphere</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {ATMOSPHERES.map((a) => (
               <button
@@ -243,19 +239,13 @@ export function CreateEventForm({
                   borderColor: atmosphere === a.id ? "var(--navy)" : "var(--line)",
                   background: a.bg,
                   color: a.id === "dinner" || a.id === "party" ? "#f7f1ea" : "#152935",
-                  boxShadow:
-                    atmosphere === a.id ? "0 0 0 2px rgba(21,41,53,0.25)" : undefined,
                 }}
               >
                 <p className="font-semibold">{a.label}</p>
-                <p className="text-xs opacity-80 mt-1">{a.blurb}</p>
+                <p className="mt-1 text-xs opacity-80">{a.blurb}</p>
               </button>
             ))}
           </div>
-        </div>
-
-        <div className="lg:hidden">
-          <ThemePreview atmosphere={atmosphere} title={title} hostName={hostName} />
         </div>
 
         <div className="field">
@@ -264,14 +254,14 @@ export function CreateEventForm({
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder={useCase === "friends" ? "Amritsar trip" : "Sara’s Birthday"}
+            placeholder="Sara’s Birthday"
             required
             maxLength={80}
           />
         </div>
 
         <div className="field">
-          <label htmlFor="host">Host name (shown to guests)</label>
+          <label htmlFor="host">Your name (shown to guests)</label>
           <input
             id="host"
             value={hostName}
@@ -281,23 +271,22 @@ export function CreateEventForm({
             maxLength={40}
           />
           {host.email ? (
-            <p className="text-xs text-[var(--muted)] mt-1">
-              {host.organizationName ? `${host.organizationName} · ` : null}
-              {host.email}
+            <p className="mt-1 text-xs text-[var(--muted)]">{host.email}</p>
+          ) : isFree ? (
+            <p className="mt-1 text-xs text-[var(--muted)]">
+              No password — this event lives on this device until it ends.
             </p>
           ) : null}
         </div>
 
         <div className="field">
-          <label htmlFor="start">
-            Event start {useCase === "celebration" || rsvpEnabled ? "(required)" : "(optional)"}
-          </label>
+          <label htmlFor="start">Event start</label>
           <input
             id="start"
             type="datetime-local"
             value={startAt}
             onChange={(e) => setStartAt(e.target.value)}
-            required={useCase === "celebration"}
+            required
           />
         </div>
 
@@ -310,14 +299,9 @@ export function CreateEventForm({
               min={1}
               max={plan.limits.maxDurationHours}
               value={durationHours}
-              disabled={!isPro}
+              disabled={isFree}
               onChange={(e) => setDurationHours(Number(e.target.value))}
             />
-            {!isPro ? (
-              <p className="text-xs text-[var(--muted)] mt-1">Free is fixed at 24 hours.</p>
-            ) : (
-              <p className="text-xs text-[var(--muted)] mt-1">Pro max 7 days (168h).</p>
-            )}
           </div>
           <div className="field">
             <label htmlFor="uploadWindow">Guest upload window (hours)</label>
@@ -327,12 +311,9 @@ export function CreateEventForm({
               min={1}
               max={durationHours}
               value={uploadWindowHours}
-              disabled={!isPro}
+              disabled={isFree}
               onChange={(e) => setUploadWindowHours(Number(e.target.value))}
             />
-            <p className="text-xs text-[var(--muted)] mt-1">
-              After this, guests stop uploading; you curate.
-            </p>
           </div>
         </div>
 
@@ -349,7 +330,7 @@ export function CreateEventForm({
             />
           </div>
           <div className="field">
-            <label htmlFor="maxMedia">Max photos total</label>
+            <label htmlFor="maxMedia">Max photos</label>
             <input
               id="maxMedia"
               type="number"
@@ -360,7 +341,7 @@ export function CreateEventForm({
             />
           </div>
           <div className="field">
-            <label htmlFor="perGuest">Max photos / guest</label>
+            <label htmlFor="perGuest">Per guest</label>
             <input
               id="perGuest"
               type="number"
@@ -394,20 +375,18 @@ export function CreateEventForm({
                 onChange={(e) => setInviteCopy(e.target.value)}
                 rows={3}
                 maxLength={400}
-                placeholder="You’re invited — can’t wait to celebrate with you!"
               />
             </div>
             <div className="field">
-              <label htmlFor="stickers">Emojis / stickers</label>
+              <label htmlFor="stickers">Emojis</label>
               <input
                 id="stickers"
                 value={inviteStickers}
                 onChange={(e) => setInviteStickers(e.target.value)}
-                placeholder="🎉✨📸"
               />
             </div>
             <div className="field">
-              <label htmlFor="visibility">What guests can see</label>
+              <label htmlFor="visibility">Guest visibility</label>
               <select
                 id="visibility"
                 value={guestVisibility}
@@ -417,9 +396,9 @@ export function CreateEventForm({
                   )
                 }
               >
-                <option value="own_only">Only their own photos (+ published highlights)</option>
+                <option value="own_only">Only their own photos (+ highlights)</option>
                 <option value="approved_public">All approved photos</option>
-                <option value="all_members">All members’ published photos</option>
+                <option value="all_members">All members’ photos</option>
               </select>
             </div>
             <label className="inline-flex items-center gap-2 text-sm">
@@ -428,7 +407,7 @@ export function CreateEventForm({
                 checked={requireApproval}
                 onChange={(e) => setRequireApproval(e.target.checked)}
               />
-              Require host approval before photos go live
+              Require approval before photos go live
             </label>
           </div>
         ) : null}
@@ -454,55 +433,15 @@ export function CreateEventForm({
           />
         </div>
 
-        <div className="field">
-          <label htmlFor="pass">Passcode (optional)</label>
-          <input
-            id="pass"
-            value={passcode}
-            onChange={(e) => setPasscode(e.target.value)}
-            minLength={4}
-            maxLength={12}
-          />
-        </div>
-
-        <div className="field">
-          <label htmlFor="mode">How guests add photos</label>
-          <select
-            id="mode"
-            value={uploadMode}
-            onChange={(e) =>
-              setUploadMode(e.target.value as "both" | "camera" | "library")
-            }
-          >
-            <option value="both">Camera + library upload</option>
-            <option value="camera">Camera only</option>
-            <option value="library">Library upload only</option>
-          </select>
-        </div>
-
-        <div className="field">
-          <label htmlFor="dl">Default download policy</label>
-          <select
-            id="dl"
-            value={downloadPolicy}
-            onChange={(e) => setDownloadPolicy(e.target.value)}
-          >
-            <option value="members">All event members</option>
-            <option value="going_only">Only RSVP Going</option>
-            <option value="organizer_only">Host only</option>
-            <option value="disabled">Nobody (disabled)</option>
-          </select>
-        </div>
-
         <div className="flex flex-wrap gap-4 text-sm">
-          {useCase === "celebration" ? (
+          {isPro && useCase === "celebration" ? (
             <label className="inline-flex items-center gap-2">
               <input
                 type="checkbox"
                 checked={rsvpEnabled}
                 onChange={(e) => setRsvpEnabled(e.target.checked)}
               />
-              Enable RSVP invite
+              Enable RSVP
             </label>
           ) : null}
           <label className="inline-flex items-center gap-2">
@@ -515,8 +454,8 @@ export function CreateEventForm({
           </label>
         </div>
 
-        {useCase === "celebration" && rsvpEnabled ? (
-          <div className="rounded-xl border border-[var(--line)] p-4 space-y-3 bg-white/60">
+        {isPro && useCase === "celebration" && rsvpEnabled ? (
+          <div className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--bg)] p-4">
             <label className="inline-flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -527,7 +466,7 @@ export function CreateEventForm({
             </label>
             {allowPlusOnes ? (
               <div className="field max-w-[160px]">
-                <label htmlFor="maxplus">Max plus-ones per guest</label>
+                <label htmlFor="maxplus">Max plus-ones</label>
                 <input
                   id="maxplus"
                   type="number"
@@ -541,14 +480,10 @@ export function CreateEventForm({
           </div>
         ) : null}
 
-        <p className="text-sm text-[var(--muted)]">
-          Gallery stays open for <strong>{retentionHours} hours</strong> from the start time.
-        </p>
-
         {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
 
-        <button type="submit" className="btn btn-accent w-full" disabled={loading}>
-          {loading ? "Creating…" : ctaLabel}
+        <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+          {loading ? "Creating…" : cta}
         </button>
       </form>
 

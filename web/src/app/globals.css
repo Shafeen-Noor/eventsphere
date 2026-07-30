@@ -1,20 +1,22 @@
 @import "tailwindcss";
 
-/* Sunburn base palette (site chrome) */
+/* Ink + ocean teal — product SaaS, not playful kit */
 :root {
-  --bg: #fde5d6;
+  --bg: #f3f6f9;
   --bg-elevated: #ffffff;
-  --fg: #152935;
-  --muted: #698ea2;
-  --line: rgba(21, 41, 53, 0.12);
-  --accent: #698ea2;
-  --accent-soft: rgba(105, 142, 162, 0.16);
-  --terracotta: #e4a576;
-  --sage: #ccd5d2;
-  --peach: #fde5d6;
-  --navy: #152935;
-  --danger: #c45c4a;
-  --ok: #4f7d62;
+  --fg: #0b1220;
+  --muted: #5a6a7c;
+  --line: #d7e0ea;
+  --accent: #0f766e;
+  --accent-soft: #d9f3ef;
+  --terracotta: #0f766e;
+  --sage: #c5d4e0;
+  --peach: #f3f6f9;
+  --navy: #0b1220;
+  --danger: #b91c1c;
+  --ok: #047857;
+  --hero: #0b1220;
+  --hero-fg: #f8fafc;
 }
 
 @theme inline {
@@ -46,7 +48,7 @@ body {
 
 body {
   margin: 0;
-  background: #f3ebe3;
+  background: var(--bg);
   color: var(--fg);
   font-family: var(--font-sans), sans-serif;
 }
@@ -64,12 +66,12 @@ select {
 }
 
 ::selection {
-  background: var(--terracotta);
-  color: var(--navy);
+  background: var(--accent);
+  color: #ffffff;
 }
 
 .container {
-  width: min(1080px, calc(100% - 2rem));
+  width: min(1120px, calc(100% - 2rem));
   margin-inline: auto;
 }
 
@@ -78,11 +80,13 @@ select {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border-radius: 6px;
-  padding: 0.8rem 1.25rem;
+  border-radius: 12px;
   border: 1px solid transparent;
+  padding: 0.85rem 1.25rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
   cursor: pointer;
-  transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
 }
 
 .btn:active {
@@ -97,32 +101,30 @@ select {
 .btn-primary {
   background: var(--accent);
   color: #ffffff;
-  font-weight: 600;
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(0.96);
+  filter: brightness(1.05);
 }
 
 .btn-ghost {
-  background: transparent;
+  background: #ffffff;
   border-color: var(--line);
   color: var(--fg);
 }
 
 .btn-ghost:hover:not(:disabled) {
-  background: rgba(21, 41, 53, 0.04);
+  background: #f8fafc;
 }
 
 .btn-accent {
-  background: #e4a576;
-  color: #152935;
-  font-weight: 700;
+  background: var(--navy);
+  color: #ffffff;
   border-color: transparent;
 }
 
 .btn-accent:hover:not(:disabled) {
-  filter: brightness(0.97);
+  filter: brightness(1.08);
 }
 
 .field {
@@ -134,6 +136,7 @@ select {
 .field label {
   font-size: 0.85rem;
   color: var(--muted);
+  font-weight: 600;
 }
 
 .field input,
@@ -151,7 +154,7 @@ select {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: rgba(105, 142, 162, 0.7);
+  border-color: var(--accent);
   box-shadow: 0 0 0 3px var(--accent-soft);
 }
 
@@ -159,7 +162,7 @@ select {
   border: 1px solid var(--line);
   background: #ffffff;
   border-radius: 18px;
-  box-shadow: 0 8px 24px rgba(21, 41, 53, 0.06);
+  box-shadow: 0 10px 30px rgba(10, 22, 40, 0.05);
 }
 
 .fade-up {
@@ -175,6 +178,70 @@ select {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.site-nav {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #ffffff;
+  border-bottom: 1px solid var(--line);
+}
+
+.hero-block {
+  background:
+    radial-gradient(ellipse 65% 55% at 85% 0%, rgba(15, 118, 110, 0.4), transparent 50%),
+    linear-gradient(165deg, #070b12 0%, #0b1220 42%, #12303a 100%);
+  color: var(--hero-fg);
+}
+
+.section-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
+  font-weight: 600;
+}
+
+.tier-card {
+  border: 1px solid var(--line);
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tier-card.featured {
+  border-color: var(--accent);
+  box-shadow: 0 16px 40px rgba(15, 118, 110, 0.14);
+}
+
+.tier-card ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.65rem;
+}
+
+.tier-card li {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.tier-card li::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  margin-top: 0.4rem;
+  border-radius: 999px;
+  background: var(--accent);
+  flex-shrink: 0;
 }
 
 /* Atmosphere shells */

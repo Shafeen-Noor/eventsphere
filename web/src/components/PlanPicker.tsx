@@ -7,7 +7,7 @@ export function PlanPicker({
   value,
   onChange,
 }: {
-  mode: "subscription" | "instant";
+  mode: "subscription" | "instant" | "onetime";
   value: PlanId;
   onChange: (id: PlanId) => void;
 }) {
@@ -16,7 +16,7 @@ export function PlanPicker({
       <div className="grid gap-2">
         {(Object.keys(PLANS) as PlanId[]).map((id) => {
           const plan = PLANS[id];
-          const tier = plan[mode];
+          const tier = plan[mode === "onetime" ? "instant" : mode];
           const selected = value === id;
           const disabled = Boolean(plan.comingSoon);
           return (

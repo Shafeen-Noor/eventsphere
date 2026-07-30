@@ -45,133 +45,390 @@ export default async function HomePage() {
     isOwner: event.ownerId === user!.id,
   }));
 
-  const createHref = hasAccount ? "/create?mode=subscription" : "/signup?next=/create?mode=subscription";
-  const instantHref = hasAccount
-    ? "/create?mode=instant"
-    : "/signup?next=/create?mode=instant";
+  const isProSub = hasAccount && user?.plan === "pro";
 
   return (
     <main>
-      <SiteHeader right={<AuthControls user={publicUser} />} />
-
-      <section className="container grid gap-10 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-end">
-        <div className="fade-up">
-          <p className="text-sm uppercase tracking-[0.2em] text-[var(--accent)]">Landing</p>
-          <h1 className="mt-4 font-[family-name:var(--font-display)] text-5xl leading-[1.05] sm:text-6xl lg:text-7xl">
-            Event
-            <br />
-            Sphere
-          </h1>
-          <p className="mt-5 max-w-xl text-lg text-[var(--muted)]">
-            Best memories belong to everyone.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            {hasAccount ? (
-              <Link href={createHref} className="btn btn-ghost">
-                + Create a new event
-              </Link>
+      <div className="hero-block">
+        <SiteHeader
+          variant="hero"
+          right={
+            hasAccount ? (
+              <AuthControls user={publicUser} />
             ) : (
-              <Link href="/signup?next=/" className="btn btn-ghost">
-                Create account
-              </Link>
-            )}
-            <Link href={instantHref} className="btn btn-primary">
-              Create an instant event
-            </Link>
-          </div>
-          <p className="mt-3 text-sm text-[var(--muted)]">
-            Account → empty event list · Instant → one-time fee
-          </p>
-        </div>
+              <div className="flex items-center gap-3">
+                <Link href="/login" className="text-sm font-semibold text-white/80 hover:text-white">
+                  Sign in
+                </Link>
+                <Link
+                  href="/signup?path=subscribe&next=/create?mode=subscription"
+                  className="btn btn-primary"
+                >
+                  Subscribe to Pro
+                </Link>
+              </div>
+            )
+          }
+        />
 
-        <div className="panel relative min-h-[320px] overflow-hidden p-6 fade-up">
-          <div
-            className="absolute inset-0 opacity-80"
-            style={{
-              background:
-                "linear-gradient(145deg, rgba(226,163,90,0.2), transparent 45%), url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22160%22 height=%22160%22 viewBox=%220 0 40 40%22%3E%3Cg fill=%22%23f2efe6%22 fill-opacity=%220.04%22%3E%3Cpath d=%22M0 40 L40 0 H20 L0 20z M40 40 V20 L20 40z%22/%3E%3C/g%3E%3C/svg%3E')",
-            }}
-          />
-          <div className="relative space-y-4">
-            <p className="font-[family-name:var(--font-display)] text-2xl">How access works</p>
-            <ul className="space-y-3 text-[var(--muted)]">
-              <li>Subscribe for an empty My events dashboard</li>
-              <li>Or pay once for a single instant event</li>
-              <li>Guests join with a link or QR — no account needed</li>
-              <li>Gallery unlocks at your start time</li>
+        <section className="container grid gap-10 pb-16 pt-10 lg:grid-cols-[1.15fr_0.85fr] lg:items-end lg:pb-20 lg:pt-16">
+          <div className="fade-up max-w-2xl">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-cyan-200/90">
+              Shared event galleries
+            </p>
+            <h1 className="section-title mt-4 text-5xl text-white sm:text-6xl lg:text-7xl">
+              EventSphere
+            </h1>
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-300">
+              Guests scan a QR, upload from the browser, and every memory lands in one private
+              gallery — no app installs, no AirDrop chaos.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <Link href="/create?mode=free" className="btn btn-primary">
+                Start a free event
+              </Link>
+              <Link
+                href="/signup?path=onetime&next=/create?mode=onetime"
+                className="btn btn-ghost border-white/20 bg-white/10 text-white hover:bg-white/15"
+              >
+                Run one Pro event
+              </Link>
+            </div>
+            <p className="mt-4 text-sm text-slate-400">
+              Free needs no account. Pro is one paid event or a monthly subscription.
+            </p>
+          </div>
+
+          <div className="fade-up rounded-2xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-100/80">
+              Built for the room
+            </p>
+            <ul className="mt-5 space-y-4 text-slate-200">
+              <li>QR + link invite — guests join with a name</li>
+              <li>Timed upload windows so the night doesn’t spill forever</li>
+              <li>Host approval, private albums, and curated highlights on Pro</li>
+              <li>Same link from invite → live → published recap</li>
             </ul>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
 
-      <section id="my-events" className="container pb-20">
-        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="font-[family-name:var(--font-display)] text-3xl">My events</h2>
-              {hasAccount ? (
-                <span className="inline-flex items-center rounded-full bg-[rgba(105,142,162,0.16)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--navy)]">
+      {hasAccount ? (
+        <section id="my-events" className="container py-14">
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="section-title text-3xl">My events</h2>
+                <span className="rounded-full bg-[var(--accent-soft)] px-3 py-1 text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--navy)]">
                   {planLabel(user?.plan)} plan
                 </span>
+              </div>
+              {user ? (
+                <p className="mt-1 text-sm text-[var(--muted)]">
+                  {[user.organizationName, user.email].filter(Boolean).join(" · ")}
+                </p>
               ) : null}
             </div>
-            {hasAccount && user ? (
-              <p className="mt-1 text-sm text-[var(--muted)]">
-                {[user.organizationName, user.email].filter(Boolean).join(" · ")}
-              </p>
-            ) : null}
-          </div>
-          <Link href={createHref} className="text-sm text-[var(--accent)]">
-            + New event
-          </Link>
-        </div>
-
-        {!user ? (
-          <div className="panel p-8 text-[var(--muted)] space-y-3">
-            <p>Sign in to see events on this account, or join an invite link to get started.</p>
-            <div className="flex flex-wrap gap-2">
-              <Link href="/login" className="btn btn-ghost">
-                Sign in
-              </Link>
-              <Link href="/signup?next=/" className="btn btn-primary">
-                Create account
-              </Link>
-            </div>
-          </div>
-        ) : events.length === 0 ? (
-          <div className="panel flex flex-col items-center justify-center gap-3 border border-dashed border-[rgba(21,41,53,0.2)] bg-white/55 p-10 text-center">
-            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-[rgba(105,142,162,0.2)] font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
-              ∅
-            </div>
-            <h3 className="font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
-              No events yet
-            </h3>
-            <p className="max-w-sm text-sm text-[var(--muted)]">
-              Your list is empty. Create your first shared gallery for a wedding, party, or brand
-              event.
-            </p>
-            <Link href={createHref} className="btn btn-primary mt-2">
-              + Create a new event
+            <Link
+              href={isProSub ? "/create?mode=subscription" : "/create?mode=onetime"}
+              className="text-sm font-semibold text-[var(--accent)]"
+            >
+              + New event
             </Link>
-            <p className="text-xs text-[var(--muted)]">
-              Included in your subscription — no per-event checkout
+          </div>
+          {events.length === 0 ? (
+            <div className="panel flex flex-col items-center gap-3 p-10 text-center">
+              <h3 className="section-title text-2xl">No events yet</h3>
+              <p className="max-w-md text-sm text-[var(--muted)]">
+                {isProSub
+                  ? "Your subscription is ready. Create your first shared gallery."
+                  : "Create a one-time Pro event, or subscribe to run multiple events this month."}
+              </p>
+              <div className="mt-2 flex flex-wrap justify-center gap-2">
+                <Link href="/create?mode=onetime" className="btn btn-primary">
+                  One Pro event
+                </Link>
+                {!isProSub ? (
+                  <Link
+                    href="/signup?path=subscribe&next=/create?mode=subscription"
+                    className="btn btn-ghost"
+                  >
+                    Subscribe to Pro
+                  </Link>
+                ) : (
+                  <Link href="/create?mode=subscription" className="btn btn-ghost">
+                    Create event
+                  </Link>
+                )}
+              </div>
+            </div>
+          ) : (
+            <EventList events={events} />
+          )}
+        </section>
+      ) : null}
+
+      <section id="how-it-works" className="container py-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+          How it works
+        </p>
+        <h2 className="section-title mt-3 max-w-2xl text-4xl sm:text-5xl">
+          From invite to highlights in one link
+        </h2>
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          {[
+            {
+              n: "01",
+              t: "Create the event",
+              d: "Free takes seconds with no signup. Pro unlocks approval, custom cards, and longer windows.",
+            },
+            {
+              n: "02",
+              t: "Guests scan & upload",
+              d: "Browser camera or library — no app. Caps and upload windows keep the gallery under control.",
+            },
+            {
+              n: "03",
+              t: "You curate & publish",
+              d: "Approve photos, build highlights, and send everyone back to the same QR when the night is ready.",
+            },
+          ].map((step) => (
+            <div key={step.n} className="panel p-6">
+              <p className="text-sm font-bold text-[var(--accent)]">{step.n}</p>
+              <h3 className="section-title mt-3 text-2xl">{step.t}</h3>
+              <p className="mt-3 text-[var(--muted)] leading-relaxed">{step.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-[var(--line)] bg-white py-16">
+        <div className="container">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+            Why hosts switch
+          </p>
+          <h2 className="section-title mt-3 max-w-2xl text-4xl">
+            Designed for the dance floor, not another cloud folder
+          </h2>
+          <div className="mt-10 grid gap-6 md:grid-cols-2">
+            {[
+              {
+                t: "No guest friction",
+                d: "QR opens a private invite. Guests type a name and start uploading — no App Store detour.",
+              },
+              {
+                t: "Host stays in control",
+                d: "Cap guests and photos, set how long uploads stay open, approve what goes public on Pro.",
+              },
+              {
+                t: "One link for every chapter",
+                d: "Invite card, live gallery, and published highlights all live on the same event URL.",
+              },
+              {
+                t: "Built for real venues",
+                d: "Weak Wi‑Fi happens. Offline queue and capture modes keep phones contributing when signal dips.",
+              },
+            ].map((item) => (
+              <div key={item.t} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-6">
+                <h3 className="section-title text-2xl">{item.t}</h3>
+                <p className="mt-3 text-[var(--muted)] leading-relaxed">{item.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="container py-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+          Made for
+        </p>
+        <h2 className="section-title mt-3 max-w-2xl text-4xl">
+          Birthdays, weddings, trips, and private dinners
+        </h2>
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            {
+              t: "Birthdays",
+              d: "Put the QR on the cake table. Collect every phone’s angle without chasing AirDrops.",
+            },
+            {
+              t: "Weddings",
+              d: "Pro approval keeps the album tasteful. Publish highlights when you’re ready to share.",
+            },
+            {
+              t: "Group trips",
+              d: "One link for the weekend. Caps stop one guest from flooding the feed.",
+            },
+            {
+              t: "Private dinners",
+              d: "Free is enough for ten friends and a short night — no signup required.",
+            },
+          ].map((item) => (
+            <div key={item.t} className="panel p-5">
+              <h3 className="section-title text-xl">{item.t}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--muted)]">{item.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section id="pricing" className="container py-16">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+          Pricing
+        </p>
+        <h2 className="section-title mt-3 max-w-2xl text-4xl sm:text-5xl">
+          Three tiers, clearly separated
+        </h2>
+        <p className="mt-4 max-w-2xl text-[var(--muted)]">
+          Free is account-free. Pro is either a single paid event or a monthly subscription.
+          Professional is for agencies — coming soon.
+        </p>
+
+        <div className="mt-10 grid gap-5 lg:grid-cols-3">
+          <article className="tier-card">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">Free</p>
+            <h3 className="section-title mt-2 text-3xl">Start free</h3>
+            <p className="mt-2 text-4xl font-bold tracking-tight">$0</p>
+            <p className="mt-2 text-sm text-[var(--muted)]">No account · one event · 24 hours</p>
+            <ul className="mt-6 flex-1">
+              <li>Up to 10 guests</li>
+              <li>Up to 100 photos</li>
+              <li>Host sets photos per guest</li>
+              <li>QR + link invite</li>
+              <li>Guests see their own photos</li>
+              <li>No password, no dashboard</li>
+            </ul>
+            <Link href="/create?mode=free" className="btn btn-ghost mt-8 w-full">
+              Start a free event
+            </Link>
+          </article>
+
+          <article className="tier-card featured">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">Pro</p>
+            <h3 className="section-title mt-2 text-3xl">Pro</h3>
+            <p className="mt-2 text-4xl font-bold tracking-tight">
+              $49 <span className="text-lg font-semibold text-[var(--muted)]">once</span>
+            </p>
+            <p className="text-sm text-[var(--muted)]">or $29 / month for multiple events</p>
+            <ul className="mt-6 flex-1">
+              <li>Up to 150 guests · 2,000 media</li>
+              <li>Event life up to 7 days</li>
+              <li>Separate guest upload window</li>
+              <li>Approval queue & guest visibility</li>
+              <li>Custom invite card, emoji, Maps link</li>
+              <li>Email / WhatsApp on join · highlights publish</li>
+              <li>RSVP, themes, live wall, videos</li>
+            </ul>
+            <div className="mt-8 grid gap-2">
+              <Link
+                href="/signup?path=onetime&next=/create?mode=onetime"
+                className="btn btn-primary w-full"
+              >
+                One Pro event — $49
+              </Link>
+              <Link
+                href="/signup?path=subscribe&next=/create?mode=subscription"
+                className="btn btn-ghost w-full"
+              >
+                Subscribe — $29/mo
+              </Link>
+            </div>
+          </article>
+
+          <article className="tier-card opacity-95">
+            <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+              Professional
+            </p>
+            <h3 className="section-title mt-2 text-3xl">Agency</h3>
+            <p className="mt-2 text-4xl font-bold tracking-tight">
+              $99<span className="text-lg text-[var(--muted)]">/mo</span>
+            </p>
+            <p className="mt-2 text-sm text-[var(--muted)]">Coming soon</p>
+            <ul className="mt-6 flex-1">
+              <li>White-label branding</li>
+              <li>Multi-client dashboard</li>
+              <li>Higher caps & SLAs</li>
+              <li>Moderation team tools</li>
+              <li>Analytics & exports</li>
+            </ul>
+            <Link href="/professional" className="btn btn-ghost mt-8 w-full">
+              View coming soon
+            </Link>
+          </article>
+        </div>
+        <p className="mt-6 text-center text-sm text-[var(--muted)]">
+          Want the full matrix?{" "}
+          <Link href="/pricing" className="font-semibold text-[var(--accent)]">
+            Open the pricing comparison →
+          </Link>
+        </p>
+      </section>
+
+      <section className="border-y border-[var(--line)] bg-white py-16">
+        <div className="container max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">FAQ</p>
+          <h2 className="section-title mt-3 text-3xl sm:text-4xl">Straight answers</h2>
+          <div className="mt-8 space-y-4">
+            {[
+              {
+                q: "Does Free ever require an account?",
+                a: "No. Free events are created with a host name only. Guests also join with a name — no passwords.",
+              },
+              {
+                q: "What’s the difference between $49 once and $29/mo?",
+                a: "$49 unlocks Pro controls for a single event. $29/mo is a subscription for hosts who create multiple Pro events.",
+              },
+              {
+                q: "Do guests need to install an app?",
+                a: "No. The invite opens in the browser. Camera or photo library — then upload.",
+              },
+              {
+                q: "When does Professional launch?",
+                a: "It’s listed as coming soon for agencies and venues that need white-label and multi-client tools. Use Pro today.",
+              },
+            ].map((item) => (
+              <div key={item.q} className="rounded-2xl border border-[var(--line)] bg-[var(--bg)] p-5">
+                <h3 className="font-semibold text-[var(--navy)]">{item.q}</h3>
+                <p className="mt-2 text-[var(--muted)] leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-[var(--line)] bg-[var(--navy)] py-16 text-white">
+        <div className="container flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
+          <div>
+            <h2 className="section-title text-3xl sm:text-4xl">Ready for tonight’s event?</h2>
+            <p className="mt-3 max-w-xl text-slate-300">
+              Launch a free gallery in under a minute, or unlock Pro controls for the celebration
+              that needs curation.
             </p>
           </div>
-        ) : (
-          <div className="space-y-3">
-            {!hasAccount ? (
-              <div className="panel p-4 text-sm text-[var(--muted)]">
-                You’re browsing as a guest on this device.{" "}
-                <Link href="/signup?next=/" className="text-[var(--navy)] underline">
-                  Create an account
-                </Link>{" "}
-                to keep these events if you switch phones.
-              </div>
-            ) : null}
-            <EventList events={events} />
+          <div className="flex flex-wrap gap-3">
+            <Link href="/create?mode=free" className="btn btn-primary">
+              Start free
+            </Link>
+            <Link
+              href="/signup?path=onetime&next=/create?mode=onetime"
+              className="btn btn-ghost border-white/20 bg-transparent text-white"
+            >
+              Go Pro once
+            </Link>
           </div>
-        )}
+        </div>
       </section>
+
+      <footer className="border-t border-[var(--line)] bg-white py-8">
+        <div className="container flex flex-wrap items-center justify-between gap-3 text-sm text-[var(--muted)]">
+          <p>© {new Date().getFullYear()} EventSphere</p>
+          <div className="flex gap-4">
+            <Link href="/pricing">Pricing</Link>
+            <Link href="/professional">Professional</Link>
+            <Link href="/login">Sign in</Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }
