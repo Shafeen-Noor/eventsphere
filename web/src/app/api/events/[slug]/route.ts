@@ -35,10 +35,10 @@ const patchSchema = z.object({
   state: z.enum(["live", "ended", "scheduled"]).optional(),
   highlightsPublished: z.boolean().optional(),
   highlightTemplate: z
-    .enum(["mosaic", "grid4", "story", "film", "hero"])
+    .enum(["ig8", "center", "mosaic", "grid4", "story", "film", "hero"])
     .optional(),
   highlightFilter: z
-    .enum(["none", "warm", "cool", "mono", "vivid", "soft", "noir"])
+    .enum(["none", "warm", "cool", "mono", "vivid", "soft", "noir", "rose"])
     .optional(),
   publishMessage: z.string().trim().max(400).optional(),
   mapsUrl: z.string().trim().max(500).optional(),
