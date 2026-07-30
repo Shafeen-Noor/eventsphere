@@ -18,7 +18,7 @@ export function AtmosphereShell({
       className="atmosphere panel overflow-hidden"
       style={{
         background: theme.bg,
-        color: dark ? "#f7f1ea" : "#152935",
+        color: theme.fg,
         borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(21,41,53,0.12)",
       }}
     >

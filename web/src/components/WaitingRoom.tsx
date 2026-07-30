@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AtmosphereShell } from "@/components/AtmosphereShell";
 import { SharePanel } from "@/components/SharePanel";
 import { getAtmosphere } from "@/lib/atmospheres";
+import { formatEventWhen } from "@/lib/time";
 
 function formatCountdown(ms: number) {
   if (ms <= 0) return { label: "Starting now…", done: true };
@@ -64,17 +65,7 @@ export function WaitingRoom({
     router.refresh();
   }, [remaining, onLive, router]);
 
-  const whenLabel = useMemo(
-    () =>
-      new Date(startAt).toLocaleString(undefined, {
-        weekday: "long",
-        month: "long",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-    [startAt],
-  );
+  const whenLabel = useMemo(() => formatEventWhen(startAt), [startAt]);
 
   const going = rsvpStatus === "going";
   const maybe = rsvpStatus === "maybe";

@@ -93,7 +93,6 @@ export default async function EventPage({ params }: Props) {
               locationName={event.locationName}
               mapsUrl={event.mapsUrl}
               inviteCopy={event.inviteCopy}
-              inviteStickers={event.inviteStickers}
               startAt={event.startAt?.toISOString() ?? null}
               atmosphere={event.atmosphere}
               requiresPasscode={Boolean(event.passcodeHash)}

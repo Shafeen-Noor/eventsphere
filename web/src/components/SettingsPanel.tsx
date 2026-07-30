@@ -1,9 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ThemePreview } from "@/components/ThemePreview";
 import { ATMOSPHERES, type AtmosphereId } from "@/lib/atmospheres";
+import {
+  getDeviceTimeZone,
+  timeZoneOptions,
+  utcToZonedLocalInput,
+  zonedLocalToUtc,
+} from "@/lib/time";
 
 type EventSettings = {
   title: string;
@@ -24,13 +30,6 @@ type EventSettings = {
   useCase: string;
 };
 
-function toLocalInputValue(iso: string | null) {
-  if (!iso) return "";
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 export function SettingsPanel({
   slug,
   initial,
@@ -39,6 +38,8 @@ export function SettingsPanel({
   initial: EventSettings;
 }) {
   const router = useRouter();
+  const [timeZone, setTimeZone] = useState(getDeviceTimeZone);
+  const zones = useMemo(() => timeZoneOptions(timeZone), [timeZone]);
   const [title, setTitle] = useState(initial.title);
   const [description, setDescription] = useState(initial.description);
   const [locationName, setLocationName] = useState(initial.locationName);
@@ -51,16 +52,16 @@ export function SettingsPanel({
   const [allowPlusOnes, setAllowPlusOnes] = useState(initial.allowPlusOnes);
   const [maxPlusOnes, setMaxPlusOnes] = useState(initial.maxPlusOnes);
   const [uploadMode, setUploadMode] = useState(initial.uploadMode);
-  const [startAt, setStartAt] = useState(toLocalInputValue(initial.startAt));
+  const [startAt, setStartAt] = useState(() =>
+    utcToZonedLocalInput(initial.startAt, getDeviceTimeZone()),
+  );
   const [atmosphere, setAtmosphere] = useState<AtmosphereId>(
     (initial.atmosphere as AtmosphereId) || "bday",
   );
   const [downloadPolicy, setDownloadPolicy] = useState(initial.downloadPolicy);
   const [downloadsEnabled, setDownloadsEnabled] = useState(initial.downloadsEnabled);
-  const [downloadOpensAt, setDownloadOpensAt] = useState(
-    initial.downloadOpensAt
-      ? new Date(initial.downloadOpensAt).toISOString().slice(0, 16)
-      : "",
+  const [downloadOpensAt, setDownloadOpensAt] = useState(() =>
+    utcToZonedLocalInput(initial.downloadOpensAt, getDeviceTimeZone()),
   );
   const [passcode, setPasscode] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -91,20 +92,50 @@ export function SettingsPanel({
     <div className="panel p-5 space-y-4">
       <h3 className="font-[family-name:var(--font-display)] text-xl">Event settings</h3>
 
-      <div className="rounded-xl border border-[var(--line)] p-4 space-y-3 bg-white/60">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4 space-y-3">
         <p className="text-sm font-medium">Event start</p>
-        <div className="field">
-          <label htmlFor="start">When the gallery & uploads unlock</label>
-          <input
-            id="start"
-            type="datetime-local"
-            value={startAt}
-            onChange={(e) => setStartAt(e.target.value)}
-          />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="field">
+            <label htmlFor="start">When the gallery & uploads unlock</label>
+            <input
+              id="start"
+              type="datetime-local"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="tz">Timezone</label>
+            <select
+              id="tz"
+              value={timeZone}
+              onChange={(e) => {
+                const next = e.target.value;
+                if (startAt) {
+                  const utc = zonedLocalToUtc(startAt, timeZone);
+                  setStartAt(utcToZonedLocalInput(utc, next));
+                }
+                if (downloadOpensAt) {
+                  const utc = zonedLocalToUtc(downloadOpensAt, timeZone);
+                  setDownloadOpensAt(utcToZonedLocalInput(utc, next));
+                }
+                setTimeZone(next);
+              }}
+            >
+              {zones.map((z) => (
+                <option key={z} value={z}>
+                  {z.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+        <p className="text-xs text-[var(--muted)]">
+          Guests see this moment in their own local timezone.
+        </p>
       </div>
 
-      <div className="rounded-xl border border-[var(--line)] p-4 space-y-3 bg-white/60">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4 space-y-3">
         <p className="text-sm font-medium">Photo capture</p>
         <div className="field">
           <label htmlFor="mode">Guest capture mode</label>
@@ -138,7 +169,7 @@ export function SettingsPanel({
         </div>
       </div>
 
-      <div className="rounded-xl border border-[var(--line)] p-4 space-y-3 bg-white/60">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4 space-y-3">
         <p className="text-sm font-medium">RSVP & plus-ones</p>
         <label className="inline-flex items-center gap-2 text-sm">
           <input
@@ -181,31 +212,20 @@ export function SettingsPanel({
             </label>
           </>
         ) : null}
-        <p className="text-xs text-[var(--muted)]">
-          Per-guest upload/download privileges live under the People tab after RSVPs arrive.
-        </p>
       </div>
 
-      <div className="rounded-xl border border-[var(--line)] p-4 space-y-3 bg-white/60">
-        <p className="text-sm font-medium">Downloads (fallback policy)</p>
-        <label className="inline-flex items-center gap-2 text-sm">
-          <input
-            type="checkbox"
-            checked={downloadsEnabled}
-            onChange={(e) => setDownloadsEnabled(e.target.checked)}
-          />
-          Allow downloads
-        </label>
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4 space-y-3">
+        <p className="text-sm font-medium">Downloads</p>
         <div className="field">
-          <label htmlFor="policy">Who can download (when not using per-guest mode)</label>
+          <label htmlFor="dl">Download policy</label>
           <select
-            id="policy"
+            id="dl"
             value={downloadPolicy}
             onChange={(e) => setDownloadPolicy(e.target.value)}
           >
             <option value="members">All members</option>
-            <option value="going_only">Only RSVP Going</option>
-            <option value="organizer_only">Host only</option>
+            <option value="going_only">Going only</option>
+            <option value="organizer_only">Organizer only</option>
             <option value="disabled">Disabled</option>
           </select>
         </div>
@@ -221,26 +241,37 @@ export function SettingsPanel({
       </div>
 
       <div>
-        <p className="text-sm text-[var(--muted)] mb-2">Atmosphere</p>
-        <div className="grid gap-2 sm:grid-cols-2">
-          {ATMOSPHERES.map((a) => (
-            <button
-              key={a.id}
-              type="button"
-              onClick={() => setAtmosphere(a.id)}
-              className="rounded-xl border p-3 text-left text-sm"
-              style={{
-                borderColor: atmosphere === a.id ? "var(--navy)" : "var(--line)",
-                background: a.bg,
-                color: a.id === "dinner" || a.id === "party" ? "#f7f1ea" : "#152935",
-                boxShadow:
-                  atmosphere === a.id ? "0 0 0 2px rgba(21,41,53,0.2)" : undefined,
-              }}
-            >
-              <strong>{a.label}</strong>
-              <div className="opacity-80 text-xs mt-1">{a.blurb}</div>
-            </button>
-          ))}
+        <p className="mb-3 text-sm font-semibold text-[var(--navy)]">Atmosphere</p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {ATMOSPHERES.map((a) => {
+            const selected = atmosphere === a.id;
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => setAtmosphere(a.id)}
+                className="relative overflow-hidden rounded-2xl border text-left"
+                style={{
+                  borderColor: selected ? a.accent : "var(--line)",
+                  boxShadow: selected ? `0 8px 22px ${a.accent}33` : undefined,
+                }}
+              >
+                <div className="min-h-[88px] p-3" style={{ background: a.bg, color: a.fg }}>
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <strong className="font-[family-name:var(--font-display)] text-lg">
+                        {a.label}
+                      </strong>
+                      <div className="mt-1 text-xs opacity-80">{a.blurb}</div>
+                    </div>
+                    <span className="text-2xl" aria-hidden>
+                      {a.motif}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
         <div className="mt-4">
           <ThemePreview atmosphere={atmosphere} title={title} />
@@ -302,12 +333,12 @@ export function SettingsPanel({
                 maxPlusOnes,
                 uploadMode,
                 uploadsEnabled,
-                startAt: startAt ? new Date(startAt).toISOString() : null,
+                startAt: startAt ? zonedLocalToUtc(startAt, timeZone).toISOString() : null,
                 atmosphere,
                 downloadPolicy,
                 downloadsEnabled: downloadsEnabled && downloadPolicy !== "disabled",
                 downloadOpensAt: downloadOpensAt
-                  ? new Date(downloadOpensAt).toISOString()
+                  ? zonedLocalToUtc(downloadOpensAt, timeZone).toISOString()
                   : null,
                 ...(passcode.trim() ? { passcode: passcode.trim() } : {}),
               },

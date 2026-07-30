@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { getAtmosphere, isDarkAtmosphere } from "@/lib/atmospheres";
+import { formatEventWhen } from "@/lib/time";
 
 type Props = {
   slug: string;
@@ -12,7 +13,6 @@ type Props = {
   locationName: string;
   mapsUrl?: string;
   inviteCopy?: string;
-  inviteStickers?: string;
   startAt: string | null;
   atmosphere: string;
   requiresPasscode: boolean;
@@ -30,7 +30,6 @@ export function InviteCard({
   locationName,
   mapsUrl = "",
   inviteCopy = "",
-  inviteStickers = "",
   startAt,
   atmosphere,
   requiresPasscode,
@@ -52,16 +51,7 @@ export function InviteCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const whenLabel = useMemo(() => {
-    if (!startAt) return null;
-    return new Date(startAt).toLocaleString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  }, [startAt]);
+  const whenLabel = useMemo(() => formatEventWhen(startAt), [startAt]);
 
   const plusOptions = useMemo(() => {
     const max = Math.max(0, maxPlusOnes);
@@ -106,11 +96,9 @@ export function InviteCard({
           boxShadow: "0 24px 60px rgba(21,41,53,0.14)",
         }}
       >
-        {inviteStickers ? (
-          <p className="text-2xl mb-2" aria-hidden>
-            {inviteStickers}
-          </p>
-        ) : null}
+        <p className="mb-3 text-3xl leading-none" aria-hidden>
+          {theme.motif}
+        </p>
         <p className="text-sm uppercase tracking-[0.2em] opacity-70">
           You’re invited · {theme.label}
         </p>

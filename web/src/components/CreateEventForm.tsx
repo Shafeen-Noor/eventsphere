@@ -1,18 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ThemePreview } from "@/components/ThemePreview";
 import { ATMOSPHERES, type AtmosphereId } from "@/lib/atmospheres";
 import { getPlan, type PlanId } from "@/lib/plans";
+import {
+  formatInTimeZone,
+  getDeviceTimeZone,
+  timeZoneOptions,
+  utcToZonedLocalInput,
+  zonedLocalToUtc,
+} from "@/lib/time";
 
 type UseCase = "friends" | "celebration";
 export type CreateMode = "free" | "onetime" | "subscription";
-
-function toLocalInputValue(d: Date) {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
 
 export function CreateEventForm({
   host,
@@ -41,12 +43,12 @@ export function CreateEventForm({
   const [locationName, setLocationName] = useState("");
   const [mapsUrl, setMapsUrl] = useState("");
   const [inviteCopy, setInviteCopy] = useState("");
-  const [inviteStickers, setInviteStickers] = useState("🎉✨");
   const [passcode, setPasscode] = useState("");
+  const [timeZone, setTimeZone] = useState(getDeviceTimeZone);
   const [startAt, setStartAt] = useState(() => {
     const d = new Date();
     d.setHours(d.getHours() + 2, 0, 0, 0);
-    return toLocalInputValue(d);
+    return utcToZonedLocalInput(d, getDeviceTimeZone());
   });
   const [durationHours, setDurationHours] = useState(plan.limits.maxDurationHours);
   const [uploadWindowHours, setUploadWindowHours] = useState(
@@ -70,6 +72,14 @@ export function CreateEventForm({
   const [downloadPolicy, setDownloadPolicy] = useState("members");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const zones = useMemo(() => timeZoneOptions(timeZone), [timeZone]);
+
+  const startUtc = useMemo(() => {
+    if (!startAt) return null;
+    const d = zonedLocalToUtc(startAt, timeZone);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }, [startAt, timeZone]);
 
   useEffect(() => {
     setDurationHours(plan.limits.maxDurationHours);
@@ -98,6 +108,7 @@ export function CreateEventForm({
     setError(null);
     try {
       if (!hostName.trim()) throw new Error("Add a host name guests will see.");
+      if (!startUtc) throw new Error("Pick a valid start time.");
       const wantsRsvp = isPro && useCase === "celebration" ? rsvpEnabled : false;
       const res = await fetch("/api/events", {
         method: "POST",
@@ -109,7 +120,7 @@ export function CreateEventForm({
           locationName,
           mapsUrl: isPro ? mapsUrl : "",
           inviteCopy: isPro ? inviteCopy : "",
-          inviteStickers: isPro ? inviteStickers : "",
+          inviteStickers: "",
           useCase,
           retentionHours: durationHours,
           uploadWindowHours: isPro ? uploadWindowHours : durationHours,
@@ -127,7 +138,7 @@ export function CreateEventForm({
           atmosphere,
           downloadPolicy,
           downloadsEnabled: downloadPolicy !== "disabled",
-          startAt: startAt ? new Date(startAt).toISOString() : null,
+          startAt: startUtc.toISOString(),
           billingMode: mode,
           planTier: activePlanId,
           confirmInstantPayment: isOnetime,
@@ -184,20 +195,11 @@ export function CreateEventForm({
           </div>
         ) : null}
 
-        {!isFree ? (
-          <div className="rounded-xl border border-[var(--line)] bg-[#ecfdf5] px-4 py-3 text-sm text-[var(--muted)]">
-            <p className="font-semibold text-[var(--ok)]">Pro limits</p>
-            <p className="mt-1">
-              Up to {plan.limits.maxGuests} guests · {plan.limits.maxMedia} media ·{" "}
-              {plan.limits.maxDurationHours}h max event life
-            </p>
-          </div>
-        ) : (
+        {isFree ? (
           <div className="rounded-xl border border-[var(--line)] bg-[var(--bg)] px-4 py-3 text-sm text-[var(--muted)]">
-            Free is locked to 10 guests, 100 photos, and 24 hours. Upgrade later from the event if
-            you need Pro.
+            Free is locked to 10 guests, 100 photos, and 24 hours.
           </div>
-        )}
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           {(
@@ -217,7 +219,7 @@ export function CreateEventForm({
               className="rounded-xl border p-4 text-left transition"
               style={{
                 borderColor: useCase === option.id ? "var(--accent)" : "var(--line)",
-                background: useCase === option.id ? "var(--accent-soft)" : "white",
+                background: useCase === option.id ? "var(--accent-soft)" : "var(--bg-elevated)",
               }}
             >
               <p className="font-[family-name:var(--font-display)] text-xl">{option.title}</p>
@@ -227,24 +229,59 @@ export function CreateEventForm({
         </div>
 
         <div>
-          <p className="mb-2 text-sm text-[var(--muted)]">Atmosphere</p>
-          <div className="grid gap-2 sm:grid-cols-2">
-            {ATMOSPHERES.map((a) => (
-              <button
-                key={a.id}
-                type="button"
-                onClick={() => setAtmosphere(a.id)}
-                className="rounded-xl border p-3 text-left transition"
-                style={{
-                  borderColor: atmosphere === a.id ? "var(--navy)" : "var(--line)",
-                  background: a.bg,
-                  color: a.id === "dinner" || a.id === "party" ? "#f7f1ea" : "#152935",
-                }}
-              >
-                <p className="font-semibold">{a.label}</p>
-                <p className="mt-1 text-xs opacity-80">{a.blurb}</p>
-              </button>
-            ))}
+          <p className="mb-3 text-sm font-semibold text-[var(--navy)]">Atmosphere</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {ATMOSPHERES.map((a) => {
+              const selected = atmosphere === a.id;
+              return (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAtmosphere(a.id)}
+                  className="group relative overflow-hidden rounded-2xl border text-left transition"
+                  style={{
+                    borderColor: selected ? a.accent : "var(--line)",
+                    boxShadow: selected ? `0 10px 28px ${a.accent}33` : "none",
+                  }}
+                >
+                  <div
+                    className="relative min-h-[108px] p-4"
+                    style={{ background: a.bg, color: a.fg }}
+                  >
+                    <div
+                      className="absolute -right-3 -top-3 h-20 w-20 rounded-full opacity-40"
+                      style={{ background: a.accent }}
+                    />
+                    <div className="relative flex items-start justify-between gap-2">
+                      <div>
+                        <p className="text-[11px] font-bold uppercase tracking-[0.16em] opacity-70">
+                          {a.layout} gallery
+                        </p>
+                        <p className="mt-1 font-[family-name:var(--font-display)] text-2xl">
+                          {a.label}
+                        </p>
+                        <p className="mt-1 text-xs opacity-80">{a.blurb}</p>
+                      </div>
+                      <span className="text-3xl leading-none drop-shadow-sm" aria-hidden>
+                        {a.motif}
+                      </span>
+                    </div>
+                    {selected ? (
+                      <span
+                        className="absolute bottom-3 right-3 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                        style={{
+                          background: a.accent,
+                          color:
+                            a.id === "dinner" || a.id === "party" ? "#1c1b19" : "#fff",
+                        }}
+                      >
+                        Selected
+                      </span>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -279,16 +316,40 @@ export function CreateEventForm({
           ) : null}
         </div>
 
-        <div className="field">
-          <label htmlFor="start">Event start</label>
-          <input
-            id="start"
-            type="datetime-local"
-            value={startAt}
-            onChange={(e) => setStartAt(e.target.value)}
-            required
-          />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="field">
+            <label htmlFor="start">Event start</label>
+            <input
+              id="start"
+              type="datetime-local"
+              value={startAt}
+              onChange={(e) => setStartAt(e.target.value)}
+              required
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="tz">Timezone</label>
+            <select id="tz" value={timeZone} onChange={(e) => setTimeZone(e.target.value)}>
+              {zones.map((z) => (
+                <option key={z} value={z}>
+                  {z.replace(/_/g, " ")}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
+        {startUtc ? (
+          <p className="text-xs text-[var(--muted)] -mt-2">
+            Guests always see this in <strong>their</strong> local time. Example:{" "}
+            {formatInTimeZone(startUtc, timeZone)}
+            {timeZone !== "Asia/Karachi" ? (
+              <> · in Karachi {formatInTimeZone(startUtc, "Asia/Karachi")}</>
+            ) : null}
+            {timeZone !== "Europe/Madrid" ? (
+              <> · in Madrid {formatInTimeZone(startUtc, "Europe/Madrid")}</>
+            ) : null}
+          </p>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="field">
@@ -354,7 +415,7 @@ export function CreateEventForm({
         </div>
 
         {isPro ? (
-          <div className="space-y-3 rounded-xl border border-[var(--line)] bg-white p-4">
+          <div className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
               Pro invite card
             </p>
@@ -375,14 +436,6 @@ export function CreateEventForm({
                 onChange={(e) => setInviteCopy(e.target.value)}
                 rows={3}
                 maxLength={400}
-              />
-            </div>
-            <div className="field">
-              <label htmlFor="stickers">Emojis</label>
-              <input
-                id="stickers"
-                value={inviteStickers}
-                onChange={(e) => setInviteStickers(e.target.value)}
               />
             </div>
             <div className="field">
