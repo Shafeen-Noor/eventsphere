@@ -13,6 +13,8 @@ type Props = {
   description?: string;
   autoOpen?: boolean;
   initiallyOpen?: boolean;
+  /** Keep card open and refresh when fields change (create form preview) */
+  livePreview?: boolean;
   /** compact = create preview, default = medium, hero = guest full-bleed */
   size?: "compact" | "default" | "hero";
   onOpened?: () => void;
@@ -29,23 +31,41 @@ export function AnimatedInvite({
   description = "",
   autoOpen = false,
   initiallyOpen = false,
+  livePreview = false,
   size = "default",
   onOpened,
   children,
 }: Props) {
   const theme = getAtmosphere(atmosphere);
   const dark = isDarkAtmosphere(atmosphere);
-  const [open, setOpen] = useState(initiallyOpen);
-  const [revealed, setRevealed] = useState(initiallyOpen);
+  const [open, setOpen] = useState(initiallyOpen || livePreview);
+  const [revealed, setRevealed] = useState(initiallyOpen || livePreview);
   const hero = size === "hero";
 
   useEffect(() => {
-    if (!autoOpen || initiallyOpen) return;
-    const t = setTimeout(() => setOpen(true), hero ? 900 : 600);
-    return () => clearTimeout(t);
-  }, [autoOpen, initiallyOpen, atmosphere, hero]);
+    if (livePreview) {
+      setOpen(true);
+      setRevealed(true);
+    }
+  }, [
+    livePreview,
+    title,
+    hostName,
+    whenLabel,
+    locationName,
+    inviteCopy,
+    description,
+    atmosphere,
+  ]);
 
   useEffect(() => {
+    if (livePreview || !autoOpen || initiallyOpen) return;
+    const t = setTimeout(() => setOpen(true), hero ? 900 : 600);
+    return () => clearTimeout(t);
+  }, [autoOpen, initiallyOpen, atmosphere, hero, livePreview]);
+
+  useEffect(() => {
+    if (livePreview) return;
     if (!open) {
       setRevealed(false);
       return;
@@ -55,7 +75,7 @@ export function AnimatedInvite({
       onOpened?.();
     }, hero ? 700 : 520);
     return () => clearTimeout(t);
-  }, [open, hero, onOpened]);
+  }, [open, hero, onOpened, livePreview]);
 
   return (
     <div

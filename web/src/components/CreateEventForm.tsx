@@ -119,7 +119,7 @@ export function CreateEventForm({
           description,
           locationName,
           mapsUrl: isPro ? mapsUrl : "",
-          inviteCopy: isPro ? inviteCopy : "",
+          inviteCopy,
           inviteStickers: "",
           useCase,
           retentionHours: durationHours,
@@ -472,8 +472,22 @@ export function CreateEventForm({
             value={locationName}
             onChange={(e) => setLocationName(e.target.value)}
             maxLength={120}
+            placeholder="Rooftop · Downtown"
           />
         </div>
+
+        {!isPro ? (
+          <div className="field">
+            <label htmlFor="inviteCopyFree">Invite line (optional)</label>
+            <input
+              id="inviteCopyFree"
+              value={inviteCopy}
+              onChange={(e) => setInviteCopy(e.target.value)}
+              maxLength={120}
+              placeholder="Dress code: sparkle"
+            />
+          </div>
+        ) : null}
 
         <div className="field">
           <label htmlFor="desc">Description (optional)</label>
@@ -483,6 +497,19 @@ export function CreateEventForm({
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             maxLength={500}
+            placeholder="Shown on the invitation card"
+          />
+        </div>
+
+        <div className="lg:hidden rounded-2xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4">
+          <ThemePreview
+            atmosphere={atmosphere}
+            title={title}
+            hostName={hostName}
+            locationName={locationName}
+            inviteCopy={inviteCopy}
+            description={description}
+            whenLabel={startUtc ? formatInTimeZone(startUtc, timeZone) : null}
           />
         </div>
 
@@ -547,11 +574,8 @@ export function CreateEventForm({
           hostName={hostName}
           locationName={locationName}
           inviteCopy={inviteCopy}
-          whenLabel={
-            startUtc
-              ? formatInTimeZone(startUtc, timeZone)
-              : null
-          }
+          description={description}
+          whenLabel={startUtc ? formatInTimeZone(startUtc, timeZone) : null}
         />
       </aside>
     </div>

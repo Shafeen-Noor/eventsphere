@@ -25,6 +25,7 @@ type Props = {
   title: string;
   hostName: string;
   locationName: string;
+  inviteCopy?: string;
   startAt: string;
   atmosphere: string;
   rsvpStatus: string | null;
@@ -39,6 +40,7 @@ export function WaitingRoom({
   title,
   hostName,
   locationName,
+  inviteCopy = "",
   startAt,
   atmosphere,
   rsvpStatus,
@@ -126,7 +128,18 @@ export function WaitingRoom({
         </p>
       </div>
 
-      {isOrganizer ? <SharePanel slug={slug} appUrl={appUrl} /> : null}
+      {isOrganizer ? (
+        <SharePanel
+          slug={slug}
+          appUrl={appUrl}
+          title={title}
+          hostName={hostName}
+          locationName={locationName}
+          inviteCopy={inviteCopy}
+          atmosphere={atmosphere}
+          whenLabel={formatEventWhen(startAt)}
+        />
+      ) : null}
     </div>
   );
 }

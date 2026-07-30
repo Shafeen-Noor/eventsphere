@@ -10,6 +10,7 @@ export function ThemePreview({
   whenLabel,
   locationName,
   inviteCopy,
+  description,
 }: {
   atmosphere: string;
   title?: string;
@@ -17,6 +18,7 @@ export function ThemePreview({
   whenLabel?: string | null;
   locationName?: string;
   inviteCopy?: string;
+  description?: string;
 }) {
   const theme = getAtmosphere(atmosphere);
 
@@ -25,11 +27,10 @@ export function ThemePreview({
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm font-semibold text-[var(--navy)]">Live invitation</p>
         <p className="text-xs uppercase tracking-wider text-[var(--muted)]">
-          {theme.label} · tap to reopen
+          {theme.label} · updates as you type
         </p>
       </div>
       <AnimatedInvite
-        key={atmosphere}
         size="compact"
         atmosphere={atmosphere}
         title={title}
@@ -37,10 +38,12 @@ export function ThemePreview({
         whenLabel={whenLabel}
         locationName={locationName}
         inviteCopy={inviteCopy}
-        autoOpen
+        description={description}
+        livePreview
       />
       <p className="text-xs text-[var(--muted)]">
-        Guests get a full-screen envelope that opens into this card.
+        Guests open a full-screen envelope into this card. Change any field — the preview
+        follows.
       </p>
     </div>
   );

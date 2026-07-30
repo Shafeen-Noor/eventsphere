@@ -12,6 +12,7 @@ import { SharePanel } from "@/components/SharePanel";
 import { UploadPanel } from "@/components/UploadPanel";
 import { WaitingRoom } from "@/components/WaitingRoom";
 import { getAtmosphere } from "@/lib/atmospheres";
+import { formatEventWhen } from "@/lib/time";
 
 type EventDto = {
   slug: string;
@@ -25,6 +26,8 @@ type EventDto = {
   memberCount: number;
   useCase: string;
   locationName: string;
+  inviteCopy?: string;
+  mapsUrl?: string;
   rsvpEnabled: boolean;
   commentsEnabled: boolean;
   uploadsEnabled: boolean;
@@ -157,6 +160,7 @@ export function EventHub({
           title={event.title}
           hostName={event.hostName}
           locationName={event.locationName}
+          inviteCopy={event.inviteCopy || ""}
           startAt={event.startAt}
           atmosphere={event.atmosphere}
           rsvpStatus={rsvpStatus}
@@ -305,7 +309,18 @@ export function EventHub({
 
       {tab === "gallery" ? (
         <>
-          <SharePanel slug={event.slug} appUrl={appUrl} />
+          <SharePanel
+            slug={event.slug}
+            appUrl={appUrl}
+            title={event.title}
+            hostName={event.hostName}
+            locationName={event.locationName}
+            inviteCopy={event.inviteCopy || ""}
+            atmosphere={event.atmosphere}
+            whenLabel={
+              event.startAt ? formatEventWhen(event.startAt) : null
+            }
+          />
           {needsGoingRsvp ? (
             <RsvpPanel
               slug={event.slug}

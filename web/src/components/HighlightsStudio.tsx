@@ -5,6 +5,7 @@ import {
   getHighlightFilterCss,
   getHighlightTemplate,
   HIGHLIGHT_FILTERS,
+  HIGHLIGHT_MAX,
   HIGHLIGHT_TEMPLATES,
   type HighlightFilterId,
   type HighlightTemplateId,
@@ -21,10 +22,11 @@ export function HighlightsStudio({
   slug,
   shots: seedShots,
   canEdit,
-  initialTemplate = "mosaic",
+  initialTemplate = "ig8",
   initialFilter = "none",
   published,
   onPublished,
+  wallOnly = false,
 }: {
   slug: string;
   shots: Shot[];
@@ -33,16 +35,19 @@ export function HighlightsStudio({
   initialFilter?: string;
   published: boolean;
   onPublished?: (v: boolean) => void;
+  /** Guest view: just the collage wall, no studio chrome */
+  wallOnly?: boolean;
 }) {
   const [shots, setShots] = useState<Shot[]>(seedShots);
   const [template, setTemplate] = useState<HighlightTemplateId>(
-    (initialTemplate as HighlightTemplateId) || "mosaic",
+    (initialTemplate as HighlightTemplateId) || "ig8",
   );
   const [filter, setFilter] = useState<HighlightFilterId>(
     (initialFilter as HighlightFilterId) || "none",
   );
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [celebrate, setCelebrate] = useState(false);
 
   useEffect(() => {
     setShots(seedShots);
@@ -52,7 +57,7 @@ export function HighlightsStudio({
     let cancelled = false;
     (async () => {
       const res = await fetch(
-        `/api/events/${slug}/media?filter=${canEdit ? "all" : "highlights"}&sort=newest`,
+        `/api/events/${slug}/media?filter=${canEdit && !wallOnly ? "all" : "highlights"}&sort=newest`,
       );
       const data = await res.json();
       if (!cancelled && res.ok) {
@@ -69,13 +74,12 @@ export function HighlightsStudio({
     return () => {
       cancelled = true;
     };
-  }, [slug, canEdit, published]);
+  }, [slug, canEdit, published, wallOnly]);
 
-  const starred = useMemo(
-    () =>
-      (canEdit ? shots.filter((s) => s.isHighlight) : shots).slice(0, 12),
-    [shots, canEdit],
-  );
+  const starred = useMemo(() => {
+    const list = canEdit && !wallOnly ? shots.filter((s) => s.isHighlight) : shots;
+    return list.slice(0, HIGHLIGHT_MAX);
+  }, [shots, canEdit, wallOnly]);
 
   const tpl = getHighlightTemplate(template);
   const filterCss = getHighlightFilterCss(filter);
@@ -95,36 +99,90 @@ export function HighlightsStudio({
     });
     setSaving(false);
     if (!res.ok) {
-      setMessage("Could not save studio settings");
+      setMessage("Could not save collage");
       return;
     }
-    if (typeof nextPublish === "boolean") onPublished?.(nextPublish);
-    setMessage(nextPublish ? "Highlights published" : "Studio saved");
+    if (typeof nextPublish === "boolean") {
+      onPublished?.(nextPublish);
+      if (nextPublish) {
+        setCelebrate(true);
+        window.setTimeout(() => setCelebrate(false), 3200);
+      }
+    }
+    setMessage(nextPublish ? "Highlight collage published" : "Collage saved");
   }
 
   if (!starred.length && !canEdit) return null;
+  if (wallOnly && !starred.length) return null;
+
+  const collage = (
+    <div className={`hl-collage-frame ${celebrate ? "hl-celebrate" : ""}`}>
+      {celebrate ? (
+        <div className="hl-publish-toast" role="status">
+          Highlight published by the host
+        </div>
+      ) : null}
+      {!starred.length ? (
+        <p className="py-10 text-center text-[var(--muted)]">
+          Star up to {HIGHLIGHT_MAX} photos below to build the collage.
+        </p>
+      ) : (
+        <div className={tpl.className} style={{ filter: filterCss }}>
+          {starred.map((shot, i) => (
+            <div
+              key={shot.id}
+              className={`hl-cell ${i === 0 ? "hl-hero" : ""} hl-slot-${i + 1}`}
+            >
+              {shot.type === "video" ? (
+                <video src={shot.url} className="h-full w-full object-cover" muted />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={shot.url} alt="" className="h-full w-full object-cover" />
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
+  if (wallOnly) {
+    return (
+      <div className="hl-wall panel overflow-hidden p-0">
+        <div className="border-b border-[var(--line)] bg-[var(--navy)] px-5 py-4 text-white">
+          <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
+            Highlight wall
+          </p>
+          <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
+            Tonight’s collage
+          </h3>
+        </div>
+        <div className="p-4">{collage}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="panel overflow-hidden p-0">
       <div className="border-b border-[var(--line)] bg-[var(--navy)] px-5 py-4 text-white">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/60">
-          Highlights studio
+          Highlight collage
         </p>
         <h3 className="mt-1 font-[family-name:var(--font-display)] text-2xl">
-          {canEdit ? "Craft the recap" : "Event highlights"}
+          {canEdit ? "Build the wall" : "Event highlights"}
         </h3>
         <p className="mt-1 text-sm text-white/70">
           {canEdit
-            ? "Star photos in the gallery, pick a template + filter, then publish."
-            : "A curated cut of the night."}
+            ? `Pick 1–${HIGHLIGHT_MAX} photos (★), choose a layout + look, then publish to the top of the gallery.`
+            : "A curated collage of the night."}
         </p>
       </div>
 
       {canEdit ? (
-        <div className="grid gap-4 border-b border-[var(--line)] p-4 sm:grid-cols-2">
+        <div className="grid gap-4 border-b border-[var(--line)] p-4 lg:grid-cols-2">
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-              Templates
+              Collage layouts
             </p>
             <div className="flex flex-wrap gap-2">
               {HIGHLIGHT_TEMPLATES.map((t) => (
@@ -139,14 +197,16 @@ export function HighlightsStudio({
                   onClick={() => setTemplate(t.id)}
                 >
                   <span className="font-semibold">{t.label}</span>
-                  <span className="mt-0.5 block text-xs text-[var(--muted)]">{t.blurb}</span>
+                  <span className="mt-0.5 block text-xs text-[var(--muted)]">
+                    {t.blurb} · best with {t.idealCount}
+                  </span>
                 </button>
               ))}
             </div>
           </div>
           <div>
             <p className="mb-2 text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
-              Filters
+              Looks
             </p>
             <div className="flex flex-wrap gap-2">
               {HIGHLIGHT_FILTERS.map((f) => (
@@ -165,30 +225,17 @@ export function HighlightsStudio({
                 </button>
               ))}
             </div>
+            <p className="mt-3 text-sm text-[var(--muted)]">
+              Selected for collage:{" "}
+              <strong>
+                {starred.length}/{HIGHLIGHT_MAX}
+              </strong>
+            </p>
           </div>
         </div>
       ) : null}
 
-      <div className="p-4">
-        {!starred.length ? (
-          <p className="py-10 text-center text-[var(--muted)]">
-            Star photos in the gallery to build this collage.
-          </p>
-        ) : (
-          <div className={tpl.className} style={{ filter: filterCss }}>
-            {starred.map((shot, i) => (
-              <div key={shot.id} className={`hl-cell ${i === 0 ? "hl-hero" : ""}`}>
-                {shot.type === "video" ? (
-                  <video src={shot.url} className="h-full w-full object-cover" muted />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={shot.url} alt="" className="h-full w-full object-cover" />
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <div className="p-4">{collage}</div>
 
       {canEdit ? (
         <div className="flex flex-wrap items-center gap-2 border-t border-[var(--line)] p-4">
@@ -198,7 +245,7 @@ export function HighlightsStudio({
             disabled={saving}
             onClick={() => saveStyle()}
           >
-            Save style
+            Save collage
           </button>
           <button
             type="button"
@@ -206,7 +253,7 @@ export function HighlightsStudio({
             disabled={saving || !starred.length}
             onClick={() => saveStyle(!published)}
           >
-            {published ? "Unpublish" : "Publish highlights"}
+            {published ? "Unpublish wall" : "Publish highlight wall"}
           </button>
           {message ? <p className="text-sm text-[var(--muted)]">{message}</p> : null}
         </div>

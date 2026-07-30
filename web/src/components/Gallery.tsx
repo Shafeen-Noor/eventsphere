@@ -1,10 +1,10 @@
 "use client";
 
 import JSZip from "jszip";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { HighlightsStudio } from "@/components/HighlightsStudio";
 import { getAtmosphere } from "@/lib/atmospheres";
-import { getHighlightFilterCss } from "@/lib/highlights";
+import { HIGHLIGHT_MAX } from "@/lib/highlights";
 
 type MediaItem = {
   id: string;
@@ -54,7 +54,7 @@ export function Gallery({
 }) {
   const theme = getAtmosphere(atmosphere);
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [filter, setFilter] = useState(eventClosed && highlightsPublished && !isOrganizer ? "highlights" : "all");
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canDownload, setCanDownload] = useState(false);
@@ -62,22 +62,25 @@ export function Gallery({
   const [canCurate, setCanCurate] = useState(false);
   const [published, setPublished] = useState(highlightsPublished);
   const [pendingCount, setPendingCount] = useState(0);
-  const [highlightTemplate, setHighlightTemplate] = useState("mosaic");
+  const [highlightTemplate, setHighlightTemplate] = useState("ig8");
   const [highlightFilter, setHighlightFilter] = useState("none");
   const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
   const [commentText, setCommentText] = useState("");
   const [zipping, setZipping] = useState(false);
   const [lightbox, setLightbox] = useState<MediaItem | null>(null);
+  const [starCount, setStarCount] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(
-        `/api/events/${slug}/media?filter=${filter}&sort=newest`,
-      );
+      const [res, starsRes] = await Promise.all([
+        fetch(`/api/events/${slug}/media?filter=${filter}&sort=newest`),
+        fetch(`/api/events/${slug}/media?filter=highlights&sort=newest`),
+      ]);
       const data = await res.json();
+      const starsData = await starsRes.json();
       if (!res.ok) throw new Error(data?.error?.message || "Could not load gallery");
       setMedia(data.media);
       setCanDownload(Boolean(data.canDownload));
@@ -85,8 +88,11 @@ export function Gallery({
       setCanCurate(Boolean(data.canCurateHighlights));
       setPublished(Boolean(data.highlightsPublished));
       setPendingCount(Number(data.pendingCount || 0));
-      setHighlightTemplate(data.highlightTemplate || "mosaic");
+      setHighlightTemplate(data.highlightTemplate || "ig8");
       setHighlightFilter(data.highlightFilter || "none");
+      if (starsRes.ok && Array.isArray(starsData.media)) {
+        setStarCount(starsData.media.length);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load gallery");
     } finally {
@@ -110,14 +116,45 @@ export function Gallery({
     const res = await fetch(`/api/media/${item.id}/like`, { method });
     const data = await res.json();
     if (!res.ok) return;
-    setMedia((prev) =>
-      prev.map((m) =>
-        m.id === item.id
-          ? { ...m, likedByMe: data.liked, likeCount: data.likeCount }
-          : m,
-      ),
-    );
+    const patch = { likedByMe: data.liked as boolean, likeCount: data.likeCount as number };
+    setMedia((prev) => prev.map((m) => (m.id === item.id ? { ...m, ...patch } : m)));
+    setLightbox((prev) => (prev?.id === item.id ? { ...prev, ...patch } : prev));
   }
+
+  const lightboxIndex = useMemo(
+    () => (lightbox ? media.findIndex((m) => m.id === lightbox.id) : -1),
+    [lightbox, media],
+  );
+
+  function stepLightbox(delta: number) {
+    if (!media.length || lightboxIndex < 0) return;
+    const next = (lightboxIndex + delta + media.length) % media.length;
+    const item = media[next];
+    setLightbox(item);
+    setOpenCommentsFor(item.id);
+    setCommentText("");
+    if (commentsEnabled && !comments[item.id]) {
+      void fetch(`/api/media/${item.id}/comments`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.comments) {
+            setComments((prev) => ({ ...prev, [item.id]: data.comments }));
+          }
+        });
+    }
+  }
+
+  useEffect(() => {
+    if (!lightbox) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setLightbox(null);
+      if (e.key === "ArrowRight") stepLightbox(1);
+      if (e.key === "ArrowLeft") stepLightbox(-1);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lightbox, lightboxIndex, media.length]);
 
   async function toggleComments(item: MediaItem) {
     if (openCommentsFor === item.id) {
@@ -152,6 +189,9 @@ export function Gallery({
         m.id === mediaId ? { ...m, commentCount: m.commentCount + 1 } : m,
       ),
     );
+    setLightbox((prev) =>
+      prev?.id === mediaId ? { ...prev, commentCount: prev.commentCount + 1 } : prev,
+    );
     setCommentText("");
   }
 
@@ -163,17 +203,21 @@ export function Gallery({
   }
 
   async function toggleHighlight(item: MediaItem) {
+    const next = !item.isHighlight;
+    if (next && starCount >= HIGHLIGHT_MAX) {
+      alert(`Highlight collage can include up to ${HIGHLIGHT_MAX} photos.`);
+      return;
+    }
     const res = await fetch(`/api/media/${item.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isHighlight: !item.isHighlight }),
+      body: JSON.stringify({ isHighlight: next }),
     });
     if (!res.ok) return;
     setMedia((prev) =>
-      prev.map((m) =>
-        m.id === item.id ? { ...m, isHighlight: !item.isHighlight } : m,
-      ),
+      prev.map((m) => (m.id === item.id ? { ...m, isHighlight: next } : m)),
     );
+    setStarCount((n) => n + (next ? 1 : -1));
   }
 
   async function setMediaState(item: MediaItem, state: "published" | "rejected") {
@@ -193,22 +237,19 @@ export function Gallery({
     setPendingCount((n) => Math.max(0, n - 1));
   }
 
-  async function shareItem(item: MediaItem) {
-    const shareUrl = item.originalUrl || item.url;
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: "EventSphere memory",
-          text: `From ${item.uploader.displayName}`,
-          url: shareUrl,
+  function openLightbox(item: MediaItem) {
+    setLightbox(item);
+    setOpenCommentsFor(item.id);
+    setCommentText("");
+    if (commentsEnabled && !comments[item.id]) {
+      void fetch(`/api/media/${item.id}/comments`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.comments) {
+            setComments((prev) => ({ ...prev, [item.id]: data.comments }));
+          }
         });
-        return;
-      }
-    } catch {
-      /* fall through */
     }
-    await navigator.clipboard.writeText(shareUrl);
-    alert("Link copied");
   }
 
   async function downloadOne(item: MediaItem) {
@@ -288,11 +329,23 @@ export function Gallery({
         </div>
       ) : null}
 
-      {canCurate || (published && (eventClosed || filter === "highlights")) ? (
+      {published && !canCurate ? (
+        <HighlightsStudio
+          slug={slug}
+          shots={[]}
+          canEdit={false}
+          wallOnly
+          initialTemplate={highlightTemplate}
+          initialFilter={highlightFilter}
+          published={published}
+        />
+      ) : null}
+
+      {canCurate ? (
         <HighlightsStudio
           slug={slug}
           shots={media}
-          canEdit={canCurate}
+          canEdit
           initialTemplate={highlightTemplate}
           initialFilter={highlightFilter}
           published={published}
@@ -304,34 +357,17 @@ export function Gallery({
         />
       ) : null}
 
-      {canCurate && !(published && eventClosed) ? (
-        <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
-          <p className="text-sm text-[var(--muted)]">
-            Star photos to include them, style in the studio, then publish.
-          </p>
-        </div>
-      ) : null}
-
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap gap-2">
-          {[
-            ["all", isOrganizer || !published ? "All" : "Highlights"],
-            ...(isOrganizer
-              ? [
-                  ["pending", `Pending${pendingCount ? ` (${pendingCount})` : ""}`],
-                  ["highlights", "Highlights"],
-                  ["photos", "Photos"],
-                  ["videos", "Videos"],
-                  ["mine", "Mine"],
-                ]
-              : !eventClosed
-                ? [
-                    ["photos", "Photos"],
-                    ["videos", "Videos"],
-                    ["mine", "Mine"],
-                  ]
-                : [["highlights", "Highlights"]]),
-          ].map(([id, label]) => (
+          {(
+            [
+              ["all", "All"],
+              ...(isOrganizer
+                ? [["pending", `Pending${pendingCount ? ` (${pendingCount})` : ""}`] as const]
+                : []),
+              ["mine", "Mine"],
+            ] as const
+          ).map(([id, label]) => (
             <button
               key={id}
               type="button"
@@ -412,7 +448,7 @@ export function Gallery({
                       ? "block w-full aspect-[4/3]"
                       : "block w-full"
                 }
-                onClick={() => setLightbox(item)}
+                onClick={() => openLightbox(item)}
               >
                 {item.type === "video" ? (
                   <video src={item.url} className="h-full w-full object-cover" muted />
@@ -425,11 +461,6 @@ export function Gallery({
                       theme.layout === "mosaic"
                         ? "w-full h-auto object-cover"
                         : "h-full w-full object-cover"
-                    }
-                    style={
-                      (filter === "highlights" || eventClosed) && published
-                        ? { filter: getHighlightFilterCss(highlightFilter) }
-                        : undefined
                     }
                   />
                 )}
@@ -494,14 +525,6 @@ export function Gallery({
                       <span>{item.commentCount}</span>
                     </button>
                   ) : null}
-                  <button
-                    type="button"
-                    onClick={() => shareItem(item)}
-                    className="gallery-action"
-                  >
-                    <span className="gallery-action-icon">↗</span>
-                    <span>Share</span>
-                  </button>
                   {item.canDownload ? (
                     <button type="button" onClick={() => downloadOne(item)} className="gallery-action">
                       <span className="gallery-action-icon">↓</span>
@@ -563,6 +586,26 @@ export function Gallery({
       {lightbox ? (
         <div className="lightbox-shell" onClick={() => setLightbox(null)}>
           <div className="lightbox-stage" onClick={(e) => e.stopPropagation()}>
+            {media.length > 1 ? (
+              <>
+                <button
+                  type="button"
+                  className="lightbox-nav lightbox-nav-prev"
+                  onClick={() => stepLightbox(-1)}
+                  aria-label="Previous"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="lightbox-nav lightbox-nav-next"
+                  onClick={() => stepLightbox(1)}
+                  aria-label="Next"
+                >
+                  ›
+                </button>
+              </>
+            ) : null}
             {lightbox.type === "video" ? (
               <video
                 src={lightbox.originalUrl || lightbox.url}
@@ -579,12 +622,40 @@ export function Gallery({
               />
             )}
             <div className="lightbox-meta">
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="font-[family-name:var(--font-display)] text-2xl text-white">
                   {lightbox.uploader.displayName}
                 </p>
                 {lightbox.caption ? (
                   <p className="mt-1 text-white/70">{lightbox.caption}</p>
+                ) : null}
+                {commentsEnabled ? (
+                  <div className="mt-3 max-h-36 space-y-2 overflow-auto text-sm text-white/85">
+                    {(comments[lightbox.id] || []).map((c) => (
+                      <p key={c.id}>
+                        <span className="font-semibold text-white">{c.user.displayName}</span>{" "}
+                        {c.body}
+                      </p>
+                    ))}
+                    <div className="flex gap-2 pt-1">
+                      <input
+                        className="flex-1 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-white/40"
+                        placeholder="Add a comment…"
+                        value={commentText}
+                        onChange={(e) => setCommentText(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") sendComment(lightbox.id);
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-primary px-3 py-2 text-sm"
+                        onClick={() => sendComment(lightbox.id)}
+                      >
+                        Post
+                      </button>
+                    </div>
+                  </div>
                 ) : null}
               </div>
               <div className="gallery-actions gallery-actions-lite">
@@ -596,15 +667,6 @@ export function Gallery({
                 >
                   <span className="gallery-action-icon">{lightbox.likedByMe ? "♥" : "♡"}</span>
                   <span>{lightbox.likeCount}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => shareItem(lightbox)}
-                  className="gallery-action"
-                  style={{ color: "#fff" }}
-                >
-                  <span className="gallery-action-icon">↗</span>
-                  <span>Share</span>
                 </button>
                 {lightbox.canDownload && lightbox.originalUrl ? (
                   <button
