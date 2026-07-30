@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatedInvite } from "@/components/AnimatedInvite";
 import { getAtmosphere } from "@/lib/atmospheres";
 import { formatEventWhen } from "@/lib/time";
+import { VisualMotifs } from "@/components/VisualMotifs";
 
 type Props = {
   slug: string;
@@ -89,6 +90,7 @@ export function InviteCard({
     <div className="guest-invite-room" style={{ ["--invite-accent" as string]: theme.accent }}>
       <div className="guest-invite-atmosphere" style={{ background: theme.bg }} aria-hidden />
       <div className="guest-invite-noise" aria-hidden />
+      <VisualMotifs variant="invite" />
 
       <div className="guest-invite-main">
         <AnimatedInvite

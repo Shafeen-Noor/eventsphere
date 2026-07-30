@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatedInvite } from "@/components/AnimatedInvite";
+import { VisualMotifs } from "@/components/VisualMotifs";
 
 function useInView<T extends HTMLElement>(threshold = 0.2) {
   const ref = useRef<T | null>(null);
@@ -49,16 +50,18 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
       <div className="hero-block hero-bang">
         <div className="hero-orbit" aria-hidden />
         <div className="hero-orbit hero-orbit-2" aria-hidden />
+        <VisualMotifs variant="hero" />
         {header}
         <div className="container relative z-[1] grid gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-28 lg:pt-10">
           <div className="bang-hero-copy">
-            <p className="bang-kicker">Shared event galleries</p>
+            <p className="bang-kicker">Neon nights · polaroid memories</p>
             <h1 className="section-title mt-4 text-5xl text-white sm:text-6xl lg:text-7xl">
               EventSphere
             </h1>
+            <div className="cobalt-rule" style={{ background: "linear-gradient(90deg, #e8c96a, #e11d8a)" }} />
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
-              Guests open a cinematic invite, upload from the browser, and every memory lands in one
-              private gallery — no app installs, no AirDrop chaos.
+              Guests open a cinematic invite, cameras fill the room, and every flash lands in one
+              private gallery — framed like a film reel, curated like an editor’s cut.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/create?mode=free" className="btn btn-primary bang-cta">
@@ -83,76 +86,88 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
               title="Tonight’s celebration"
               hostName="You"
               whenLabel="Saturday · 9:00 PM"
-              inviteCopy="Scan. Open. Upload. Relive."
+              inviteCopy="Pop. Flash. Reel. Relive."
               autoOpen
             />
           </div>
         </div>
       </div>
 
-      <BangSection className="container py-20">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-          How it works
-        </p>
-        <h2 className="section-title mt-3 max-w-2xl text-4xl sm:text-5xl">
-          Invite → upload → highlights
-        </h2>
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {[
-            {
-              n: "01",
-              t: "Send the envelope",
-              d: "Guests tap a cinematic invitation that opens into your event card.",
-            },
-            {
-              n: "02",
-              t: "Fill the room",
-              d: "Browser camera or library — caps and windows keep the gallery sharp.",
-            },
-            {
-              n: "03",
-              t: "Publish the cut",
-              d: "Star shots, drop filters + templates, publish a highlight reel.",
-            },
-          ].map((step, i) => (
-            <div
-              key={step.n}
-              className="panel bang-card p-6"
-              style={{ transitionDelay: `${i * 90}ms` }}
-            >
-              <p className="text-sm font-bold text-[var(--accent)]">{step.n}</p>
-              <h3 className="section-title mt-3 text-2xl">{step.t}</h3>
-              <p className="mt-3 text-[var(--muted)] leading-relaxed">{step.d}</p>
-            </div>
-          ))}
+      <BangSection className="picnic-band container py-20">
+        <VisualMotifs variant="section" />
+        <div className="relative z-[1]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--cobalt)]">
+            How it works
+          </p>
+          <h2 className="section-title mt-3 max-w-2xl text-4xl sm:text-5xl">
+            Envelope → flash → film strip
+          </h2>
+          <div className="cobalt-rule" />
+          <div className="mt-12 grid gap-5 md:grid-cols-3">
+            {[
+              {
+                n: "01",
+                t: "Open the invite",
+                d: "A neon-gala envelope opens into your polaroid-ready event card.",
+                icon: "✉️",
+              },
+              {
+                n: "02",
+                t: "Fill the reel",
+                d: "Guests shoot from the browser — cameras, poppers, and caps keep it lively.",
+                icon: "📷",
+              },
+              {
+                n: "03",
+                t: "Publish the cut",
+                d: "Editorial templates + filters turn the night into a highlight strip.",
+                icon: "🎞️",
+              },
+            ].map((step, i) => (
+              <div
+                key={step.n}
+                className="panel bang-card p-6"
+                style={{ transitionDelay: `${i * 90}ms` }}
+              >
+                <p className="text-3xl" aria-hidden>
+                  {step.icon}
+                </p>
+                <p className="mt-3 text-sm font-bold text-[var(--accent)]">{step.n}</p>
+                <h3 className="section-title mt-2 text-2xl">{step.t}</h3>
+                <p className="mt-3 text-[var(--muted)] leading-relaxed">{step.d}</p>
+              </div>
+            ))}
+          </div>
         </div>
       </BangSection>
 
-      <BangSection className="border-y border-[var(--line)] bg-[var(--bg-elevated)] py-20">
-        <div className="container">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
+      <BangSection className="border-y border-[var(--line)] bg-[var(--bg-elevated)] py-20 relative overflow-hidden">
+        <VisualMotifs variant="section" />
+        <div className="container relative z-[1]">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--spark)]">
             Why it hits
           </p>
           <h2 className="section-title mt-3 max-w-2xl text-4xl">
-            Built for the dance floor, not another cloud folder
+            Gala energy, picnic warmth, editorial polish
           </h2>
+          <div className="cobalt-rule" />
           <div className="mt-12 grid gap-6 md:grid-cols-2">
             {[
               {
-                t: "Zero guest friction",
-                d: "QR opens a private invite. Name in, photos up — no App Store detour.",
+                t: "Cinematic invites",
+                d: "Champagne-gold seals and full-screen envelopes — not a plain link page.",
               },
               {
-                t: "Host stays director",
-                d: "Caps, upload windows, approval, and curated highlights on Pro.",
+                t: "Polaroid presence",
+                d: "Photo tiles, film sprockets, and tumbling frames make the gallery feel real.",
               },
               {
-                t: "One link, every chapter",
-                d: "Invite, live gallery, and published recap share the same URL.",
+                t: "Lens-grade control",
+                d: "Caps, approval, and highlight studio — host like a photo editor.",
               },
               {
-                t: "Venue-proof",
-                d: "Offline queue and capture modes keep phones contributing when Wi‑Fi dips.",
+                t: "Party motion",
+                d: "Poppers, shutter flashes, and rolling reels keep the page alive.",
               },
             ].map((item, i) => (
               <div
@@ -175,6 +190,7 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
         <h2 className="section-title mt-3 max-w-2xl text-4xl sm:text-5xl">
           Three tiers, clearly separated
         </h2>
+        <div className="cobalt-rule" />
         <p className="mt-4 max-w-2xl text-[var(--muted)]">
           Free is account-free. Pro is one paid event or a monthly subscription. Professional is
           coming soon for agencies.
@@ -188,7 +204,7 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
             <p className="mt-2 text-sm text-[var(--muted)]">No account · 24 hours</p>
             <ul className="mt-6 flex-1">
               <li>10 guests · 100 photos</li>
-              <li>QR + cinematic invite</li>
+              <li>Cinematic QR invite</li>
               <li>Guests see their own photos</li>
             </ul>
             <Link href="/create?mode=free" className="btn btn-ghost mt-8 w-full">
@@ -250,7 +266,7 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
       </BangSection>
 
       <section className="border-t border-[var(--line)] bg-[var(--navy)] py-20 text-white overflow-hidden relative">
-        <div className="hero-orbit opacity-40" aria-hidden />
+        <VisualMotifs variant="hero" />
         <div className="container relative z-[1] flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <div>
             <h2 className="section-title text-3xl sm:text-5xl">Ready for tonight?</h2>

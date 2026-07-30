@@ -1,23 +1,26 @@
 @import "tailwindcss";
 
-/* Grey-beige + soft blue — warm stone base, cool accent */
+/* Hybrid: Neon Reception (4) + Polaroid Picnic (2) + Editorial Lens (3) */
 :root {
-  --bg: #f0ebe3;
-  --bg-elevated: #faf8f5;
-  --fg: #1c1b19;
-  --muted: #6b6560;
-  --line: #ddd6cb;
-  --accent: #3d5a80;
-  --accent-soft: #e4ebf3;
-  --terracotta: #3d5a80;
-  --sage: #d4cfc6;
-  --peach: #f0ebe3;
-  --navy: #1c1b19;
+  --bg: #f3efe6;
+  --bg-elevated: #fbf8f1;
+  --fg: #12101a;
+  --muted: #6a6358;
+  --line: #e0d6c6;
+  --accent: #c9a227;
+  --accent-soft: #f5ecd0;
+  --spark: #e11d8a;
+  --cobalt: #2f4f8a;
+  --butter: #f0e3a4;
+  --terracotta: #c9a227;
+  --sage: #d8d0c2;
+  --peach: #f3efe6;
+  --navy: #0e0c12;
   --danger: #b91c1c;
   --ok: #3f6b4a;
-  --hero: #1c1b19;
-  --hero-fg: #faf8f5;
-  --hero-accent: #b8c9dc;
+  --hero: #0a0810;
+  --hero-fg: #fbf8f1;
+  --hero-accent: #e8c96a;
 }
 
 @theme inline {
@@ -101,11 +104,11 @@ select {
 
 .btn-primary {
   background: var(--accent);
-  color: #faf8f5;
+  color: #0e0c12;
 }
 
 .btn-primary:hover:not(:disabled) {
-  filter: brightness(1.08);
+  filter: brightness(1.06);
 }
 
 .btn-ghost {
@@ -191,9 +194,10 @@ select {
 
 .hero-block {
   background:
-    radial-gradient(ellipse 60% 50% at 90% 0%, rgba(61, 90, 128, 0.45), transparent 55%),
-    radial-gradient(ellipse 40% 40% at 10% 100%, rgba(212, 196, 168, 0.12), transparent 50%),
-    linear-gradient(165deg, #141312 0%, #1c1b19 48%, #2a2d35 100%);
+    radial-gradient(ellipse 55% 45% at 88% 8%, rgba(225, 29, 138, 0.28), transparent 55%),
+    radial-gradient(ellipse 50% 40% at 12% 90%, rgba(201, 162, 39, 0.22), transparent 50%),
+    radial-gradient(ellipse 35% 35% at 55% 40%, rgba(47, 79, 138, 0.2), transparent 60%),
+    linear-gradient(165deg, #07060a 0%, #0e0c12 42%, #1a1524 100%);
   color: var(--hero-fg);
 }
 
@@ -216,7 +220,7 @@ select {
 
 .tier-card.featured {
   border-color: var(--accent);
-  box-shadow: 0 16px 40px rgba(61, 90, 128, 0.12);
+  box-shadow: 0 16px 40px rgba(201, 162, 39, 0.18);
 }
 
 .tier-card ul {
@@ -416,7 +420,8 @@ select {
   right: 0.6rem;
   bottom: auto;
   top: 0.6rem;
-  background: rgba(61, 90, 128, 0.9);
+  background: rgba(201, 162, 39, 0.92);
+  color: #0e0c12;
 }
 
 .lightbox-shell {
@@ -457,8 +462,9 @@ select {
   padding: 1.75rem 1.5rem;
   color: #faf8f5;
   background:
-    radial-gradient(ellipse 70% 80% at 100% 0%, rgba(61, 90, 128, 0.45), transparent 55%),
-    linear-gradient(145deg, #1c1b19 0%, #2a2d35 100%);
+    radial-gradient(ellipse 70% 80% at 100% 0%, rgba(225, 29, 138, 0.35), transparent 55%),
+    radial-gradient(ellipse 50% 60% at 0% 100%, rgba(201, 162, 39, 0.25), transparent 50%),
+    linear-gradient(145deg, #0e0c12 0%, #1a1524 100%);
 }
 
 .event-moment-begin {
@@ -741,6 +747,10 @@ select {
   mix-blend-mode: soft-light;
 }
 
+.motif-invite .motif {
+  opacity: 0.45;
+}
+
 .guest-invite-main {
   position: relative;
   z-index: 1;
@@ -820,7 +830,7 @@ select {
   border-radius: 50%;
   right: -18vmax;
   top: -22vmax;
-  background: radial-gradient(circle, rgba(61, 90, 128, 0.45), transparent 65%);
+  background: radial-gradient(circle, rgba(225, 29, 138, 0.35), transparent 65%);
   animation: orbitDrift 14s ease-in-out infinite;
   pointer-events: none;
 }
@@ -830,7 +840,7 @@ select {
   right: auto;
   top: auto;
   bottom: -25vmax;
-  background: radial-gradient(circle, rgba(212, 196, 168, 0.2), transparent 60%);
+  background: radial-gradient(circle, rgba(201, 162, 39, 0.28), transparent 60%);
   animation-duration: 18s;
   animation-direction: reverse;
 }
@@ -954,10 +964,10 @@ select {
 @keyframes ctaGlow {
   0%,
   100% {
-    box-shadow: 0 0 0 0 rgba(61, 90, 128, 0.35);
+    box-shadow: 0 0 0 0 rgba(201, 162, 39, 0.45);
   }
   50% {
-    box-shadow: 0 0 0 10px rgba(61, 90, 128, 0);
+    box-shadow: 0 0 0 12px rgba(201, 162, 39, 0);
   }
 }
 
@@ -1064,4 +1074,229 @@ select {
 
 .hl-template-hero .hl-hero {
   grid-row: 1 / span 2;
+}
+
+/* Motif field — poppers, cameras, polaroids, reels, apertures */
+.motif-field {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.motif {
+  position: absolute;
+  font-size: 1.75rem;
+  opacity: 0.55;
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.25));
+}
+
+.motif-hero .motif {
+  opacity: 0.7;
+  font-size: 2rem;
+}
+
+.motif-popper {
+  animation: popBurst 3.2s ease-in-out infinite;
+}
+
+.motif-camera {
+  animation: shutterBlink 4s ease-in-out infinite;
+}
+
+.motif-polaroid {
+  width: 52px;
+  height: 62px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #fff 0%, #fff 72%, #f0e3a4 72%, #f0e3a4 100%);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  color: transparent;
+  font-size: 0;
+  animation: polaroidDrift 7s ease-in-out infinite;
+}
+
+.motif-polaroid::before {
+  content: "";
+  position: absolute;
+  inset: 6px 6px 16px;
+  border-radius: 2px;
+  background: linear-gradient(135deg, #2f4f8a, #e11d8a 55%, #c9a227);
+}
+
+.motif-polaroid-tilt {
+  transform: rotate(12deg);
+}
+
+.motif-aperture {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 3px solid rgba(232, 201, 106, 0.55);
+  box-shadow:
+    inset 0 0 0 8px rgba(14, 12, 18, 0.5),
+    inset 0 0 0 14px rgba(232, 201, 106, 0.25);
+  animation: apertureSpin 10s linear infinite;
+}
+
+.motif-spark {
+  color: var(--spark, #e11d8a);
+  font-size: 1.25rem;
+  animation: sparkle 2.2s ease-in-out infinite;
+}
+
+.motif-reel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 8%;
+  height: 54px;
+  overflow: hidden;
+  opacity: 0.55;
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+}
+
+.motif-reel-track {
+  display: flex;
+  gap: 8px;
+  width: max-content;
+  animation: reelMarquee 22s linear infinite;
+}
+
+.motif-reel-frame {
+  width: 72px;
+  height: 48px;
+  border-radius: 4px;
+  border: 2px solid rgba(232, 201, 106, 0.45);
+  background:
+    linear-gradient(90deg, transparent 0 6px, rgba(255, 255, 255, 0.08) 6px 8px, transparent 8px),
+    linear-gradient(135deg, rgba(47, 79, 138, 0.55), rgba(225, 29, 138, 0.4));
+  flex-shrink: 0;
+}
+
+.motif-sprocket {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 18px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 10px,
+      rgba(201, 162, 39, 0.35) 10px 16px,
+      transparent 16px 26px
+    );
+  opacity: 0.4;
+}
+
+.motif-sprocket-l {
+  left: 0;
+}
+
+.motif-sprocket-r {
+  right: 0;
+}
+
+.motif-section {
+  opacity: 0.85;
+}
+
+.motif-section .motif-reel {
+  bottom: 0;
+  opacity: 0.35;
+}
+
+.picnic-band {
+  background:
+    linear-gradient(180deg, rgba(240, 227, 164, 0.35), transparent 40%),
+    var(--bg);
+  position: relative;
+  overflow: hidden;
+}
+
+.cobalt-rule {
+  height: 2px;
+  width: 64px;
+  background: linear-gradient(90deg, var(--cobalt), var(--accent));
+  border-radius: 999px;
+  margin-top: 0.75rem;
+}
+
+@keyframes popBurst {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg) scale(1);
+  }
+  40% {
+    transform: translateY(-18px) rotate(8deg) scale(1.15);
+  }
+  60% {
+    transform: translateY(-8px) rotate(-4deg) scale(1.05);
+  }
+}
+
+@keyframes shutterBlink {
+  0%,
+  40%,
+  60%,
+  100% {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.7));
+  }
+}
+
+@keyframes polaroidDrift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-8deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(6deg);
+  }
+}
+
+.motif-polaroid-tilt {
+  animation-name: polaroidDriftAlt;
+}
+
+@keyframes polaroidDriftAlt {
+  0%,
+  100% {
+    transform: translateY(0) rotate(12deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(4deg);
+  }
+}
+
+@keyframes apertureSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes reelMarquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motif,
+  .motif-aperture,
+  .motif-reel-track,
+  .motif-polaroid {
+    animation: none !important;
+  }
 }
