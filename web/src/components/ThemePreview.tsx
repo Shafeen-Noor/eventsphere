@@ -30,6 +30,7 @@ export function ThemePreview({
       </div>
       <AnimatedInvite
         key={atmosphere}
+        size="compact"
         atmosphere={atmosphere}
         title={title}
         hostName={hostName}
@@ -37,10 +38,9 @@ export function ThemePreview({
         locationName={locationName}
         inviteCopy={inviteCopy}
         autoOpen
-        compact
       />
       <p className="text-xs text-[var(--muted)]">
-        Guests open an animated envelope — the card slides out with this atmosphere.
+        Guests get a full-screen envelope that opens into this card.
       </p>
     </div>
   );

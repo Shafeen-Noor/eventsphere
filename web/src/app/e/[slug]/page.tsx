@@ -70,63 +70,68 @@ export default async function EventPage({ params }: Props) {
     isMember && !started && Boolean(event.startAt) && !isOrganizer;
 
   return (
-    <main>
-      <SiteHeader
-        right={
-          <Link href="/" className="hover:opacity-70">
-            Home
-          </Link>
-        }
-      />
-      <div className="container">
-        {!isMember ? (
-          expired ? (
-            <div className="panel p-8 text-[var(--muted)] my-8">
-              This gallery has closed.
-            </div>
-          ) : (
-            <InviteCard
-              slug={slug}
-              title={event.title}
-              description={event.description}
-              hostName={event.owner.displayName}
-              locationName={event.locationName}
-              mapsUrl={event.mapsUrl}
-              inviteCopy={event.inviteCopy}
-              startAt={event.startAt?.toISOString() ?? null}
-              atmosphere={event.atmosphere}
-              requiresPasscode={Boolean(event.passcodeHash)}
-              rsvpEnabled={event.rsvpEnabled}
-              allowPlusOnes={event.allowPlusOnes}
-              maxPlusOnes={event.maxPlusOnes}
-              collectContacts={event.planTier === "pro" || event.planTier === "professional"}
-            />
-          )
-        ) : showWaitingRoom ? (
-          <WaitingRoom
+    <main className={!isMember && !expired ? "guest-invite-main-wrap" : undefined}>
+      {isMember || expired ? (
+        <SiteHeader
+          marketing={false}
+          right={
+            <Link href="/" className="hover:opacity-70">
+              Home
+            </Link>
+          }
+        />
+      ) : null}
+      {!isMember ? (
+        expired ? (
+          <div className="container">
+            <div className="panel p-8 text-[var(--muted)] my-8">This gallery has closed.</div>
+          </div>
+        ) : (
+          <InviteCard
             slug={slug}
             title={event.title}
+            description={event.description}
             hostName={event.owner.displayName}
             locationName={event.locationName}
-            startAt={event.startAt!.toISOString()}
+            mapsUrl={event.mapsUrl}
+            inviteCopy={event.inviteCopy}
+            startAt={event.startAt?.toISOString() ?? null}
             atmosphere={event.atmosphere}
-            rsvpStatus={rsvp?.status ?? null}
-            plusOnes={rsvp?.plusOnes ?? 0}
-            isOrganizer={false}
-            appUrl={appUrl}
+            requiresPasscode={Boolean(event.passcodeHash)}
+            rsvpEnabled={event.rsvpEnabled}
+            allowPlusOnes={event.allowPlusOnes}
+            maxPlusOnes={event.maxPlusOnes}
+            collectContacts={event.planTier === "pro" || event.planTier === "professional"}
           />
-        ) : (
-          <EventHub
-            event={dto}
-            role={membership!.role}
-            canUploadPrivilege={membership!.canUpload}
-            canDownloadPrivilege={membership!.canDownload}
-            initialRsvpStatus={rsvp?.status ?? null}
-            initialPlusOnes={rsvp?.plusOnes ?? 0}
-            appUrl={appUrl}
-          />
-        )}
-      </div>
+        )
+      ) : (
+        <div className="container">
+          {showWaitingRoom ? (
+            <WaitingRoom
+              slug={slug}
+              title={event.title}
+              hostName={event.owner.displayName}
+              locationName={event.locationName}
+              startAt={event.startAt!.toISOString()}
+              atmosphere={event.atmosphere}
+              rsvpStatus={rsvp?.status ?? null}
+              plusOnes={rsvp?.plusOnes ?? 0}
+              isOrganizer={false}
+              appUrl={appUrl}
+            />
+          ) : (
+            <EventHub
+              event={dto}
+              role={membership!.role}
+              canUploadPrivilege={membership!.canUpload}
+              canDownloadPrivilege={membership!.canDownload}
+              initialRsvpStatus={rsvp?.status ?? null}
+              initialPlusOnes={rsvp?.plusOnes ?? 0}
+              appUrl={appUrl}
+            />
+          )}
+        </div>
+      )}
     </main>
   );
 }
