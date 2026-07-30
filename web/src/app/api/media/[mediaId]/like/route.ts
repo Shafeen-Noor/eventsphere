@@ -12,7 +12,12 @@ export async function POST(_req: Request, ctx: Ctx) {
     if (!user) return jsonError("AUTH_REQUIRED", "Sign in to continue.", 401);
 
     const media = await prisma.media.findUnique({ where: { id: mediaId } });
-    if (!media || media.state !== "published") {
+    if (!media) {
+      return jsonError("MEDIA_NOT_FOUND", "This photo is no longer available.", 404);
+    }
+    const canEngage =
+      media.state === "published" || media.uploaderId === user.id;
+    if (!canEngage || media.state === "rejected") {
       return jsonError("MEDIA_NOT_FOUND", "This photo is no longer available.", 404);
     }
     await assertEventMember(media.eventId, user.id);

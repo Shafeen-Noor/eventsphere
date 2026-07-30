@@ -541,7 +541,18 @@ export function CreateEventForm({
       </form>
 
       <aside className="hidden lg:block sticky top-6 fade-up">
-        <ThemePreview atmosphere={atmosphere} title={title} hostName={hostName} />
+        <ThemePreview
+          atmosphere={atmosphere}
+          title={title}
+          hostName={hostName}
+          locationName={locationName}
+          inviteCopy={inviteCopy}
+          whenLabel={
+            startUtc
+              ? formatInTimeZone(startUtc, timeZone)
+              : null
+          }
+        />
       </aside>
     </div>
   );

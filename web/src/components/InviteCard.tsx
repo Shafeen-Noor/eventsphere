@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { getAtmosphere, isDarkAtmosphere } from "@/lib/atmospheres";
+import { AnimatedInvite } from "@/components/AnimatedInvite";
 import { formatEventWhen } from "@/lib/time";
 
 type Props = {
@@ -39,8 +39,6 @@ export function InviteCard({
   collectContacts = false,
 }: Props) {
   const router = useRouter();
-  const theme = getAtmosphere(atmosphere);
-  const dark = isDarkAtmosphere(atmosphere);
 
   const [displayName, setDisplayName] = useState("");
   const [passcode, setPasscode] = useState("");
@@ -86,52 +84,29 @@ export function InviteCard({
   }
 
   return (
-    <div className="grid gap-8 py-8 lg:grid-cols-[1fr_0.95fr] lg:items-center">
-      <div
-        className="fade-up relative overflow-hidden rounded-[28px] border p-7 sm:p-10"
-        style={{
-          background: theme.bg,
-          color: dark ? "#f7f1ea" : "#152935",
-          borderColor: dark ? "rgba(255,255,255,0.12)" : "rgba(21,41,53,0.12)",
-          boxShadow: "0 24px 60px rgba(21,41,53,0.14)",
-        }}
+    <div className="grid gap-8 py-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+      <AnimatedInvite
+        atmosphere={atmosphere}
+        title={title}
+        hostName={hostName}
+        whenLabel={whenLabel}
+        locationName={locationName}
+        inviteCopy={inviteCopy}
+        description={description}
+        autoOpen
       >
-        <p className="mb-3 text-3xl leading-none" aria-hidden>
-          {theme.motif}
-        </p>
-        <p className="text-sm uppercase tracking-[0.2em] opacity-70">
-          You’re invited · {theme.label}
-        </p>
-        <h1 className="mt-3 font-[family-name:var(--font-display)] text-5xl leading-[1.05]">
-          {title}
-        </h1>
-        <p className="mt-4 text-lg opacity-80">
-          Hosted by {hostName}
-          {locationName ? ` · ${locationName}` : ""}
-        </p>
         {mapsUrl ? (
           <a
             href={mapsUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-3 inline-flex underline opacity-90"
+            className="mt-4 inline-flex underline opacity-90"
+            onClick={(e) => e.stopPropagation()}
           >
             Open in Google Maps
           </a>
         ) : null}
-        {whenLabel ? (
-          <p
-            className="mt-5 inline-flex rounded-full px-4 py-2 text-sm"
-            style={{
-              background: dark ? "rgba(255,255,255,0.12)" : "rgba(21,41,53,0.08)",
-            }}
-          >
-            {whenLabel}
-          </p>
-        ) : null}
-        {inviteCopy ? <p className="mt-5 max-w-lg text-lg opacity-90">{inviteCopy}</p> : null}
-        {description ? <p className="mt-4 max-w-lg opacity-85">{description}</p> : null}
-      </div>
+      </AnimatedInvite>
 
       <form onSubmit={onSubmit} className="panel p-6 sm:p-8 space-y-5 max-w-md w-full fade-up">
         <div>

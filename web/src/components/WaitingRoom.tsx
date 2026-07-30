@@ -8,7 +8,7 @@ import { getAtmosphere } from "@/lib/atmospheres";
 import { formatEventWhen } from "@/lib/time";
 
 function formatCountdown(ms: number) {
-  if (ms <= 0) return { label: "Starting now…", done: true };
+  if (ms <= 0) return { label: "Opening now", done: true, parts: [] as string[] };
   const totalSec = Math.floor(ms / 1000);
   const d = Math.floor(totalSec / 86400);
   const h = Math.floor((totalSec % 86400) / 3600);
@@ -17,7 +17,7 @@ function formatCountdown(ms: number) {
   const parts = [];
   if (d > 0) parts.push(`${d}d`);
   parts.push(`${h}h`, `${m}m`, `${s}s`);
-  return { label: parts.join(" "), done: false };
+  return { label: parts.join(" "), done: false, parts: [d, h, m, s] as number[] };
 }
 
 type Props = {
@@ -66,7 +66,6 @@ export function WaitingRoom({
   }, [remaining, onLive, router]);
 
   const whenLabel = useMemo(() => formatEventWhen(startAt), [startAt]);
-
   const going = rsvpStatus === "going";
   const maybe = rsvpStatus === "maybe";
   const declined = rsvpStatus === "declined";
@@ -75,7 +74,7 @@ export function WaitingRoom({
     <div className="space-y-6 pb-16">
       <AtmosphereShell atmosphere={atmosphere}>
         <p className="text-sm uppercase tracking-[0.18em] opacity-70">
-          {theme.label} · Before the event
+          {theme.label} · Doors closed
         </p>
         <h1 className="mt-2 font-[family-name:var(--font-display)] text-4xl sm:text-5xl">
           {title}
@@ -87,71 +86,47 @@ export function WaitingRoom({
         <p className="mt-1 opacity-70">{whenLabel}</p>
       </AtmosphereShell>
 
-      <div
-        className="panel relative overflow-hidden p-8 sm:p-10 text-center space-y-4 fade-up"
-        style={{ boxShadow: "0 20px 50px rgba(21,41,53,0.12)" }}
-      >
-        <div
-          className="pointer-events-none absolute inset-x-0 top-0 h-1.5"
-          style={{ background: "linear-gradient(90deg, #698ea2, #e4a576)" }}
-        />
-
-        {going || isOrganizer ? (
-          <>
-            <p className="text-sm uppercase tracking-[0.16em] text-[var(--muted)]">
-              You’re on the list
-            </p>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl text-[var(--navy)]">
-              We look forward to seeing you
-              {plusOnes > 0 ? ` (+${plusOnes})` : ""}
-            </h2>
-            <p className="text-[var(--muted)] max-w-md mx-auto">
-              The shared gallery and photo uploads unlock when the event begins —
-              hang tight for the countdown.
-            </p>
-          </>
-        ) : maybe ? (
-          <>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
-              Fingers crossed
-            </h2>
-            <p className="text-[var(--muted)]">
-              You marked Maybe. Update your RSVP anytime before the event starts.
-            </p>
-          </>
-        ) : declined ? (
-          <>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
-              We’ll miss you
-            </h2>
-            <p className="text-[var(--muted)]">
-              If plans change, you can update your RSVP before the event begins.
-            </p>
-          </>
-        ) : (
-          <>
-            <h2 className="font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
-              You’re in
-            </h2>
-            <p className="text-[var(--muted)]">
-              Waiting for the event to start before the gallery opens.
-            </p>
-          </>
-        )}
-
-        <div className="pt-2">
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--muted)] mb-2">
-            Starts in
-          </p>
-          <p className="font-[family-name:var(--font-display)] text-4xl sm:text-5xl text-[var(--navy)] tabular-nums">
-            {countdown.label}
-          </p>
+      <div className="event-moment event-moment-begin fade-up">
+        <p className="text-xs font-bold uppercase tracking-[0.2em] opacity-70">
+          {countdown.done ? "Gallery unlocking" : "Countdown to open"}
+        </p>
+        <div className="mt-5 flex flex-wrap justify-center gap-3">
+          {countdown.done ? (
+            <div className="countdown-block min-w-[12rem]">
+              <p className="countdown-value">Now</p>
+              <p className="countdown-label">live</p>
+            </div>
+          ) : (
+            [
+              [String(countdown.parts[0] || 0), "days"],
+              [String(countdown.parts[1]).padStart(2, "0"), "hrs"],
+              [String(countdown.parts[2]).padStart(2, "0"), "min"],
+              [String(countdown.parts[3]).padStart(2, "0"), "sec"],
+            ].map(([value, label]) => (
+              <div key={label} className="countdown-block">
+                <p className="countdown-value">{value}</p>
+                <p className="countdown-label">{label}</p>
+              </div>
+            ))
+          )}
         </div>
+        <h2 className="mt-8 font-[family-name:var(--font-display)] text-3xl sm:text-4xl">
+          {countdown.done
+            ? "Welcome in"
+            : going || isOrganizer
+              ? "You’re on the list"
+              : "The gallery opens when the event begins"}
+        </h2>
+        <p className="mx-auto mt-3 max-w-lg text-sm opacity-80">
+          {declined
+            ? "You marked can’t make it — you can still change your RSVP."
+            : maybe
+              ? "You’re a maybe. Confirm Going to unlock uploads when doors open."
+              : "When the clock hits zero, the shared album unlocks — camera, library, likes, and comments."}
+        </p>
       </div>
 
-      {isOrganizer ? (
-        <SharePanel slug={slug} appUrl={appUrl} />
-      ) : null}
+      {isOrganizer ? <SharePanel slug={slug} appUrl={appUrl} /> : null}
     </div>
   );
 }

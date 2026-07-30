@@ -2,7 +2,9 @@
 
 import JSZip from "jszip";
 import { useCallback, useEffect, useState } from "react";
+import { HighlightsStudio } from "@/components/HighlightsStudio";
 import { getAtmosphere } from "@/lib/atmospheres";
+import { getHighlightFilterCss } from "@/lib/highlights";
 
 type MediaItem = {
   id: string;
@@ -59,8 +61,9 @@ export function Gallery({
   const [downloadBlockedReason, setDownloadBlockedReason] = useState<string | null>(null);
   const [canCurate, setCanCurate] = useState(false);
   const [published, setPublished] = useState(highlightsPublished);
-  const [publishing, setPublishing] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
+  const [highlightTemplate, setHighlightTemplate] = useState("mosaic");
+  const [highlightFilter, setHighlightFilter] = useState("none");
   const [openCommentsFor, setOpenCommentsFor] = useState<string | null>(null);
   const [comments, setComments] = useState<Record<string, Comment[]>>({});
   const [commentText, setCommentText] = useState("");
@@ -82,6 +85,8 @@ export function Gallery({
       setCanCurate(Boolean(data.canCurateHighlights));
       setPublished(Boolean(data.highlightsPublished));
       setPendingCount(Number(data.pendingCount || 0));
+      setHighlightTemplate(data.highlightTemplate || "mosaic");
+      setHighlightFilter(data.highlightFilter || "none");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load gallery");
     } finally {
@@ -188,17 +193,22 @@ export function Gallery({
     setPendingCount((n) => Math.max(0, n - 1));
   }
 
-  async function publishHighlights(next: boolean) {
-    setPublishing(true);
-    const res = await fetch(`/api/events/${slug}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ highlightsPublished: next }),
-    });
-    setPublishing(false);
-    if (!res.ok) return;
-    setPublished(next);
-    onHighlightsPublished?.(next);
+  async function shareItem(item: MediaItem) {
+    const shareUrl = item.originalUrl || item.url;
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "EventSphere memory",
+          text: `From ${item.uploader.displayName}`,
+          url: shareUrl,
+        });
+        return;
+      }
+    } catch {
+      /* fall through */
+    }
+    await navigator.clipboard.writeText(shareUrl);
+    alert("Link copied");
   }
 
   async function downloadOne(item: MediaItem) {
@@ -261,37 +271,44 @@ export function Gallery({
   return (
     <div className="space-y-4">
       {eventClosed ? (
-        <div className="rounded-2xl bg-[rgba(21,41,53,0.06)] px-4 py-6 text-center">
-          <h2 className="font-[family-name:var(--font-display)] text-2xl text-[var(--navy)]">
-            Event closed
+        <div className="event-moment event-moment-end">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] opacity-70">
+            The night is over
+          </p>
+          <h2 className="font-[family-name:var(--font-display)] text-3xl sm:text-4xl mt-2">
+            {published ? "Highlights are live" : "Building the recap"}
           </h2>
-          <p className="mt-2 text-sm text-[var(--muted)]">
+          <p className="mt-2 max-w-xl text-sm opacity-80">
             {isOrganizer
-              ? "Host curates · then publishes highlights to guests"
+              ? "Star shots, pick a template + filter, then publish."
               : published
-                ? `Your highlights from this event`
-                : "Waiting for the host to publish highlights"}
+                ? "A curated cut of every angle from the room."
+                : "Your host is still curating. Your own photos stay visible to you."}
           </p>
         </div>
       ) : null}
 
-      {canCurate ? (
+      {canCurate || (published && (eventClosed || filter === "highlights")) ? (
+        <HighlightsStudio
+          slug={slug}
+          shots={media}
+          canEdit={canCurate}
+          initialTemplate={highlightTemplate}
+          initialFilter={highlightFilter}
+          published={published}
+          onPublished={(v) => {
+            setPublished(v);
+            onHighlightsPublished?.(v);
+            load();
+          }}
+        />
+      ) : null}
+
+      {canCurate && !(published && eventClosed) ? (
         <div className="panel flex flex-wrap items-center justify-between gap-3 p-4">
           <p className="text-sm text-[var(--muted)]">
-            Star photos to include them, then publish highlights for guests.
+            Star photos to include them, style in the studio, then publish.
           </p>
-          <button
-            type="button"
-            className="btn btn-primary text-sm"
-            disabled={publishing}
-            onClick={() => publishHighlights(!published)}
-          >
-            {publishing
-              ? "Saving…"
-              : published
-                ? "Unpublish highlights"
-                : "Publish highlights"}
-          </button>
         </div>
       ) : null}
 
@@ -385,6 +402,7 @@ export function Gallery({
                     : undefined
               }
             >
+              <div className="relative">
               <button
                 type="button"
                 className={
@@ -408,45 +426,58 @@ export function Gallery({
                         ? "w-full h-auto object-cover"
                         : "h-full w-full object-cover"
                     }
+                    style={
+                      (filter === "highlights" || eventClosed) && published
+                        ? { filter: getHighlightFilterCss(highlightFilter) }
+                        : undefined
+                    }
                   />
                 )}
               </button>
+              {item.state === "pending_approval" ? (
+                <span className="gallery-pending-badge">Awaiting approval · visible to you</span>
+              ) : null}
+              {item.isMine ? <span className="gallery-mine-badge">Yours</span> : null}
+              </div>
 
-              <div className="px-2 py-2 space-y-1">
-                <div className="flex items-center gap-3 text-sm">
+              <div className="px-3 py-3 space-y-2">
+                <div className="gallery-actions">
                   <button
                     type="button"
                     onClick={() => toggleLike(item)}
-                    className="inline-flex items-center gap-1 font-medium"
+                    className="gallery-action"
                     style={{ color: item.likedByMe ? "#c45c4a" : "inherit" }}
                   >
-                    {item.likedByMe ? "♥" : "♡"} {item.likeCount}
+                    <span className="gallery-action-icon">{item.likedByMe ? "♥" : "♡"}</span>
+                    <span>{item.likeCount}</span>
                   </button>
                   {canCurate ? (
                     <button
                       type="button"
                       onClick={() => toggleHighlight(item)}
-                      className="inline-flex items-center gap-1 font-medium"
+                      className="gallery-action"
                       style={{ color: item.isHighlight ? "#c98b5e" : "inherit" }}
                       title={item.isHighlight ? "Remove from highlights" : "Add to highlights"}
                     >
-                      {item.isHighlight ? "★" : "☆"}
+                      <span className="gallery-action-icon">{item.isHighlight ? "★" : "☆"}</span>
                     </button>
                   ) : item.isHighlight ? (
-                    <span className="text-[var(--muted)]">★</span>
+                    <span className="gallery-action">
+                      <span className="gallery-action-icon">★</span>
+                    </span>
                   ) : null}
                   {canCurate && item.state === "pending_approval" ? (
                     <>
                       <button
                         type="button"
-                        className="font-medium text-[var(--ok)]"
+                        className="btn btn-primary px-3 py-1.5 text-sm"
                         onClick={() => setMediaState(item, "published")}
                       >
                         Approve
                       </button>
                       <button
                         type="button"
-                        className="font-medium text-[var(--danger)]"
+                        className="btn btn-ghost px-3 py-1.5 text-sm"
                         onClick={() => setMediaState(item, "rejected")}
                       >
                         Reject
@@ -457,30 +488,43 @@ export function Gallery({
                     <button
                       type="button"
                       onClick={() => toggleComments(item)}
-                      className="inline-flex items-center gap-1"
+                      className="gallery-action"
                     >
-                      💬 {item.commentCount}
+                      <span className="gallery-action-icon">💬</span>
+                      <span>{item.commentCount}</span>
                     </button>
                   ) : null}
+                  <button
+                    type="button"
+                    onClick={() => shareItem(item)}
+                    className="gallery-action"
+                  >
+                    <span className="gallery-action-icon">↗</span>
+                    <span>Share</span>
+                  </button>
                   {item.canDownload ? (
-                    <button type="button" onClick={() => downloadOne(item)}>
-                      ↓
+                    <button type="button" onClick={() => downloadOne(item)} className="gallery-action">
+                      <span className="gallery-action-icon">↓</span>
                     </button>
                   ) : null}
                   {item.canDelete ? (
-                    <button type="button" onClick={() => remove(item)} className="ml-auto text-[var(--danger)]">
+                    <button
+                      type="button"
+                      onClick={() => remove(item)}
+                      className="gallery-action gallery-action-danger ml-auto"
+                    >
                       Delete
                     </button>
                   ) : null}
                 </div>
-                <p className="text-xs opacity-70">
+                <p className="text-sm opacity-80">
                   <span className="font-semibold">{item.uploader.displayName}</span>
                   {item.caption ? ` · ${item.caption}` : ""}
                 </p>
 
                 {openCommentsFor === item.id && commentsEnabled ? (
                   <div className="mt-2 space-y-2 border-t border-[var(--line)] pt-2">
-                    <ul className="max-h-28 overflow-auto space-y-1 text-xs">
+                    <ul className="max-h-36 overflow-auto space-y-2 text-sm">
                       {(comments[item.id] || []).map((c) => (
                         <li key={c.id}>
                           <span className="font-semibold">{c.user.displayName}</span> {c.body}
@@ -492,7 +536,7 @@ export function Gallery({
                     </ul>
                     <div className="flex gap-2">
                       <input
-                        className="flex-1 rounded-md border border-[var(--line)] bg-white/70 px-2 py-1 text-xs"
+                        className="flex-1 rounded-lg border border-[var(--line)] bg-white/70 px-3 py-2 text-sm"
                         placeholder="Add a comment…"
                         value={commentText}
                         onChange={(e) => setCommentText(e.target.value)}
@@ -502,7 +546,7 @@ export function Gallery({
                       />
                       <button
                         type="button"
-                        className="btn btn-primary px-2 py-1 text-xs"
+                        className="btn btn-primary px-3 py-2 text-sm"
                         onClick={() => sendComment(item.id)}
                       >
                         Post
@@ -517,34 +561,68 @@ export function Gallery({
       )}
 
       {lightbox ? (
-        <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4"
-          onClick={() => setLightbox(null)}
-        >
-          <div className="max-w-3xl w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="lightbox-shell" onClick={() => setLightbox(null)}>
+          <div className="lightbox-stage" onClick={(e) => e.stopPropagation()}>
             {lightbox.type === "video" ? (
               <video
                 src={lightbox.originalUrl || lightbox.url}
                 controls
-                className="max-h-[80vh] w-full bg-black"
+                autoPlay
+                className="lightbox-media"
               />
             ) : (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={lightbox.originalUrl || lightbox.url}
                 alt={lightbox.caption || "Photo"}
-                className="max-h-[80vh] w-full object-contain bg-black"
+                className="lightbox-media"
               />
             )}
-            <div className="mt-3 flex gap-2 justify-end">
-              {lightbox.canDownload && lightbox.originalUrl ? (
-                <button type="button" className="btn btn-primary" onClick={() => downloadOne(lightbox)}>
-                  Download
+            <div className="lightbox-meta">
+              <div>
+                <p className="font-[family-name:var(--font-display)] text-2xl text-white">
+                  {lightbox.uploader.displayName}
+                </p>
+                {lightbox.caption ? (
+                  <p className="mt-1 text-white/70">{lightbox.caption}</p>
+                ) : null}
+              </div>
+              <div className="gallery-actions gallery-actions-lite">
+                <button
+                  type="button"
+                  onClick={() => toggleLike(lightbox)}
+                  className="gallery-action"
+                  style={{ color: lightbox.likedByMe ? "#c45c4a" : "#fff" }}
+                >
+                  <span className="gallery-action-icon">{lightbox.likedByMe ? "♥" : "♡"}</span>
+                  <span>{lightbox.likeCount}</span>
                 </button>
-              ) : null}
-              <button type="button" className="btn btn-ghost" onClick={() => setLightbox(null)}>
-                Close
-              </button>
+                <button
+                  type="button"
+                  onClick={() => shareItem(lightbox)}
+                  className="gallery-action"
+                  style={{ color: "#fff" }}
+                >
+                  <span className="gallery-action-icon">↗</span>
+                  <span>Share</span>
+                </button>
+                {lightbox.canDownload && lightbox.originalUrl ? (
+                  <button
+                    type="button"
+                    className="btn btn-primary"
+                    onClick={() => downloadOne(lightbox)}
+                  >
+                    Download
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  className="btn btn-ghost border-white/20 bg-white/10 text-white"
+                  onClick={() => setLightbox(null)}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -70,6 +70,8 @@ model Event {
   planTier            String    @default("free")
   instantFeeCents     Int       @default(0)
   highlightsPublished Boolean   @default(false)
+  highlightTemplate   String    @default("mosaic")
+  highlightFilter     String    @default("none")
   maxGuests           Int       @default(10)
   maxMedia            Int       @default(100)
   maxMediaPerGuest    Int       @default(10)

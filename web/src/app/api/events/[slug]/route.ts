@@ -34,6 +34,12 @@ const patchSchema = z.object({
   extendHours: z.number().int().min(1).max(168).optional(),
   state: z.enum(["live", "ended", "scheduled"]).optional(),
   highlightsPublished: z.boolean().optional(),
+  highlightTemplate: z
+    .enum(["mosaic", "grid4", "story", "film", "hero"])
+    .optional(),
+  highlightFilter: z
+    .enum(["none", "warm", "cool", "mono", "vivid", "soft", "noir"])
+    .optional(),
   publishMessage: z.string().trim().max(400).optional(),
   mapsUrl: z.string().trim().max(500).optional(),
   inviteCopy: z.string().trim().max(400).optional(),
@@ -149,6 +155,8 @@ export async function PATCH(req: Request, ctx: Ctx) {
       data.highlightsPublished = body.highlightsPublished;
       if (body.highlightsPublished) data.publishedAt = new Date();
     }
+    if (body.highlightTemplate !== undefined) data.highlightTemplate = body.highlightTemplate;
+    if (body.highlightFilter !== undefined) data.highlightFilter = body.highlightFilter;
     if (body.publishMessage !== undefined) data.publishMessage = body.publishMessage;
     if (body.mapsUrl !== undefined) data.mapsUrl = body.mapsUrl;
     if (body.inviteCopy !== undefined) data.inviteCopy = body.inviteCopy;

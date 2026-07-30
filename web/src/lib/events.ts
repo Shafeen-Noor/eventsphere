@@ -319,6 +319,8 @@ export function publicEventDto(event: {
   planTier?: string;
   instantFeeCents?: number;
   highlightsPublished?: boolean;
+  highlightTemplate?: string;
+  highlightFilter?: string;
   maxGuests?: number;
   maxMedia?: number;
   maxMediaPerGuest?: number;
@@ -381,6 +383,8 @@ export function publicEventDto(event: {
     planTier: event.planTier || "free",
     instantFeeCents: event.instantFeeCents ?? 0,
     highlightsPublished: Boolean(event.highlightsPublished),
+    highlightTemplate: event.highlightTemplate || "mosaic",
+    highlightFilter: event.highlightFilter || "none",
     maxGuests: event.maxGuests ?? 10,
     maxMedia: event.maxMedia ?? 100,
     maxMediaPerGuest: event.maxMediaPerGuest ?? 10,

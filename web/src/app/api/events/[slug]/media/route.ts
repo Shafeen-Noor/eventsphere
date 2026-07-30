@@ -55,37 +55,49 @@ export async function GET(req: Request, ctx: Ctx) {
       where.state = "pending_approval";
     } else if (isOrg) {
       where.state = { in: ["published", "pending_approval"] };
+    } else if (filter === "mine") {
+      // Guests always see their own uploads immediately (even while pending).
+      where.uploaderId = user.id;
+      where.state = { in: ["published", "pending_approval"] };
+    } else if (filter === "highlights") {
+      where.isHighlight = true;
+      where.state = "published";
     } else {
+      // Guests: always include own photos + published media per visibility.
       where.state = "published";
     }
 
     if (filter === "photos") where.type = "image";
     if (filter === "videos") where.type = "video";
-    if (filter === "mine") where.uploaderId = user.id;
-    if (filter === "highlights") where.isHighlight = true;
+    if (filter === "highlights" && isOrg) where.isHighlight = true;
+    if (filter === "mine" && isOrg) where.uploaderId = user.id;
 
-    // Guest visibility rules
-    if (!isOrg) {
+    // Guest visibility rules (non-org, non-mine/highlights already handled above)
+    if (!isOrg && filter !== "mine" && filter !== "highlights") {
       const visibility = event.guestVisibility || "own_only";
-      if (filter !== "mine" && filter !== "highlights") {
-        if (visibility === "own_only") {
-          if (event.highlightsPublished) {
-            where.OR = [
-              { uploaderId: user.id },
-              { isHighlight: true, state: "published" },
-            ];
-            delete where.state;
-          } else {
-            where.uploaderId = user.id;
-          }
-        } else if (visibility === "approved_public") {
-          // published only (already set); all approved
+      const own = {
+        uploaderId: user.id,
+        state: { in: ["published", "pending_approval"] },
+      };
+
+      if (visibility === "own_only") {
+        if (event.highlightsPublished) {
+          where.OR = [own, { isHighlight: true, state: "published" }];
+          delete where.state;
+          delete where.uploaderId;
+        } else {
+          where.uploaderId = user.id;
+          where.state = { in: ["published", "pending_approval"] };
         }
-        // all_members: see all published
+      } else {
+        // approved_public / all_members: everyone else's published + own (incl. pending)
+        where.OR = [own, { state: "published" }];
+        delete where.state;
       }
+
       if (closed && event.highlightsPublished && filter === "all") {
         where.OR = [
-          { uploaderId: user.id, state: "published" },
+          { uploaderId: user.id, state: { in: ["published", "pending_approval"] } },
           { isHighlight: true, state: "published" },
         ];
         delete where.state;
@@ -153,6 +165,8 @@ export async function GET(req: Request, ctx: Ctx) {
       downloadBlockedReason: download.reason,
       atmosphere: event.atmosphere,
       highlightsPublished: event.highlightsPublished,
+      highlightTemplate: event.highlightTemplate || "mosaic",
+      highlightFilter: event.highlightFilter || "none",
       canCurateHighlights: isOrg,
       pendingCount,
       guestVisibility: event.guestVisibility,
