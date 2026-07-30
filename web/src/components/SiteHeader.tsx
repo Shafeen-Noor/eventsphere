@@ -29,14 +29,14 @@ export function SiteHeader({
           <Link
             href="/"
             className="font-[family-name:var(--font-display)] text-2xl tracking-tight"
-            style={{ color: onHero ? "#f8fafc" : "var(--navy)" }}
+            style={{ color: onHero ? "var(--hero-accent)" : "var(--navy)" }}
           >
             EventSphere
           </Link>
           {marketing ? (
             <nav
-              className="hidden items-center gap-5 text-sm font-semibold md:flex"
-              style={{ color: onHero ? "rgba(248,250,252,0.78)" : "var(--muted)" }}
+              className="hidden items-center gap-5 text-sm font-semibold uppercase tracking-[0.12em] md:flex"
+              style={{ color: onHero ? "rgba(232,201,106,0.78)" : "var(--muted)" }}
             >
               <a href="/#how-it-works" className="hover:opacity-100 opacity-90">
                 How it works

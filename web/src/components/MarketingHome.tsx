@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { AnimatedInvite } from "@/components/AnimatedInvite";
+import { NeonReceptionHero } from "@/components/NeonReceptionHero";
 import { VisualMotifs } from "@/components/VisualMotifs";
 
 function useInView<T extends HTMLElement>(threshold = 0.2) {
@@ -47,53 +47,40 @@ function BangSection({
 export function MarketingHome({ header }: { header?: React.ReactNode }) {
   return (
     <>
-      <div className="hero-block hero-bang">
+      <div className="hero-block hero-bang neon-reception-hero">
         <div className="hero-orbit" aria-hidden />
         <div className="hero-orbit hero-orbit-2" aria-hidden />
-        <VisualMotifs variant="hero" />
         {header}
-        <div className="container relative z-[1] grid gap-12 pb-20 pt-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:pb-28 lg:pt-10">
+        <div className="container relative z-[1] grid gap-10 pb-28 pt-6 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:pb-32 lg:pt-8">
           <div className="bang-hero-copy">
-            <p className="bang-kicker">Neon nights · polaroid memories</p>
-            <h1 className="section-title mt-4 text-5xl text-white sm:text-6xl lg:text-7xl">
+            <h1 className="section-title text-5xl text-[var(--hero-accent)] sm:text-6xl lg:text-7xl">
               EventSphere
             </h1>
-            <div className="cobalt-rule" style={{ background: "linear-gradient(90deg, #e8c96a, #e11d8a)" }} />
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-white/70">
-              Guests open a cinematic invite, cameras fill the room, and every flash lands in one
-              private gallery — framed like a film reel, curated like an editor’s cut.
+            <p className="neon-hero-tagline mt-5 max-w-lg text-2xl leading-snug sm:text-3xl">
+              Every moment, together.
+              <br />
+              All your photos, <span className="neon-magenta">in one place.</span>
+            </p>
+            <p className="mt-5 max-w-md text-base leading-relaxed text-[rgba(232,201,106,0.72)]">
+              Collect, relive, and celebrate every moment with the people who made it unforgettable.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/create?mode=free" className="btn btn-primary bang-cta">
-                Start a free event
+              <Link href="/create?mode=free" className="btn bang-cta neon-cta-gold">
+                Create your event
               </Link>
-              <Link
-                href="/signup?path=onetime&next=/create?mode=onetime"
-                className="btn btn-ghost border-white/20 bg-white/10 text-white hover:bg-white/15"
-              >
-                Run one Pro event
+              <Link href="/#how-it-works" className="btn neon-cta-magenta">
+                See how it works
               </Link>
             </div>
-            <p className="mt-4 text-sm text-white/45">
-              Free needs no account. Pro is one paid event or a monthly subscription.
-            </p>
           </div>
 
-          <div className="bang-hero-invite hidden lg:block">
-            <AnimatedInvite
-              size="default"
-              atmosphere="party"
-              title="Tonight’s celebration"
-              hostName="You"
-              whenLabel="Saturday · 9:00 PM"
-              inviteCopy="Pop. Flash. Reel. Relive."
-              autoOpen
-            />
+          <div className="bang-hero-invite relative min-h-[340px] lg:min-h-[460px]">
+            <NeonReceptionHero />
           </div>
         </div>
       </div>
 
-      <BangSection className="picnic-band container py-20">
+      <BangSection id="how-it-works" className="picnic-band container py-20">
         <VisualMotifs variant="section" />
         <div className="relative z-[1]">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--cobalt)]">
