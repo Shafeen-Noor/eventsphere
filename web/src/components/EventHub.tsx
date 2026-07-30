@@ -309,18 +309,20 @@ export function EventHub({
 
       {tab === "gallery" ? (
         <>
-          <SharePanel
-            slug={event.slug}
-            appUrl={appUrl}
-            title={event.title}
-            hostName={event.hostName}
-            locationName={event.locationName}
-            inviteCopy={event.inviteCopy || ""}
-            atmosphere={event.atmosphere}
-            whenLabel={
-              event.startAt ? formatEventWhen(event.startAt) : null
-            }
-          />
+          {isOrganizer ? (
+            <SharePanel
+              slug={event.slug}
+              appUrl={appUrl}
+              title={event.title}
+              hostName={event.hostName}
+              locationName={event.locationName}
+              inviteCopy={event.inviteCopy || ""}
+              atmosphere={event.atmosphere}
+              whenLabel={
+                event.startAt ? formatEventWhen(event.startAt) : null
+              }
+            />
+          ) : null}
           {needsGoingRsvp ? (
             <RsvpPanel
               slug={event.slug}
