@@ -186,19 +186,19 @@ export function MarketingHome({ header }: { header?: React.ReactNode }) {
               <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--accent)]">
                 Pro
               </p>
-              <h3 className="section-title mt-2 text-3xl">$49 once</h3>
+              <h3 className="section-title mt-2 text-3xl">From $9 once</h3>
               <p className="text-sm text-[var(--muted)]">or $29 / month</p>
               <ul className="mt-6 flex-1">
-                <li>150 guests · 2,000 media · 7 days</li>
-                <li>Approval, custom invite, maps</li>
-                <li>Highlights studio</li>
+                <li>Pick size: 25 → 150 guests</li>
+                <li>$9 · $15 · $25 · $39 by pack</li>
+                <li>Approval, invite, highlight collage</li>
               </ul>
               <div className="mt-8 grid gap-2">
                 <Link
                   href="/signup?path=onetime&next=/create?mode=onetime"
                   className="btn btn-primary w-full"
                 >
-                  One Pro event — $49
+                  One Pro event — from $9
                 </Link>
                 <Link
                   href="/signup?path=subscribe&next=/create?mode=subscription"

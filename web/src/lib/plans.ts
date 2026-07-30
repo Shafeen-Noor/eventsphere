@@ -101,10 +101,10 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
       storageLabel: "2,000 media",
     },
     instant: {
-      priceLabel: "$49 once",
-      priceCents: 4900,
-      blurb: "This event only · full Pro controls",
-      storageLabel: "2,000 media",
+      priceLabel: "From $9 once",
+      priceCents: 900,
+      blurb: "Pick guests + storage for this event only",
+      storageLabel: "400–2,000 media",
     },
   },
   professional: {
@@ -150,6 +150,74 @@ export const HOST_TYPES: { id: HostType; label: string }[] = [
 ];
 
 export const SELECTABLE_PLANS: PlanId[] = ["free", "pro"];
+
+/**
+ * Pro one-time event size packs (USD).
+ * AWS math (us-east-1 list, pitch-grade):
+ * - ~4.5 MB stored per media (original + web + thumb)
+ * - 7-day retain → S3 Standard ≈ $0.023/GB-mo × (7/30)
+ * - Delivery (CloudFront) dominates: host download + browse ≈ $0.085/GB
+ * - Buffer for PUT/GET + Neon/Vercel share folded into awsCents
+ * Stripe ≈ 2.9% + $0.30 — kept outside awsCents; see net after fee in pitch.
+ */
+export const ONETIME_TIERS = [
+  {
+    id: "cozy",
+    label: "Cozy",
+    guests: 25,
+    maxMedia: 400,
+    maxMediaPerGuest: 20,
+    priceCents: 900,
+    priceLabel: "$9",
+    /** Estimated all-in AWS variable cost for a full event */
+    awsCents: 80,
+    blurb: "Birthday dinner · small crew",
+  },
+  {
+    id: "party",
+    label: "Party",
+    guests: 50,
+    maxMedia: 800,
+    maxMediaPerGuest: 25,
+    priceCents: 1500,
+    priceLabel: "$15",
+    awsCents: 140,
+    blurb: "House party · weekend trip",
+  },
+  {
+    id: "gather",
+    label: "Gather",
+    guests: 100,
+    maxMedia: 1400,
+    maxMediaPerGuest: 30,
+    priceCents: 2500,
+    priceLabel: "$25",
+    awsCents: 220,
+    blurb: "Big birthday · family celebration",
+  },
+  {
+    id: "celebration",
+    label: "Celebration",
+    guests: 150,
+    maxMedia: 2000,
+    maxMediaPerGuest: 40,
+    priceCents: 3900,
+    priceLabel: "$39",
+    awsCents: 300,
+    blurb: "Reception-size · full Pro controls",
+  },
+] as const;
+
+export type OnetimeTierId = (typeof ONETIME_TIERS)[number]["id"];
+
+export function getOnetimeTier(id?: string | null) {
+  return ONETIME_TIERS.find((t) => t.id === id) ?? ONETIME_TIERS[0];
+}
+
+/** Stripe fee estimate in cents for a charge amount */
+export function stripeFeeCents(priceCents: number) {
+  return Math.round(priceCents * 0.029) + 30;
+}
 
 export function planLabel(plan: string | null | undefined) {
   const id = (plan || "free") as PlanId;

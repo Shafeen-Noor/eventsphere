@@ -4,7 +4,13 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ThemePreview } from "@/components/ThemePreview";
 import { ATMOSPHERES, type AtmosphereId } from "@/lib/atmospheres";
-import { getPlan, type PlanId } from "@/lib/plans";
+import {
+  getOnetimeTier,
+  getPlan,
+  ONETIME_TIERS,
+  type OnetimeTierId,
+  type PlanId,
+} from "@/lib/plans";
 import {
   formatInTimeZone,
   getDeviceTimeZone,
@@ -54,6 +60,8 @@ export function CreateEventForm({
   const [uploadWindowHours, setUploadWindowHours] = useState(
     isPro ? 24 : plan.limits.maxDurationHours,
   );
+  const [onetimeTierId, setOnetimeTierId] = useState<OnetimeTierId>("party");
+  const onetimeTier = getOnetimeTier(onetimeTierId);
   const [maxGuests, setMaxGuests] = useState(plan.limits.maxGuests);
   const [maxMedia, setMaxMedia] = useState(plan.limits.maxMedia);
   const [maxMediaPerGuest, setMaxMediaPerGuest] = useState(
@@ -83,13 +91,19 @@ export function CreateEventForm({
 
   useEffect(() => {
     setDurationHours(plan.limits.maxDurationHours);
-    setMaxGuests(plan.limits.maxGuests);
-    setMaxMedia(plan.limits.maxMedia);
-    setMaxMediaPerGuest(plan.limits.maxMediaPerGuestDefault);
     setUploadWindowHours(isPro ? 24 : plan.limits.maxDurationHours);
     setRequireApproval(isPro);
     setRsvpEnabled(isPro);
-  }, [activePlanId, isPro, plan.limits]);
+    if (isOnetime) {
+      setMaxGuests(onetimeTier.guests);
+      setMaxMedia(onetimeTier.maxMedia);
+      setMaxMediaPerGuest(onetimeTier.maxMediaPerGuest);
+    } else {
+      setMaxGuests(plan.limits.maxGuests);
+      setMaxMedia(plan.limits.maxMedia);
+      setMaxMediaPerGuest(plan.limits.maxMediaPerGuestDefault);
+    }
+  }, [activePlanId, isPro, isOnetime, onetimeTier, plan.limits]);
 
   const headline = isFree
     ? "Start a free event"
@@ -99,7 +113,7 @@ export function CreateEventForm({
   const subcopy = isFree
     ? "No account needed. 10 guests · 100 photos · 24 hours. Guests join by name."
     : isOnetime
-      ? "One-time $49 for this event’s Pro controls — not a monthly subscription."
+      ? `Pick your size — from $9 (25 guests) to $39 (150). Pay once for this event.`
       : "Included in your Pro subscription. No per-event checkout.";
 
   async function onSubmit(e: React.FormEvent) {
@@ -124,9 +138,11 @@ export function CreateEventForm({
           useCase,
           retentionHours: durationHours,
           uploadWindowHours: isPro ? uploadWindowHours : durationHours,
-          maxGuests,
-          maxMedia,
-          maxMediaPerGuest,
+          maxGuests: isOnetime ? onetimeTier.guests : maxGuests,
+          maxMedia: isOnetime ? onetimeTier.maxMedia : maxMedia,
+          maxMediaPerGuest: isOnetime
+            ? onetimeTier.maxMediaPerGuest
+            : maxMediaPerGuest,
           guestVisibility: isPro ? guestVisibility : "own_only",
           requireApproval: isPro ? requireApproval : false,
           passcode: passcode.trim() || null,
@@ -141,6 +157,7 @@ export function CreateEventForm({
           startAt: startUtc.toISOString(),
           billingMode: mode,
           planTier: activePlanId,
+          onetimeTierId: isOnetime ? onetimeTierId : undefined,
           confirmInstantPayment: isOnetime,
         }),
       });
@@ -166,7 +183,7 @@ export function CreateEventForm({
   const cta = isFree
     ? "Create free event"
     : isOnetime
-      ? "Pay $49 · create event"
+      ? `Pay ${onetimeTier.priceLabel} · create event`
       : "Create event";
 
   return (
@@ -186,11 +203,14 @@ export function CreateEventForm({
           <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] px-4 py-3">
             <p className="font-semibold text-[var(--navy)]">One-time payment</p>
             <p className="mt-1 text-sm text-[var(--muted)]">
-              Checkout is simulated until Stripe is connected. You get full Pro controls for this
-              single event.
+              Checkout is simulated until Stripe is connected. Choose your guest + photo pack
+              below — price updates with size.
             </p>
             <p className="mt-2 font-[family-name:var(--font-display)] text-3xl text-[var(--navy)]">
-              $49
+              {onetimeTier.priceLabel}
+              <span className="ml-2 text-base font-semibold text-[var(--muted)]">
+                · {onetimeTier.guests} guests
+              </span>
             </p>
           </div>
         ) : null}
@@ -378,41 +398,85 @@ export function CreateEventForm({
           </div>
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="field">
-            <label htmlFor="maxGuests">Max guests</label>
-            <input
-              id="maxGuests"
-              type="number"
-              min={1}
-              max={plan.limits.maxGuests}
-              value={maxGuests}
-              onChange={(e) => setMaxGuests(Number(e.target.value))}
-            />
+        {isOnetime ? (
+          <div className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--accent)]">
+              Event size · one-time price
+            </p>
+            <p className="text-sm text-[var(--muted)]">
+              Choose guests + photo storage. Priced so AWS storage stays covered with a
+              small margin — not a flat $49 for every birthday.
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {ONETIME_TIERS.map((t) => {
+                const selected = onetimeTierId === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setOnetimeTierId(t.id)}
+                    className="rounded-xl border p-3 text-left transition"
+                    style={{
+                      borderColor: selected ? "var(--accent)" : "var(--line)",
+                      background: selected ? "var(--accent-soft)" : "var(--bg)",
+                    }}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <span className="font-[family-name:var(--font-display)] text-xl">
+                        {t.label}
+                      </span>
+                      <span className="text-lg font-bold">{t.priceLabel}</span>
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--muted)]">
+                      {t.guests} guests · {t.maxMedia.toLocaleString()} photos
+                    </p>
+                    <p className="mt-0.5 text-xs text-[var(--muted)]">{t.blurb}</p>
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-[var(--muted)]">
+              Est. AWS media cost for a full {onetimeTier.label} event ≈ $
+              {(onetimeTier.awsCents / 100).toFixed(2)} · you pay {onetimeTier.priceLabel}
+            </p>
           </div>
-          <div className="field">
-            <label htmlFor="maxMedia">Max photos</label>
-            <input
-              id="maxMedia"
-              type="number"
-              min={1}
-              max={plan.limits.maxMedia}
-              value={maxMedia}
-              onChange={(e) => setMaxMedia(Number(e.target.value))}
-            />
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="field">
+              <label htmlFor="maxGuests">Max guests</label>
+              <input
+                id="maxGuests"
+                type="number"
+                min={1}
+                max={plan.limits.maxGuests}
+                value={maxGuests}
+                onChange={(e) => setMaxGuests(Number(e.target.value))}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="maxMedia">Max photos</label>
+              <input
+                id="maxMedia"
+                type="number"
+                min={1}
+                max={plan.limits.maxMedia}
+                value={maxMedia}
+                onChange={(e) => setMaxMedia(Number(e.target.value))}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="perGuest">Per guest</label>
+              <input
+                id="perGuest"
+                type="number"
+                min={1}
+                max={maxMedia}
+                value={maxMediaPerGuest}
+                onChange={(e) => setMaxMediaPerGuest(Number(e.target.value))}
+              />
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="perGuest">Per guest</label>
-            <input
-              id="perGuest"
-              type="number"
-              min={1}
-              max={maxMedia}
-              value={maxMediaPerGuest}
-              onChange={(e) => setMaxMediaPerGuest(Number(e.target.value))}
-            />
-          </div>
-        </div>
+        )}
 
         {isPro ? (
           <div className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--bg-elevated)] p-4">

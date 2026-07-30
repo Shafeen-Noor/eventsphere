@@ -88,12 +88,12 @@ export default async function HomePage() {
             <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--accent-soft)] px-5 py-4">
               <p className="font-semibold text-[var(--navy)]">You’re on a personal account</p>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Upgrade to Pro ($29/mo) for multiple events, or create a single Pro event for $49.
+                Upgrade to Pro ($29/mo) for multiple events, or create a single Pro event from $9.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <UpgradeProButton />
                 <Link href="/create?mode=onetime" className="btn btn-ghost">
-                  One Pro event — $49
+                  One Pro event — from $9
                 </Link>
               </div>
             </div>

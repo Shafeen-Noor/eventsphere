@@ -79,13 +79,13 @@ export default function PricingPage() {
             </p>
             <h2 className="section-title mt-2 text-3xl">Full host controls</h2>
             <p className="mt-2 text-4xl font-bold tracking-tight">
-              $49 <span className="text-lg font-semibold text-[var(--muted)]">once</span>
+              From $9 <span className="text-lg font-semibold text-[var(--muted)]">once</span>
             </p>
             <p className="text-sm text-[var(--muted)]">or $29 / month · account required</p>
             <ul className="mt-6 flex-1">
-              <li>150 guests · 2,000 media · 7 days</li>
+              <li>Size packs: 25 → 150 guests ($9–$39)</li>
               <li>Approval, visibility, custom invite</li>
-              <li>RSVP, maps, highlights, videos</li>
+              <li>RSVP, maps, highlight collage</li>
               <li>Email / WhatsApp contacts on join</li>
             </ul>
             <div className="mt-8 grid gap-2">
@@ -93,7 +93,7 @@ export default function PricingPage() {
                 href="/signup?path=onetime&next=/create?mode=onetime"
                 className="btn btn-primary w-full"
               >
-                One Pro event — $49
+                One Pro event — from $9
               </Link>
               <Link
                 href="/signup?path=subscribe&next=/create?mode=subscription"

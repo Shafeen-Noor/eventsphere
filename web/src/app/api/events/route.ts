@@ -7,7 +7,7 @@ import {
 import { prisma } from "@/lib/db";
 import { hashPasscode, publicEventDto } from "@/lib/events";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
-import { getPlan, PLANS } from "@/lib/plans";
+import { getOnetimeTier, getPlan } from "@/lib/plans";
 import { slugifyTitle } from "@/lib/slug";
 
 const createSchema = z.object({
@@ -47,6 +47,9 @@ const createSchema = z.object({
     .optional()
     .default("subscription"),
   planTier: z.enum(["free", "pro", "professional"]).optional(),
+  onetimeTierId: z
+    .enum(["cozy", "party", "gather", "celebration"])
+    .optional(),
   confirmInstantPayment: z.boolean().optional().default(false),
 });
 
@@ -112,16 +115,23 @@ export async function POST(req: Request) {
 
     let planTier: "free" | "pro";
     let instantFeeCents = 0;
+    let onetimeGuests: number | undefined;
+    let onetimeMedia: number | undefined;
+    let onetimePerGuest: number | undefined;
 
     if (billingMode === "free") {
       planTier = "free";
     } else if (billingMode === "onetime") {
       planTier = "pro";
-      instantFeeCents = PLANS.pro.instant.priceCents;
+      const tier = getOnetimeTier(body.onetimeTierId);
+      instantFeeCents = tier.priceCents;
+      onetimeGuests = tier.guests;
+      onetimeMedia = tier.maxMedia;
+      onetimePerGuest = tier.maxMediaPerGuest;
       if (!body.confirmInstantPayment) {
         return jsonError(
           "PAYMENT_REQUIRED",
-          "Confirm the one-time payment to create this Pro event.",
+          `Confirm the ${tier.priceLabel} one-time payment to create this Pro event.`,
           402,
         );
       }
@@ -187,15 +197,17 @@ export async function POST(req: Request) {
     }
 
     const maxGuests = Math.min(
-      body.maxGuests ?? plan.limits.maxGuests,
+      onetimeGuests ?? body.maxGuests ?? plan.limits.maxGuests,
       plan.limits.maxGuests,
     );
     const maxMedia = Math.min(
-      body.maxMedia ?? plan.limits.maxMedia,
+      onetimeMedia ?? body.maxMedia ?? plan.limits.maxMedia,
       plan.limits.maxMedia,
     );
     const maxMediaPerGuest = Math.min(
-      body.maxMediaPerGuest ?? plan.limits.maxMediaPerGuestDefault,
+      onetimePerGuest ??
+        body.maxMediaPerGuest ??
+        plan.limits.maxMediaPerGuestDefault,
       plan.limits.maxMedia,
     );
 
