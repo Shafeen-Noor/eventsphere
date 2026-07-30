@@ -4,6 +4,7 @@ import { EventHub } from "@/components/EventHub";
 import { InviteCard } from "@/components/InviteCard";
 import { SiteHeader } from "@/components/SiteHeader";
 import { WaitingRoom } from "@/components/WaitingRoom";
+import { headers } from "next/headers";
 import { getAppUrl } from "@/lib/appUrl";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
@@ -48,7 +49,18 @@ export default async function EventPage({ params }: Props) {
 
   const expired = isEventExpired(event.expiresAt);
   const started = hasEventStarted(event.startAt);
-  const appUrl = getAppUrl();
+
+  // Build a Request-like host from Next headers so QR uses the public alias.
+  const h = await headers();
+  const host = h.get("x-forwarded-host") || h.get("host") || "";
+  const proto = h.get("x-forwarded-proto") || "https";
+  const appUrl = getAppUrl(
+    host
+      ? new Request(`${proto}://${host}/`, {
+          headers: { host, "x-forwarded-host": host, "x-forwarded-proto": proto },
+        })
+      : undefined,
+  );
   const isMember = membership && membership.status === "active";
   const isOrganizer =
     membership?.role === "organizer" || membership?.role === "co_organizer";
