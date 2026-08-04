@@ -13,7 +13,7 @@ import {
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isEventExpired } from "@/lib/events";
-import { planLabel } from "@/lib/plans";
+import { normalizePlanId, planLabel } from "@/lib/plans";
 
 export default async function HomePage() {
   const user = await getCurrentUser();
@@ -47,12 +47,15 @@ export default async function HomePage() {
     isOwner: event.ownerId === user!.id,
   }));
 
-  const isProSub = hasAccount && user?.plan === "pro";
+  const continueSlug = memberships[0]?.event.slug ?? null;
+  const planId = user ? normalizePlanId(user.plan) : "free";
+  const isPaidHost =
+    hasAccount && (planId === "premium" || planId === "enterprise" || planId === "essential");
 
-  // Logged-in: personal dashboard only — no marketing content
+  // Logged-in account: personal workspace
   if (hasAccount && user) {
     return (
-      <main>
+      <main className="es-site">
         <SiteHeader
           marketing={false}
           right={<AuthControls user={publicUser} />}
@@ -74,26 +77,24 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              {!isProSub ? <UpgradeProButton label="Upgrade to Pro" /> : null}
-              <Link
-                href={isProSub ? "/create?mode=subscription" : "/create?mode=onetime"}
-                className="btn btn-ghost"
-              >
+              {!isPaidHost ? <UpgradeProButton plan="premium" label="Upgrade to Premium" /> : null}
+              <Link href="/create" className="btn btn-ghost">
                 + New event
               </Link>
             </div>
           </div>
 
-          {!isProSub ? (
+          {!isPaidHost ? (
             <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--accent-soft)] px-5 py-4">
-              <p className="font-semibold text-[var(--navy)]">You’re on a personal account</p>
+              <p className="font-semibold text-[var(--navy)]">You’re on Free</p>
               <p className="mt-1 text-sm text-[var(--muted)]">
-                Upgrade to Pro ($29/mo) for multiple events, or create a single Pro event from $9.
+                Create unlimited free events, or upgrade your account to Essential / Premium for
+                higher caps and host tools across events.
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
-                <UpgradeProButton />
-                <Link href="/create?mode=onetime" className="btn btn-ghost">
-                  One Pro event — from $9
+                <UpgradeProButton plan="premium" />
+                <Link href="/pricing" className="btn btn-ghost">
+                  Compare plans
                 </Link>
               </div>
             </div>
@@ -107,23 +108,13 @@ export default async function HomePage() {
             <div className="panel flex flex-col items-center gap-3 p-10 text-center">
               <h3 className="section-title text-2xl">No events yet</h3>
               <p className="max-w-md text-sm text-[var(--muted)]">
-                {isProSub
-                  ? "Create your first shared gallery."
-                  : "Start with one Pro event, or upgrade to run multiple this month."}
+                Start a free gallery in under a minute — no payment required.
               </p>
               <div className="mt-2 flex flex-wrap justify-center gap-2">
-                {isProSub ? (
-                  <Link href="/create?mode=subscription" className="btn btn-primary">
-                    Create event
-                  </Link>
-                ) : (
-                  <>
-                    <Link href="/create?mode=onetime" className="btn btn-primary">
-                      One Pro event
-                    </Link>
-                    <UpgradeProButton label="Upgrade to Pro" className="btn btn-ghost" />
-                  </>
-                )}
+                <Link href="/create" className="btn btn-primary">
+                  Create event
+                </Link>
+                <UpgradeProButton plan="premium" label="Upgrade to Premium" className="btn btn-ghost" />
               </div>
             </div>
           ) : (
@@ -134,9 +125,11 @@ export default async function HomePage() {
     );
   }
 
+  // Marketing for anonymous + guest cookie users (continueSlug when they have an event)
   return (
     <main>
       <MarketingHome
+        continueSlug={continueSlug}
         header={
           <SiteHeader
             variant="hero"
@@ -145,11 +138,8 @@ export default async function HomePage() {
                 <Link href="/login" className="text-sm font-semibold text-[var(--muted)] hover:text-[var(--fg)]">
                   Sign in
                 </Link>
-                <Link
-                  href="/signup?path=subscribe&next=/create?mode=subscription"
-                  className="btn btn-primary"
-                >
-                  Subscribe to Pro
+                <Link href="/create" className="btn btn-primary">
+                  Create Your Event
                 </Link>
               </div>
             }

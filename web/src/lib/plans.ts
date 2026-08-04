@@ -1,147 +1,5 @@
-export type PlanId = "free" | "pro" | "professional";
-export type BillingMode = "free" | "onetime" | "subscription";
+export type PlanId = "free" | "essential" | "premium" | "enterprise";
 export type HostType = "planner" | "venue" | "individual";
-export type GuestVisibility = "own_only" | "approved_public" | "all_members";
-
-export type PlanLimits = {
-  maxGuests: number;
-  maxMedia: number;
-  maxMediaPerGuestDefault: number;
-  maxDurationHours: number;
-  canSetUploadWindow: boolean;
-  canCustomizeInvite: boolean;
-  canAddMaps: boolean;
-  canUseVideos: boolean;
-  canRequireApproval: boolean;
-  canPublishHighlights: boolean;
-  canUseLiveWall: boolean;
-  canUseRsvp: boolean;
-  canSetGuestVisibility: boolean;
-  canCollectContacts: boolean;
-  branding: boolean;
-};
-
-export type PlanDefinition = {
-  id: PlanId;
-  label: string;
-  comingSoon?: boolean;
-  limits: PlanLimits;
-  subscription: {
-    priceLabel: string;
-    priceCents: number;
-    blurb: string;
-    storageLabel: string;
-  };
-  instant: {
-    priceLabel: string;
-    priceCents: number;
-    blurb: string;
-    storageLabel: string;
-  };
-};
-
-export const PLANS: Record<PlanId, PlanDefinition> = {
-  free: {
-    id: "free",
-    label: "Free",
-    limits: {
-      maxGuests: 10,
-      maxMedia: 100,
-      maxMediaPerGuestDefault: 10,
-      maxDurationHours: 24,
-      canSetUploadWindow: false,
-      canCustomizeInvite: false,
-      canAddMaps: false,
-      canUseVideos: false,
-      canRequireApproval: false,
-      canPublishHighlights: false,
-      canUseLiveWall: false,
-      canUseRsvp: false,
-      canSetGuestVisibility: false,
-      canCollectContacts: false,
-      branding: true,
-    },
-    subscription: {
-      priceLabel: "$0 / mo",
-      priceCents: 0,
-      blurb: "10 guests · 100 photos · 24h",
-      storageLabel: "100 photos",
-    },
-    instant: {
-      priceLabel: "$0",
-      priceCents: 0,
-      blurb: "10 guests · 100 photos · 24h",
-      storageLabel: "100 photos",
-    },
-  },
-  pro: {
-    id: "pro",
-    label: "Pro",
-    limits: {
-      maxGuests: 150,
-      maxMedia: 2000,
-      maxMediaPerGuestDefault: 50,
-      maxDurationHours: 168,
-      canSetUploadWindow: true,
-      canCustomizeInvite: true,
-      canAddMaps: true,
-      canUseVideos: true,
-      canRequireApproval: true,
-      canPublishHighlights: true,
-      canUseLiveWall: true,
-      canUseRsvp: true,
-      canSetGuestVisibility: true,
-      canCollectContacts: true,
-      branding: false,
-    },
-    subscription: {
-      priceLabel: "$29 / mo",
-      priceCents: 2900,
-      blurb: "Approval · private albums · custom card · up to 7 days",
-      storageLabel: "2,000 media",
-    },
-    instant: {
-      priceLabel: "From $9 once",
-      priceCents: 900,
-      blurb: "Pick guests + storage for this event only",
-      storageLabel: "400–2,000 media",
-    },
-  },
-  professional: {
-    id: "professional",
-    label: "Professional",
-    comingSoon: true,
-    limits: {
-      maxGuests: 1000,
-      maxMedia: 20000,
-      maxMediaPerGuestDefault: 100,
-      maxDurationHours: 720,
-      canSetUploadWindow: true,
-      canCustomizeInvite: true,
-      canAddMaps: true,
-      canUseVideos: true,
-      canRequireApproval: true,
-      canPublishHighlights: true,
-      canUseLiveWall: true,
-      canUseRsvp: true,
-      canSetGuestVisibility: true,
-      canCollectContacts: true,
-      branding: false,
-    },
-    subscription: {
-      priceLabel: "$99 / mo",
-      priceCents: 9900,
-      blurb: "Coming soon · agency / white-label",
-      storageLabel: "20,000 media",
-    },
-    instant: {
-      priceLabel: "$149 once",
-      priceCents: 14900,
-      blurb: "Coming soon",
-      storageLabel: "20,000 media",
-    },
-  },
-};
 
 export const HOST_TYPES: { id: HostType; label: string }[] = [
   { id: "planner", label: "Event planner / agency" },
@@ -149,109 +7,253 @@ export const HOST_TYPES: { id: HostType; label: string }[] = [
   { id: "individual", label: "Individual host" },
 ];
 
-export const SELECTABLE_PLANS: PlanId[] = ["free", "pro"];
+/** Soft “unlimited” cap stored in DB for media/guests. */
+export const UNLIMITED = 999_999;
 
-/**
- * Pro one-time event size packs (USD).
- * AWS math (us-east-1 list, pitch-grade):
- * - ~4.5 MB stored per media (original + web + thumb)
- * - 7-day retain → S3 Standard ≈ $0.023/GB-mo × (7/30)
- * - Delivery (CloudFront) dominates: host download + browse ≈ $0.085/GB
- * - Buffer for PUT/GET + Neon/Vercel share folded into awsCents
- * Stripe ≈ 2.9% + $0.30 — kept outside awsCents; see net after fee in pitch.
- */
-export const ONETIME_TIERS = [
-  {
-    id: "cozy",
-    label: "Cozy",
-    guests: 25,
-    maxMedia: 400,
-    maxMediaPerGuest: 20,
+export const EXTENSION_MONTH_CENTS = 500;
+
+export type EventTypeId =
+  | "wedding"
+  | "birthday"
+  | "party"
+  | "corporate"
+  | "conference"
+  | "reunion"
+  | "baby_shower"
+  | "graduation"
+  | "holiday"
+  | "other";
+
+export const EVENT_TYPES: { id: EventTypeId; label: string }[] = [
+  { id: "wedding", label: "Wedding" },
+  { id: "birthday", label: "Birthday" },
+  { id: "party", label: "Party / celebration" },
+  { id: "corporate", label: "Corporate" },
+  { id: "conference", label: "Conference" },
+  { id: "reunion", label: "Reunion" },
+  { id: "baby_shower", label: "Baby shower" },
+  { id: "graduation", label: "Graduation" },
+  { id: "holiday", label: "Holiday gathering" },
+  { id: "other", label: "Other" },
+];
+
+export type PlanFeatures = {
+  branding: boolean;
+  guestbook: boolean;
+  feed: boolean;
+  slideshow: boolean;
+  zipDownload: boolean;
+  coverPhoto: boolean;
+  timeline: boolean;
+  challenges: boolean;
+  polls: boolean;
+  audioMemories: boolean;
+  seating: boolean;
+  voting: boolean;
+  ai: boolean;
+  multihost: boolean;
+  password: boolean;
+  faces: boolean;
+  analytics: boolean;
+  moderation: boolean;
+  whiteLabel: boolean;
+  api: boolean;
+};
+
+export type PlanDefinition = {
+  id: PlanId;
+  label: string;
+  priceCents: number;
+  priceLabel: string;
+  blurb: string;
+  maxGuests: number;
+  maxMedia: number;
+  retentionHours: number;
+  features: PlanFeatures;
+};
+
+const FREE_FEATURES: PlanFeatures = {
+  branding: true,
+  guestbook: true,
+  feed: true,
+  slideshow: false,
+  zipDownload: false,
+  coverPhoto: false,
+  timeline: false,
+  challenges: false,
+  polls: false,
+  audioMemories: false,
+  seating: false,
+  voting: false,
+  ai: false,
+  multihost: false,
+  password: false,
+  faces: false,
+  analytics: false,
+  moderation: false,
+  whiteLabel: false,
+  api: false,
+};
+
+const ESSENTIAL_FEATURES: PlanFeatures = {
+  ...FREE_FEATURES,
+  branding: true,
+  slideshow: true,
+  zipDownload: true,
+  coverPhoto: true,
+  timeline: true,
+  challenges: true,
+  polls: true,
+  audioMemories: true,
+  seating: true,
+};
+
+const PREMIUM_FEATURES: PlanFeatures = {
+  ...ESSENTIAL_FEATURES,
+  branding: false,
+  voting: true,
+  ai: true,
+  multihost: true,
+  password: true,
+  faces: true,
+  analytics: true,
+  moderation: true,
+};
+
+const ENTERPRISE_FEATURES: PlanFeatures = {
+  ...PREMIUM_FEATURES,
+  branding: false,
+  whiteLabel: true,
+  api: true,
+};
+
+export const PLANS: Record<PlanId, PlanDefinition> = {
+  free: {
+    id: "free",
+    label: "Free",
+    priceCents: 0,
+    priceLabel: "$0",
+    blurb: "5 guests · 40 media · 24h · guestbook + live feed",
+    maxGuests: 5,
+    maxMedia: 40,
+    retentionHours: 24,
+    features: FREE_FEATURES,
+  },
+  essential: {
+    id: "essential",
+    label: "Essential",
     priceCents: 900,
     priceLabel: "$9",
-    /** Estimated all-in AWS variable cost for a full event */
-    awsCents: 80,
-    blurb: "Birthday dinner · small crew",
+    blurb: "50 guests · 500 media · 7 days · slideshow, polls, seating",
+    maxGuests: 50,
+    maxMedia: 500,
+    retentionHours: 24 * 7,
+    features: ESSENTIAL_FEATURES,
   },
-  {
-    id: "party",
-    label: "Party",
-    guests: 50,
-    maxMedia: 800,
-    maxMediaPerGuest: 25,
-    priceCents: 1500,
-    priceLabel: "$15",
-    awsCents: 140,
-    blurb: "House party · weekend trip",
+  premium: {
+    id: "premium",
+    label: "Premium",
+    priceCents: 2900,
+    priceLabel: "$29",
+    blurb: "200 guests · unlimited media · 30 days · AI, faces, moderation",
+    maxGuests: 200,
+    maxMedia: UNLIMITED,
+    retentionHours: 24 * 30,
+    features: PREMIUM_FEATURES,
   },
-  {
-    id: "gather",
-    label: "Gather",
-    guests: 100,
-    maxMedia: 1400,
-    maxMediaPerGuest: 30,
-    priceCents: 2500,
-    priceLabel: "$25",
-    awsCents: 220,
-    blurb: "Big birthday · family celebration",
+  enterprise: {
+    id: "enterprise",
+    label: "Enterprise",
+    priceCents: 19900,
+    priceLabel: "$199/mo",
+    blurb: "Unlimited everything · white-label · API access",
+    maxGuests: UNLIMITED,
+    maxMedia: UNLIMITED,
+    retentionHours: 24 * 365,
+    features: ENTERPRISE_FEATURES,
   },
-  {
-    id: "celebration",
-    label: "Celebration",
-    guests: 150,
-    maxMedia: 2000,
-    maxMediaPerGuest: 40,
-    priceCents: 3900,
-    priceLabel: "$39",
-    awsCents: 300,
-    blurb: "Reception-size · full Pro controls",
-  },
-] as const;
+};
 
-export type OnetimeTierId = (typeof ONETIME_TIERS)[number]["id"];
+export const SELECTABLE_PLANS: PlanId[] = [
+  "free",
+  "essential",
+  "premium",
+  "enterprise",
+];
 
-export function getOnetimeTier(id?: string | null) {
-  return ONETIME_TIERS.find((t) => t.id === id) ?? ONETIME_TIERS[0];
-}
-
-/** Stripe fee estimate in cents for a charge amount */
-export function stripeFeeCents(priceCents: number) {
-  return Math.round(priceCents * 0.029) + 30;
-}
-
-export function planLabel(plan: string | null | undefined) {
-  const id = (plan || "free") as PlanId;
-  return PLANS[id]?.label ?? "Free";
+/** Map legacy plan ids and aliases onto current PlanIds. */
+export function normalizePlanId(plan: string | null | undefined): PlanId {
+  const raw = (plan || "free").toLowerCase().trim();
+  if (raw === "pro") return "essential";
+  if (raw === "professional") return "enterprise";
+  if (
+    raw === "free" ||
+    raw === "essential" ||
+    raw === "premium" ||
+    raw === "enterprise"
+  ) {
+    return raw;
+  }
+  return "free";
 }
 
 export function getPlan(plan: string | null | undefined): PlanDefinition {
-  const id = (plan || "free") as PlanId;
-  return PLANS[id] ?? PLANS.free;
+  return PLANS[normalizePlanId(plan)];
+}
+
+export function planLabel(plan: string | null | undefined) {
+  return getPlan(plan).label;
+}
+
+export function mediaLimitLabel(maxMedia: number | null | undefined) {
+  if (maxMedia == null || maxMedia >= UNLIMITED) return "Unlimited media";
+  return `${maxMedia.toLocaleString()} media`;
+}
+
+export function guestLimitLabel(maxGuests: number | null | undefined) {
+  if (maxGuests == null || maxGuests >= UNLIMITED) return "Unlimited guests";
+  return `${maxGuests.toLocaleString()} guests`;
+}
+
+export type PlanLimitedEventFields = {
+  planTier: PlanId;
+  maxGuests: number;
+  maxMedia: number;
+  retentionHours: number;
+  whiteLabel?: boolean;
+};
+
+/** Apply plan caps onto an event draft / row (does not persist). */
+export function applyPlanLimitsToEvent<T extends Record<string, unknown>>(
+  event: T,
+  planId?: string | null,
+): T & PlanLimitedEventFields {
+  const plan = getPlan(
+    planId ??
+      (typeof event.planTier === "string" ? event.planTier : undefined),
+  );
+  return {
+    ...event,
+    planTier: plan.id,
+    maxGuests: plan.maxGuests,
+    maxMedia: plan.maxMedia,
+    retentionHours: plan.retentionHours,
+    whiteLabel: plan.features.whiteLabel,
+  };
 }
 
 export function assertSelectablePlan(plan: string): PlanId {
-  if (plan === "professional") {
+  const id = normalizePlanId(plan);
+  if (!SELECTABLE_PLANS.includes(id)) {
     throw new Response(
       JSON.stringify({
         error: {
-          code: "PLAN_COMING_SOON",
-          message: "Professional is coming soon. Choose Free or Pro for now.",
+          code: "PLAN_INVALID",
+          message: "Choose Free, Essential, Premium, or Enterprise.",
         },
       }),
       { status: 422, headers: { "Content-Type": "application/json" } },
     );
   }
-  if (plan !== "free" && plan !== "pro") {
-    throw new Response(
-      JSON.stringify({
-        error: { code: "PLAN_INVALID", message: "Choose Free or Pro." },
-      }),
-      { status: 422, headers: { "Content-Type": "application/json" } },
-    );
-  }
-  return plan;
-}
-
-export function guestLimitLabel(maxGuests: number | null) {
-  return maxGuests == null ? "Unlimited" : `${maxGuests} guests`;
+  return id;
 }

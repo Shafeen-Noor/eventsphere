@@ -42,6 +42,11 @@ export function Gallery({
   isOrganizer = false,
   highlightsPublished = false,
   onHighlightsPublished,
+  memoryCards = false,
+  filterMode,
+  onReact,
+  emojis,
+  onVote,
 }: {
   slug: string;
   refreshKey: number;
@@ -51,10 +56,23 @@ export function Gallery({
   isOrganizer?: boolean;
   highlightsPublished?: boolean;
   onHighlightsPublished?: (published: boolean) => void;
+  /** Render polaroid-style memory cards instead of the default grid tiles */
+  memoryCards?: boolean;
+  /** Optional initial / locked filter mode (e.g. highlights) */
+  filterMode?: string;
+  /** Optional reaction handler (emoji reactions API) */
+  onReact?: (mediaId: string, emoji: string) => void;
+  emojis?: string[];
+  /** Optional photo-vote handler */
+  onVote?: (mediaId: string) => void;
 }) {
   const theme = getAtmosphere(atmosphere);
   const [media, setMedia] = useState<MediaItem[]>([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(filterMode || "all");
+
+  useEffect(() => {
+    if (filterMode) setFilter(filterMode);
+  }, [filterMode]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [canDownload, setCanDownload] = useState(false);
@@ -309,8 +327,9 @@ export function Gallery({
     }
   }
 
-  const layoutClass =
-    theme.layout === "polaroid"
+  const layoutClass = memoryCards
+    ? "polaroid-wall"
+    : theme.layout === "polaroid"
       ? "gallery-polaroid"
       : theme.layout === "film"
         ? "gallery-film"
@@ -319,6 +338,8 @@ export function Gallery({
           : theme.layout === "disco"
             ? "gallery-disco"
             : "gallery-ig";
+
+  const reactionEmojis = emojis?.length ? emojis : ["❤️", "🔥", "😂", "👏"];
 
   return (
     <div className="space-y-4">
@@ -430,18 +451,20 @@ export function Gallery({
             <article
               key={item.id}
               className={
-                theme.layout === "polaroid"
-                  ? "break-inside-avoid bg-white p-2 pb-3 shadow-md"
-                  : theme.layout === "film"
-                    ? "min-w-[260px] max-w-[280px] shrink-0 snap-center overflow-hidden rounded-xl border border-[var(--line)] bg-black/10"
-                    : theme.layout === "mosaic"
-                      ? "mb-3 break-inside-avoid overflow-hidden rounded-lg"
-                      : theme.layout === "disco"
-                        ? "overflow-hidden rounded-xl border-2"
-                        : "overflow-hidden bg-black/5"
+                memoryCards
+                  ? "memory-card"
+                  : theme.layout === "polaroid"
+                    ? "break-inside-avoid bg-white p-2 pb-3 shadow-md"
+                    : theme.layout === "film"
+                      ? "min-w-[260px] max-w-[280px] shrink-0 snap-center overflow-hidden rounded-xl border border-[var(--line)] bg-black/10"
+                      : theme.layout === "mosaic"
+                        ? "mb-3 break-inside-avoid overflow-hidden rounded-lg"
+                        : theme.layout === "disco"
+                          ? "overflow-hidden rounded-xl border-2"
+                          : "overflow-hidden bg-black/5"
               }
               style={
-                theme.layout === "polaroid"
+                memoryCards || theme.layout === "polaroid"
                   ? { transform: `rotate(${index % 2 === 0 ? -1.5 : 1.5}deg)` }
                   : theme.layout === "disco"
                     ? {
@@ -499,6 +522,27 @@ export function Gallery({
                     <span className="gallery-action-icon">{item.likedByMe ? "♥" : "♡"}</span>
                     <span>{item.likeCount}</span>
                   </button>
+                  {onVote ? (
+                    <button
+                      type="button"
+                      className="gallery-action"
+                      onClick={() => onVote(item.id)}
+                    >
+                      Vote
+                    </button>
+                  ) : null}
+                  {onReact
+                    ? reactionEmojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="gallery-action"
+                          onClick={() => onReact(item.id, emoji)}
+                        >
+                          {emoji}
+                        </button>
+                      ))
+                    : null}
                   {canCurate ? (
                     <button
                       type="button"

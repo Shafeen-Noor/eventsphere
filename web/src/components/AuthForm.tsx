@@ -35,8 +35,15 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Accounts exist for Pro paths only — Free never requires signup.
-  const accountPlan = isSubscribe ? "pro" : "free";
+  // Accounts exist for Premium/Enterprise paths — Free never requires signup.
+  const isEnterprise =
+    path === "enterprise" ||
+    Boolean(nextParam?.includes("mode=enterprise"));
+  const accountPlan = isEnterprise
+    ? "enterprise"
+    : isSubscribe
+      ? "premium"
+      : "free";
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -44,8 +44,8 @@ export function SiteHeader({
               <Link href="/pricing" className="hover:opacity-100 opacity-90">
                 Pricing
               </Link>
-              <Link href="/professional" className="hover:opacity-100 opacity-90">
-                Professional
+              <Link href="/enterprise" className="hover:opacity-100 opacity-90">
+                Enterprise
               </Link>
             </nav>
           ) : null}

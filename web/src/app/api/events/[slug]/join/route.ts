@@ -1,11 +1,13 @@
 import { z } from "zod";
 import { ensureUser } from "@/lib/auth";
+import { refreshGuestBadge } from "@/lib/badges";
 import { prisma } from "@/lib/db";
 import {
   hashPasscode,
   isEventExpired,
   publicEventDto,
 } from "@/lib/events";
+import { addFeedItem } from "@/lib/feed";
 import { getPlan } from "@/lib/plans";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
 
@@ -14,7 +16,14 @@ const schema = z.object({
   passcode: z.string().trim().optional().nullable(),
   rsvpStatus: z.enum(["going", "maybe", "declined"]).optional().nullable(),
   plusOnes: z.number().int().min(0).max(10).optional().default(0),
-  contactEmail: z.string().trim().email().max(120).optional().nullable().or(z.literal("")),
+  contactEmail: z
+    .string()
+    .trim()
+    .email()
+    .max(120)
+    .optional()
+    .nullable()
+    .or(z.literal("")),
   contactWhatsapp: z.string().trim().max(32).optional().nullable().or(z.literal("")),
   notificationsOptIn: z.boolean().optional().default(true),
 });
@@ -51,32 +60,27 @@ export async function POST(req: Request, ctx: Ctx) {
         where: {
           eventId: event.id,
           status: "active",
-          role: { notIn: ["organizer", "co_organizer"] },
+          role: { notIn: ["organizer", "co_organizer", "photographer"] },
         },
       });
       const isOwner = event.ownerId === user.id;
       if (!isOwner && guestCount >= event.maxGuests) {
         return jsonError(
           "GUEST_CAP",
-          `This event is full (${event.maxGuests} guests).`,
+          `This event is full (${event.maxGuests} guests). Upgrade for more room.`,
           403,
         );
       }
     }
 
-    const collectContacts = plan.limits.canCollectContacts;
+    const collectContacts =
+      plan.features.analytics || plan.features.password;
     const contactEmail =
       collectContacts && body.contactEmail ? body.contactEmail : null;
     const contactWhatsapp =
       collectContacts && body.contactWhatsapp ? body.contactWhatsapp : null;
 
-    if (collectContacts && !contactEmail && !contactWhatsapp) {
-      return jsonError(
-        "CONTACT_REQUIRED",
-        "Add an email or WhatsApp number so the host can send updates.",
-        422,
-      );
-    }
+    const wasNew = !existing || existing.status !== "active";
 
     const membership = await prisma.membership.upsert({
       where: { eventId_userId: { eventId: event.id, userId: user.id } },
@@ -98,6 +102,16 @@ export async function POST(req: Request, ctx: Ctx) {
         notificationsOptIn: body.notificationsOptIn ?? true,
       },
     });
+
+    if (wasNew && membership.role === "guest") {
+      await addFeedItem({
+        eventId: event.id,
+        actorId: user.id,
+        kind: "guest_joined",
+        message: `${user.displayName} joined the event`,
+      });
+      await refreshGuestBadge(event.id, user.id);
+    }
 
     let rsvp = null;
     if (event.rsvpEnabled && body.rsvpStatus) {
@@ -131,9 +145,7 @@ export async function POST(req: Request, ctx: Ctx) {
         canUpload: membership.canUpload,
         canDownload: membership.canDownload,
       },
-      rsvp: rsvp
-        ? { status: rsvp.status, plusOnes: rsvp.plusOnes }
-        : null,
+      rsvp: rsvp ? { status: rsvp.status, plusOnes: rsvp.plusOnes } : null,
       user: { id: user.id, displayName: user.displayName },
     });
   } catch (err) {

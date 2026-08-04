@@ -8,7 +8,10 @@ const schema = z.object({
   password: z.string().min(8).max(72),
   organizationName: z.string().trim().max(80).optional().nullable(),
   hostType: z.enum(["planner", "venue", "individual"]).optional().nullable(),
-  plan: z.enum(["free", "pro", "professional"]).optional().default("free"),
+  plan: z
+    .enum(["free", "essential", "premium", "enterprise", "pro", "professional"])
+    .optional()
+    .default("free"),
   skipOtp: z.boolean().optional().default(false),
 });
 
