@@ -273,11 +273,12 @@ model PhotoVote {
 }
 
 model GuestbookEntry {
-  id        String   @id @default(cuid())
-  eventId   String
-  userId    String
-  body      String
-  createdAt DateTime @default(now())
+  id           String   @id @default(cuid())
+  eventId      String
+  userId       String
+  body         String
+  signatureSvg String?
+  createdAt    DateTime @default(now())
 
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -319,6 +320,7 @@ model StoryChapter {
 model Poll {
   id        String    @id @default(cuid())
   eventId   String
+  kind      String    @default("choice")
   question  String
   status    String    @default("open")
   closesAt  DateTime?
