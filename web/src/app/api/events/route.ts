@@ -5,24 +5,44 @@ import {
   requireVerifiedAccount,
 } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { addFeedItem } from "@/lib/feed";
 import { hashPasscode, publicEventDto } from "@/lib/events";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
-import { getOnetimeTier, getPlan } from "@/lib/plans";
+import {
+  applyPlanLimitsToEvent,
+  getPlan,
+  normalizePlanId,
+  type PlanId,
+} from "@/lib/plans";
 import { slugifyTitle } from "@/lib/slug";
+
+const eventTypeEnum = z.enum([
+  "wedding",
+  "birthday",
+  "party",
+  "corporate",
+  "conference",
+  "reunion",
+  "baby_shower",
+  "graduation",
+  "holiday",
+  "other",
+]);
 
 const createSchema = z.object({
   title: z.string().trim().min(1).max(80),
   description: z.string().trim().max(500).optional().default(""),
   hostName: z.string().trim().min(1).max(40).optional(),
-  useCase: z.enum(["friends", "celebration"]).default("friends"),
+  eventType: eventTypeEnum.optional().default("other"),
+  useCase: z.enum(["friends", "celebration"]).optional(),
   locationName: z.string().trim().max(120).optional().default(""),
   mapsUrl: z.string().trim().max(500).optional().default(""),
   inviteCopy: z.string().trim().max(400).optional().default(""),
   inviteStickers: z.string().trim().max(120).optional().default(""),
-  retentionHours: z.number().int().min(1).max(720).optional(),
+  retentionHours: z.number().int().min(1).max(8760).optional(),
   uploadWindowHours: z.number().int().min(1).max(168).optional().nullable(),
-  maxGuests: z.number().int().min(1).max(1000).optional(),
-  maxMedia: z.number().int().min(1).max(20000).optional(),
+  maxGuests: z.number().int().min(1).max(999999).optional(),
+  maxMedia: z.number().int().min(1).max(999999).optional(),
   maxMediaPerGuest: z.number().int().min(1).max(500).optional(),
   guestVisibility: z
     .enum(["own_only", "approved_public", "all_members"])
@@ -34,7 +54,9 @@ const createSchema = z.object({
   allowPlusOnes: z.boolean().optional().default(true),
   maxPlusOnes: z.number().int().min(0).max(10).optional().default(2),
   uploadMode: z.enum(["both", "camera", "library"]).optional().default("both"),
-  atmosphere: z.enum(["bday", "wedding", "trip", "dinner", "party"]).default("bday"),
+  atmosphere: z
+    .enum(["bday", "wedding", "trip", "dinner", "party"])
+    .optional(),
   downloadPolicy: z
     .enum(["members", "going_only", "organizer_only", "disabled"])
     .optional()
@@ -43,15 +65,25 @@ const createSchema = z.object({
   startAt: z.string().datetime().optional().nullable(),
   endAt: z.string().datetime().optional().nullable(),
   billingMode: z
-    .enum(["free", "onetime", "subscription", "instant"])
+    .enum(["free", "onetime", "subscription", "instant", "enterprise"])
     .optional()
-    .default("subscription"),
-  planTier: z.enum(["free", "pro", "professional"]).optional(),
-  onetimeTierId: z
-    .enum(["cozy", "party", "gather", "celebration"])
+    .default("free"),
+  planTier: z
+    .enum(["free", "essential", "premium", "enterprise", "pro", "professional"])
     .optional(),
+  confirmPayment: z.boolean().optional().default(false),
   confirmInstantPayment: z.boolean().optional().default(false),
+  disposableCamera: z.boolean().optional().default(false),
 });
+
+function atmosphereForType(eventType: string) {
+  if (eventType === "wedding" || eventType === "baby_shower") return "wedding";
+  if (eventType === "birthday") return "bday";
+  if (eventType === "corporate" || eventType === "conference") return "dinner";
+  if (eventType === "graduation" || eventType === "party" || eventType === "holiday")
+    return "party";
+  return "trip";
+}
 
 export async function GET() {
   try {
@@ -86,13 +118,11 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const body = createSchema.parse(await req.json());
-
-    // Normalize legacy "instant" → "onetime"
     const billingMode =
       body.billingMode === "instant" ? "onetime" : body.billingMode;
 
     let user;
-    if (billingMode === "free") {
+    if (billingMode === "free" || billingMode === "onetime") {
       const hostName = body.hostName?.trim();
       if (!hostName) {
         return jsonError(
@@ -101,7 +131,6 @@ export async function POST(req: Request) {
           422,
         );
       }
-      // Free never requires an account — guest cookie identity is enough.
       user = await ensureUser(hostName);
     } else {
       user = await requireVerifiedAccount();
@@ -113,156 +142,129 @@ export async function POST(req: Request) {
       }
     }
 
-    let planTier: "free" | "pro";
+    let planTier: PlanId;
     let instantFeeCents = 0;
-    let onetimeGuests: number | undefined;
-    let onetimeMedia: number | undefined;
-    let onetimePerGuest: number | undefined;
 
     if (billingMode === "free") {
       planTier = "free";
     } else if (billingMode === "onetime") {
-      planTier = "pro";
-      const tier = getOnetimeTier(body.onetimeTierId);
-      instantFeeCents = tier.priceCents;
-      onetimeGuests = tier.guests;
-      onetimeMedia = tier.maxMedia;
-      onetimePerGuest = tier.maxMediaPerGuest;
-      if (!body.confirmInstantPayment) {
+      planTier = normalizePlanId(body.planTier || "essential");
+      if (planTier !== "essential" && planTier !== "premium") planTier = "essential";
+      const plan = getPlan(planTier);
+      instantFeeCents = plan.priceCents;
+      if (!body.confirmPayment && !body.confirmInstantPayment) {
         return jsonError(
           "PAYMENT_REQUIRED",
-          `Confirm the ${tier.priceLabel} one-time payment to create this Pro event.`,
+          `Confirm the ${plan.priceLabel} payment to unlock ${plan.label}.`,
           402,
         );
       }
-    } else {
-      if (user.plan !== "pro") {
+    } else if (billingMode === "enterprise") {
+      if (normalizePlanId(user.plan) !== "enterprise") {
         return jsonError(
           "SUBSCRIPTION_REQUIRED",
-          "A Pro subscription is required to create events this way.",
+          "An Enterprise subscription is required.",
           402,
         );
       }
-      planTier = "pro";
+      planTier = "enterprise";
+    } else {
+      const accountPlan = normalizePlanId(user.plan);
+      if (accountPlan !== "premium" && accountPlan !== "enterprise") {
+        return jsonError(
+          "SUBSCRIPTION_REQUIRED",
+          "A paid account is required for subscription events.",
+          402,
+        );
+      }
+      planTier = accountPlan === "enterprise" ? "enterprise" : "premium";
     }
 
     const plan = getPlan(planTier);
-
-    let retentionHours = body.retentionHours ?? plan.limits.maxDurationHours;
-    retentionHours = Math.min(retentionHours, plan.limits.maxDurationHours);
-
+    const limits = applyPlanLimitsToEvent({ planTier }, planTier);
     const now = new Date();
-    const rsvpEnabled = plan.limits.canUseRsvp
-      ? (body.rsvpEnabled ?? body.useCase === "celebration")
-      : false;
+    const eventType = body.eventType || "other";
+    const atmosphere = body.atmosphere || atmosphereForType(eventType);
+    const useCase =
+      body.useCase ||
+      (eventType === "wedding" || eventType === "birthday"
+        ? "celebration"
+        : "friends");
 
-    if (rsvpEnabled && !body.startAt) {
-      return jsonError(
-        "VAL_START_AT",
-        "Set a start date and time so guests know when the event begins.",
-        422,
-      );
-    }
-
-    const startAt = body.startAt ? new Date(body.startAt) : null;
-    if (startAt && startAt.getTime() < now.getTime() - 60_000) {
-      return jsonError(
-        "VAL_START_AT",
-        "Start time should be in the future.",
-        422,
-      );
-    }
-
-    const retentionBase = startAt ?? now;
-    const expiresAt = new Date(
-      retentionBase.getTime() + retentionHours * 60 * 60 * 1000,
+    const startAt = body.startAt ? new Date(body.startAt) : now;
+    const endAt = body.endAt
+      ? new Date(body.endAt)
+      : new Date(startAt.getTime() + 8 * 60 * 60 * 1000);
+    const retentionHours = Math.min(
+      body.retentionHours ?? limits.retentionHours,
+      plan.retentionHours,
     );
-
-    let uploadWindowHours: number | null = null;
-    let uploadsOpenAt: Date | null = startAt;
-    let uploadsCloseAt: Date | null = null;
-    if (plan.limits.canSetUploadWindow && body.uploadWindowHours) {
-      uploadWindowHours = Math.min(
-        body.uploadWindowHours,
-        plan.limits.maxDurationHours,
-      );
-      const open = startAt ?? now;
-      uploadsOpenAt = open;
-      uploadsCloseAt = new Date(open.getTime() + uploadWindowHours * 60 * 60 * 1000);
-      if (uploadsCloseAt > expiresAt) uploadsCloseAt = expiresAt;
-    } else {
-      uploadWindowHours = retentionHours;
-      uploadsOpenAt = startAt ?? now;
-      uploadsCloseAt = expiresAt;
-    }
+    const expiresAt = new Date(
+      Math.max(endAt.getTime(), now.getTime()) + retentionHours * 60 * 60 * 1000,
+    );
 
     const maxGuests = Math.min(
-      onetimeGuests ?? body.maxGuests ?? plan.limits.maxGuests,
-      plan.limits.maxGuests,
+      body.maxGuests ?? limits.maxGuests,
+      plan.maxGuests,
     );
-    const maxMedia = Math.min(
-      onetimeMedia ?? body.maxMedia ?? plan.limits.maxMedia,
-      plan.limits.maxMedia,
-    );
-    const maxMediaPerGuest = Math.min(
-      onetimePerGuest ??
-        body.maxMediaPerGuest ??
-        plan.limits.maxMediaPerGuestDefault,
-      plan.limits.maxMedia,
-    );
+    const maxMedia = Math.min(body.maxMedia ?? limits.maxMedia, plan.maxMedia);
+    const maxMediaPerGuest = body.disposableCamera
+      ? 10
+      : body.maxMediaPerGuest ?? 10;
 
-    const guestVisibility = plan.limits.canSetGuestVisibility
-      ? body.guestVisibility || "own_only"
-      : "own_only";
-    const requireApproval = plan.limits.canRequireApproval
-      ? Boolean(body.requireApproval)
-      : false;
-
-    const mapsUrl = plan.limits.canAddMaps ? body.mapsUrl || "" : "";
-    const inviteCopy = plan.limits.canCustomizeInvite ? body.inviteCopy || "" : "";
-    const inviteStickers = plan.limits.canCustomizeInvite
-      ? body.inviteStickers || ""
-      : "";
+    if (body.passcode && !plan.features.password) {
+      return jsonError(
+        "PLAN_FEATURE",
+        "Password protection requires Premium.",
+        403,
+      );
+    }
 
     const event = await prisma.event.create({
       data: {
         title: body.title,
         description: body.description,
         slug: slugifyTitle(body.title),
-        useCase: body.useCase,
+        eventType,
+        useCase,
         locationName: body.locationName || "",
-        mapsUrl,
-        inviteCopy,
-        inviteStickers,
-        state: startAt && startAt.getTime() > now.getTime() ? "scheduled" : "live",
+        mapsUrl: plan.features.coverPhoto ? body.mapsUrl || "" : "",
+        inviteCopy: body.inviteCopy || "",
+        inviteStickers: body.inviteStickers || "",
+        state: startAt.getTime() > now.getTime() ? "scheduled" : "live",
         retentionHours,
         expiresAt,
         startAt,
-        endAt: body.endAt ? new Date(body.endAt) : null,
-        passcodeHash: body.passcode ? hashPasscode(body.passcode) : null,
-        rsvpEnabled,
+        endAt,
+        passcodeHash:
+          body.passcode && plan.features.password
+            ? hashPasscode(body.passcode)
+            : null,
+        rsvpEnabled: false,
         commentsEnabled: body.commentsEnabled,
         uploadsEnabled: true,
-        requireRsvpToUpload: rsvpEnabled,
-        allowPlusOnes: plan.limits.canUseRsvp ? body.allowPlusOnes : false,
-        maxPlusOnes: plan.limits.canUseRsvp ? body.maxPlusOnes : 0,
+        requireRsvpToUpload: false,
+        allowPlusOnes: false,
+        maxPlusOnes: 0,
         uploadMode: body.uploadMode,
-        useGuestPrivileges: false,
-        atmosphere: body.atmosphere,
+        atmosphere,
         downloadPolicy: body.downloadPolicy,
         downloadsEnabled: body.downloadsEnabled,
-        themeColor: "#0e7490",
+        themeColor: "#0c0b0a",
         billingMode,
         planTier,
         instantFeeCents,
         maxGuests,
         maxMedia,
         maxMediaPerGuest,
-        uploadWindowHours,
-        uploadsOpenAt,
-        uploadsCloseAt,
-        guestVisibility,
-        requireApproval,
+        uploadWindowHours: retentionHours,
+        uploadsOpenAt: startAt,
+        uploadsCloseAt: expiresAt,
+        guestVisibility: "all_members",
+        requireApproval: plan.features.moderation
+          ? Boolean(body.requireApproval)
+          : false,
+        disposableCamera: Boolean(body.disposableCamera),
         ownerId: user.id,
         memberships: {
           create: {
@@ -272,15 +274,28 @@ export async function POST(req: Request) {
             canDownload: true,
           },
         },
-        rsvps: rsvpEnabled
-          ? {
-              create: {
-                userId: user.id,
-                status: "going",
-              },
-            }
-          : undefined,
       },
+    });
+
+    await addFeedItem({
+      eventId: event.id,
+      actorId: user.id,
+      kind: "event_created",
+      message: `${user.displayName} created the event website`,
+    });
+
+    const defaults =
+      eventType === "wedding"
+        ? ["Ceremony", "Reception", "Dance", "Cake", "After Party"]
+        : eventType === "birthday"
+          ? ["Arrival", "Cake", "Games", "Photos"]
+          : ["Welcome", "Main Program", "Photos"];
+    await prisma.scheduleItem.createMany({
+      data: defaults.map((title, i) => ({
+        eventId: event.id,
+        title,
+        sortOrder: i,
+      })),
     });
 
     return jsonOk({ event: publicEventDto(event) }, 201);

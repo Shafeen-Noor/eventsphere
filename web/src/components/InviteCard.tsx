@@ -1,11 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatedInvite } from "@/components/AnimatedInvite";
-import { getAtmosphere } from "@/lib/atmospheres";
+import { getEventPhase, phaseLabel } from "@/lib/phase";
+import { getPlan, type PlanFeatures } from "@/lib/plans";
 import { formatEventWhen } from "@/lib/time";
-import { VisualMotifs } from "@/components/VisualMotifs";
 
 type Props = {
   slug: string;
@@ -16,13 +15,61 @@ type Props = {
   mapsUrl?: string;
   inviteCopy?: string;
   startAt: string | null;
-  atmosphere: string;
+  endAt?: string | null;
+  expiresAt?: string | null;
+  atmosphere?: string;
   requiresPasscode: boolean;
-  rsvpEnabled: boolean;
-  allowPlusOnes: boolean;
-  maxPlusOnes: number;
+  rsvpEnabled?: boolean;
+  allowPlusOnes?: boolean;
+  maxPlusOnes?: number;
   collectContacts?: boolean;
+  planTier?: string;
+  features?: Partial<PlanFeatures>;
 };
+
+const HUB_TILES: { key: keyof PlanFeatures | "gallery" | "upload"; label: string; always?: boolean }[] = [
+  { key: "gallery", label: "Gallery", always: true },
+  { key: "upload", label: "Upload", always: true },
+  { key: "feed", label: "Live feed" },
+  { key: "guestbook", label: "Guestbook" },
+  { key: "slideshow", label: "Slideshow" },
+  { key: "challenges", label: "Challenges" },
+  { key: "polls", label: "Polls" },
+  { key: "timeline", label: "Schedule" },
+  { key: "voting", label: "Vote" },
+  { key: "seating", label: "Seating" },
+  { key: "audioMemories", label: "Audio" },
+  { key: "faces", label: "Faces" },
+  { key: "ai", label: "Ask AI" },
+];
+
+function useCountdown(targetIso: string | null | undefined) {
+  const [label, setLabel] = useState("");
+  useEffect(() => {
+    if (!targetIso) {
+      setLabel("");
+      return;
+    }
+    const tick = () => {
+      const ms = new Date(targetIso).getTime() - Date.now();
+      if (ms <= 0) {
+        setLabel("Starting now");
+        return;
+      }
+      const totalSec = Math.floor(ms / 1000);
+      const d = Math.floor(totalSec / 86400);
+      const h = Math.floor((totalSec % 86400) / 3600);
+      const m = Math.floor((totalSec % 3600) / 60);
+      const s = totalSec % 60;
+      if (d > 0) setLabel(`${d}d ${h}h ${m}m`);
+      else setLabel(`${h}h ${m}m ${s}s`);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [targetIso]);
+  return label;
+}
 
 export function InviteCard({
   slug,
@@ -33,17 +80,23 @@ export function InviteCard({
   mapsUrl = "",
   inviteCopy = "",
   startAt,
-  atmosphere,
+  endAt = null,
+  expiresAt = null,
   requiresPasscode,
-  rsvpEnabled,
-  allowPlusOnes,
-  maxPlusOnes,
+  rsvpEnabled = false,
+  allowPlusOnes = true,
+  maxPlusOnes = 2,
   collectContacts = false,
+  planTier = "free",
+  features,
 }: Props) {
   const router = useRouter();
-  const theme = getAtmosphere(atmosphere);
-  const [opened, setOpened] = useState(false);
-  const [showJoin, setShowJoin] = useState(false);
+  const plan = getPlan(planTier);
+  const feats = features || plan.features;
+  const phase = getEventPhase({ startAt, endAt, expiresAt });
+  const countdown = useCountdown(phase === "countdown" ? startAt : null);
+  const whenLabel = useMemo(() => formatEventWhen(startAt), [startAt]);
+
   const [displayName, setDisplayName] = useState("");
   const [passcode, setPasscode] = useState("");
   const [contactEmail, setContactEmail] = useState("");
@@ -53,11 +106,15 @@ export function InviteCard({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const whenLabel = useMemo(() => formatEventWhen(startAt), [startAt]);
   const plusOptions = useMemo(() => {
     const max = Math.max(0, maxPlusOnes);
     return Array.from({ length: max + 1 }, (_, i) => i);
   }, [maxPlusOnes]);
+
+  const tiles = HUB_TILES.filter((t) => {
+    if (t.always) return true;
+    return Boolean(feats[t.key as keyof PlanFeatures]);
+  }).slice(0, 8);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -87,172 +144,176 @@ export function InviteCard({
   }
 
   return (
-    <div className="guest-invite-room" style={{ ["--invite-accent" as string]: theme.accent }}>
-      <div className="guest-invite-atmosphere" style={{ background: theme.bg }} aria-hidden />
-      <div className="guest-invite-noise" aria-hidden />
-      <VisualMotifs variant="invite" />
-
+    <div className="es-site guest-invite-room">
+      <div className="guest-invite-atmosphere" aria-hidden />
       <div className="guest-invite-main">
-        <AnimatedInvite
-          size="hero"
-          atmosphere={atmosphere}
-          title={title}
-          hostName={hostName}
-          whenLabel={whenLabel}
-          locationName={locationName}
-          inviteCopy={inviteCopy}
-          description={description}
-          autoOpen
-          onOpened={() => {
-            setOpened(true);
-            setTimeout(() => setShowJoin(true), 400);
-          }}
-        >
-          {mapsUrl ? (
-            <a
-              href={mapsUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="mt-5 inline-flex text-base font-semibold underline opacity-90"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Open in Google Maps
-            </a>
-          ) : null}
-          {opened && !showJoin ? (
-            <button
-              type="button"
-              className="btn btn-primary mt-6"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowJoin(true);
-              }}
-            >
-              Continue to join
-            </button>
-          ) : null}
-        </AnimatedInvite>
-      </div>
+        <div className="panel mx-auto max-w-xl overflow-hidden p-0">
+          <div className="phase-banner">
+            <span>{phaseLabel(phase)}</span>
+            {phase === "countdown" && countdown ? (
+              <strong className="font-[family-name:var(--font-display)] text-lg tracking-tight">
+                {countdown}
+              </strong>
+            ) : (
+              <strong className="text-sm">{phase === "live" ? "Join the hub" : "Memories stay open"}</strong>
+            )}
+          </div>
 
-      <div className={`guest-join-sheet ${showJoin ? "is-up" : ""}`}>
-        <form onSubmit={onSubmit} className="guest-join-form space-y-5">
-          <div>
+          <div className="space-y-4 p-6 sm:p-8">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--accent)]">
-              Step in
+              You’re invited
             </p>
-            <h2 className="mt-2 font-[family-name:var(--font-display)] text-3xl sm:text-4xl text-[var(--navy)]">
-              {rsvpEnabled ? "Will you be there?" : "Join this event"}
-            </h2>
-            <p className="mt-2 text-[var(--muted)]">
-              {collectContacts
-                ? "Add your name plus email or WhatsApp for invite updates."
-                : rsvpEnabled
-                  ? "Confirm your name and RSVP."
-                  : "Enter your name to open the shared gallery."}
+            <h1 className="section-title text-4xl sm:text-5xl">{title}</h1>
+            <p className="text-[var(--muted)]">
+              Hosted by {hostName}
+              {whenLabel ? ` · ${whenLabel}` : ""}
+              {locationName ? ` · ${locationName}` : ""}
             </p>
-          </div>
+            {inviteCopy ? <p className="leading-relaxed">{inviteCopy}</p> : null}
+            {description ? (
+              <p className="text-sm leading-relaxed text-[var(--muted)]">{description}</p>
+            ) : null}
+            {mapsUrl ? (
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex text-sm font-semibold underline"
+              >
+                Open in maps
+              </a>
+            ) : null}
 
-          <div className="field">
-            <label htmlFor="name">Your name</label>
-            <input
-              id="name"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              maxLength={40}
-              placeholder="Riley"
-              autoFocus={showJoin}
-            />
-          </div>
-
-          {collectContacts ? (
-            <>
-              <div className="field">
-                <label htmlFor="email">Email</label>
-                <input
-                  id="email"
-                  type="email"
-                  value={contactEmail}
-                  onChange={(e) => setContactEmail(e.target.value)}
-                  placeholder="you@email.com"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="wa">WhatsApp number</label>
-                <input
-                  id="wa"
-                  value={contactWhatsapp}
-                  onChange={(e) => setContactWhatsapp(e.target.value)}
-                  placeholder="+1 555 000 0000"
-                />
-              </div>
-            </>
-          ) : null}
-
-          {requiresPasscode ? (
-            <div className="field">
-              <label htmlFor="pass">Passcode</label>
-              <input
-                id="pass"
-                value={passcode}
-                onChange={(e) => setPasscode(e.target.value)}
-                required
-                maxLength={12}
-              />
-            </div>
-          ) : null}
-
-          {rsvpEnabled ? (
-            <>
-              <div className="flex flex-wrap gap-2">
-                {(
-                  [
-                    { id: "going" as const, label: "Going" },
-                    { id: "maybe" as const, label: "Maybe" },
-                    { id: "declined" as const, label: "Can’t make it" },
-                  ] as const
-                ).map((opt) => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className="btn px-4 py-2 text-sm"
-                    style={{
-                      background: status === opt.id ? "var(--accent)" : "var(--bg-elevated)",
-                      color: status === opt.id ? "#ffffff" : "var(--fg)",
-                      border: "1px solid var(--line)",
-                    }}
-                    onClick={() => setStatus(opt.id)}
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-[var(--muted)]">
+                Inside the hub
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tiles.map((t) => (
+                  <span
+                    key={t.key}
+                    className="rounded-full border border-[var(--line)] bg-[var(--bg)] px-3 py-1 text-xs font-semibold"
                   >
-                    {opt.label}
-                  </button>
+                    {t.label}
+                  </span>
                 ))}
               </div>
+            </div>
+          </div>
 
-              {allowPlusOnes && status === "going" && maxPlusOnes > 0 ? (
+          <form onSubmit={onSubmit} className="space-y-4 border-t border-[var(--line)] bg-[var(--bg)] p-6 sm:p-8">
+            <div>
+              <h2 className="section-title text-2xl">
+                {rsvpEnabled ? "Will you be there?" : "Join by name"}
+              </h2>
+              <p className="mt-1 text-sm text-[var(--muted)]">
+                {collectContacts
+                  ? "Add your name plus email or WhatsApp for updates."
+                  : "Enter your name to open the shared hub."}
+              </p>
+            </div>
+
+            <div className="field">
+              <label htmlFor="name">Your name</label>
+              <input
+                id="name"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                required
+                maxLength={40}
+                placeholder="Riley"
+                autoFocus
+              />
+            </div>
+
+            {collectContacts ? (
+              <>
                 <div className="field">
-                  <label htmlFor="plus">Plus-ones (up to {maxPlusOnes})</label>
-                  <select
-                    id="plus"
-                    value={plusOnes}
-                    onChange={(e) => setPlusOnes(Number(e.target.value))}
-                  >
-                    {plusOptions.map((n) => (
-                      <option key={n} value={n}>
-                        {n === 0 ? "Just me" : `+${n}`}
-                      </option>
-                    ))}
-                  </select>
+                  <label htmlFor="email">Email</label>
+                  <input
+                    id="email"
+                    type="email"
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="you@email.com"
+                  />
                 </div>
-              ) : null}
-            </>
-          ) : null}
+                <div className="field">
+                  <label htmlFor="wa">WhatsApp</label>
+                  <input
+                    id="wa"
+                    value={contactWhatsapp}
+                    onChange={(e) => setContactWhatsapp(e.target.value)}
+                    placeholder="+1 555 000 0000"
+                  />
+                </div>
+              </>
+            ) : null}
 
-          {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
+            {requiresPasscode ? (
+              <div className="field">
+                <label htmlFor="pass">Passcode</label>
+                <input
+                  id="pass"
+                  value={passcode}
+                  onChange={(e) => setPasscode(e.target.value)}
+                  required
+                  maxLength={12}
+                />
+              </div>
+            ) : null}
 
-          <button type="submit" className="btn btn-primary w-full text-base py-4" disabled={loading}>
-            {loading ? "Sending…" : rsvpEnabled ? "Confirm RSVP" : "Enter the gallery"}
-          </button>
-        </form>
+            {rsvpEnabled ? (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {(
+                    [
+                      { id: "going" as const, label: "Going" },
+                      { id: "maybe" as const, label: "Maybe" },
+                      { id: "declined" as const, label: "Can’t make it" },
+                    ] as const
+                  ).map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className="btn px-4 py-2 text-sm"
+                      style={{
+                        background: status === opt.id ? "var(--accent)" : "var(--bg-elevated)",
+                        color: status === opt.id ? "#ffffff" : "var(--fg)",
+                        border: "1px solid var(--line)",
+                      }}
+                      onClick={() => setStatus(opt.id)}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {allowPlusOnes && status === "going" && maxPlusOnes > 0 ? (
+                  <div className="field">
+                    <label htmlFor="plus">Plus-ones (up to {maxPlusOnes})</label>
+                    <select
+                      id="plus"
+                      value={plusOnes}
+                      onChange={(e) => setPlusOnes(Number(e.target.value))}
+                    >
+                      {plusOptions.map((n) => (
+                        <option key={n} value={n}>
+                          {n === 0 ? "Just me" : `+${n}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : null}
+              </>
+            ) : null}
+
+            {error ? <p className="text-sm text-[var(--danger)]">{error}</p> : null}
+
+            <button type="submit" className="btn btn-primary w-full py-4 text-base" disabled={loading}>
+              {loading ? "Joining…" : rsvpEnabled ? "Confirm & enter" : "Enter the hub"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

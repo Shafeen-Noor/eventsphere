@@ -1,18 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { EventHub } from "@/components/EventHub";
 import { InviteCard } from "@/components/InviteCard";
 import { SiteHeader } from "@/components/SiteHeader";
-import { WaitingRoom } from "@/components/WaitingRoom";
-import { headers } from "next/headers";
 import { getAppUrl } from "@/lib/appUrl";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import {
-  hasEventStarted,
-  isEventExpired,
-  publicEventDto,
-} from "@/lib/events";
+import { isEventExpired, publicEventDto } from "@/lib/events";
+import { getPlan } from "@/lib/plans";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -40,17 +36,21 @@ export default async function EventPage({ params }: Props) {
       })
     : null;
 
+  const plan = getPlan(event.planTier);
   const dto = {
     ...publicEventDto(event),
     hostName: event.owner.displayName,
     mediaCount: event._count.media,
     memberCount: event._count.memberships,
+    eventType: event.eventType,
+    disposableCamera: event.disposableCamera,
+    hideUntilEventEnd: event.hideUntilEventEnd,
+    whiteLabel: event.whiteLabel,
+    features: plan.features,
   };
 
   const expired = isEventExpired(event.expiresAt);
-  const started = hasEventStarted(event.startAt);
 
-  // Build a Request-like host from Next headers so QR uses the public alias.
   const h = await headers();
   const host = h.get("x-forwarded-host") || h.get("host") || "";
   const proto = h.get("x-forwarded-proto") || "https";
@@ -62,15 +62,15 @@ export default async function EventPage({ params }: Props) {
       : undefined,
   );
   const isMember = membership && membership.status === "active";
-  const isOrganizer =
-    membership?.role === "organizer" || membership?.role === "co_organizer";
 
-  // Guests wait in the invite lounge until start; hosts manage RSVPs/privileges early.
-  const showWaitingRoom =
-    isMember && !started && Boolean(event.startAt) && !isOrganizer;
+  // Essential+ (coverPhoto) and Premium+ (password/analytics) collect guest contacts.
+  const collectContacts =
+    plan.features.coverPhoto ||
+    plan.features.password ||
+    plan.features.analytics;
 
   return (
-    <main className={!isMember && !expired ? "guest-invite-main-wrap" : undefined}>
+    <main className={!isMember && !expired ? "guest-invite-main-wrap" : "es-site"}>
       {isMember || expired ? (
         <SiteHeader
           marketing={false}
@@ -84,7 +84,7 @@ export default async function EventPage({ params }: Props) {
       {!isMember ? (
         expired ? (
           <div className="container">
-            <div className="panel p-8 text-[var(--muted)] my-8">This gallery has closed.</div>
+            <div className="panel my-8 p-8 text-[var(--muted)]">This gallery has closed.</div>
           </div>
         ) : (
           <InviteCard
@@ -96,40 +96,29 @@ export default async function EventPage({ params }: Props) {
             mapsUrl={event.mapsUrl}
             inviteCopy={event.inviteCopy}
             startAt={event.startAt?.toISOString() ?? null}
+            endAt={event.endAt?.toISOString() ?? null}
+            expiresAt={event.expiresAt.toISOString()}
             atmosphere={event.atmosphere}
             requiresPasscode={Boolean(event.passcodeHash)}
             rsvpEnabled={event.rsvpEnabled}
             allowPlusOnes={event.allowPlusOnes}
             maxPlusOnes={event.maxPlusOnes}
-            collectContacts={event.planTier === "pro" || event.planTier === "professional"}
+            collectContacts={collectContacts}
+            planTier={event.planTier}
+            features={plan.features}
           />
         )
       ) : (
         <div className="container">
-          {showWaitingRoom ? (
-            <WaitingRoom
-              slug={slug}
-              title={event.title}
-              hostName={event.owner.displayName}
-              locationName={event.locationName}
-              startAt={event.startAt!.toISOString()}
-              atmosphere={event.atmosphere}
-              rsvpStatus={rsvp?.status ?? null}
-              plusOnes={rsvp?.plusOnes ?? 0}
-              isOrganizer={false}
-              appUrl={appUrl}
-            />
-          ) : (
-            <EventHub
-              event={dto}
-              role={membership!.role}
-              canUploadPrivilege={membership!.canUpload}
-              canDownloadPrivilege={membership!.canDownload}
-              initialRsvpStatus={rsvp?.status ?? null}
-              initialPlusOnes={rsvp?.plusOnes ?? 0}
-              appUrl={appUrl}
-            />
-          )}
+          <EventHub
+            event={dto}
+            role={membership!.role}
+            canUploadPrivilege={membership!.canUpload}
+            canDownloadPrivilege={membership!.canDownload}
+            initialRsvpStatus={rsvp?.status ?? null}
+            initialPlusOnes={rsvp?.plusOnes ?? 0}
+            appUrl={appUrl}
+          />
         </div>
       )}
     </main>

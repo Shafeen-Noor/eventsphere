@@ -52,6 +52,11 @@ const patchSchema = z.object({
   uploadWindowHours: z.number().int().min(1).max(168).nullable().optional(),
   uploadsOpenAt: z.string().datetime().nullable().optional(),
   uploadsCloseAt: z.string().datetime().nullable().optional(),
+  disposableCamera: z.boolean().optional(),
+  hideUntilEventEnd: z.boolean().optional(),
+  whiteLabel: z.boolean().optional(),
+  customDomain: z.string().trim().max(200).optional(),
+  coverKey: z.string().trim().max(500).nullable().optional(),
 });
 
 export async function GET(_req: Request, ctx: Ctx) {
@@ -176,6 +181,16 @@ export async function PATCH(req: Request, ctx: Ctx) {
     if (body.passcode !== undefined) {
       data.passcodeHash = body.passcode ? hashPasscode(body.passcode) : null;
     }
+    if (body.disposableCamera !== undefined) {
+      data.disposableCamera = body.disposableCamera;
+      if (body.disposableCamera) data.maxMediaPerGuest = 10;
+    }
+    if (body.hideUntilEventEnd !== undefined) {
+      data.hideUntilEventEnd = body.hideUntilEventEnd;
+    }
+    if (body.whiteLabel !== undefined) data.whiteLabel = body.whiteLabel;
+    if (body.customDomain !== undefined) data.customDomain = body.customDomain;
+    if (body.coverKey !== undefined) data.coverKey = body.coverKey;
     if (body.extendHours) {
       const base =
         event.expiresAt.getTime() > Date.now()

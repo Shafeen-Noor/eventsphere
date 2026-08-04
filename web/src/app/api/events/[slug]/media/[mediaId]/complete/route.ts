@@ -1,6 +1,9 @@
+import { generateAiCaption } from "@/lib/ai";
 import { getCurrentUser } from "@/lib/auth";
+import { refreshGuestBadge } from "@/lib/badges";
 import { prisma } from "@/lib/db";
-import { assertCanUpload, assertEventMember } from "@/lib/events";
+import { assertCanUpload, assertEventMember, isStaffRole } from "@/lib/events";
+import { addFeedItem } from "@/lib/feed";
 import { handleRouteError, jsonError, jsonOk } from "@/lib/http";
 import { generateThumbIfImage } from "@/lib/media";
 import { createDownloadUrl, objectExists } from "@/lib/storage";
@@ -38,10 +41,18 @@ export async function POST(_req: Request, ctx: Ctx) {
       contentType: media.contentType,
     });
 
-    const isOrg =
-      membership.role === "organizer" || membership.role === "co_organizer";
+    const isOrg = isStaffRole(membership.role);
     const nextState =
       !isOrg && event.requireApproval ? "pending_approval" : "published";
+
+    const aiCaption =
+      media.caption?.trim() ||
+      (await generateAiCaption({
+        eventTitle: event.title,
+        eventType: event.eventType,
+        caption: media.caption,
+        locationName: event.locationName,
+      }));
 
     const updated = await prisma.media.update({
       where: { id: media.id },
@@ -50,17 +61,33 @@ export async function POST(_req: Request, ctx: Ctx) {
         thumbKey: thumb?.thumbKey ?? null,
         width: thumb?.width ?? media.width,
         height: thumb?.height ?? media.height,
+        aiCaption,
+        ...(event.hideUntilEventEnd && event.endAt
+          ? { hiddenUntil: event.endAt }
+          : {}),
       },
       include: {
         uploader: { select: { id: true, displayName: true } },
       },
     });
 
+    if (nextState === "published") {
+      await addFeedItem({
+        eventId: event.id,
+        actorId: user.id,
+        kind: "upload",
+        message: `${user.displayName} uploaded a photo`,
+        meta: { mediaId: updated.id },
+      });
+      await refreshGuestBadge(event.id, user.id);
+    }
+
     return jsonOk({
       media: {
         id: updated.id,
         type: updated.type,
         caption: updated.caption,
+        aiCaption: updated.aiCaption,
         state: updated.state,
         url: await createDownloadUrl(updated.thumbKey || updated.storageKey),
         originalUrl: await createDownloadUrl(updated.storageKey),

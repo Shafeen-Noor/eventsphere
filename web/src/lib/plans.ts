@@ -1,4 +1,11 @@
 export type PlanId = "free" | "essential" | "premium" | "enterprise";
+export type HostType = "planner" | "venue" | "individual";
+
+export const HOST_TYPES: { id: HostType; label: string }[] = [
+  { id: "planner", label: "Event planner / agency" },
+  { id: "venue", label: "Venue / brand" },
+  { id: "individual", label: "Individual host" },
+];
 
 /** Soft “unlimited” cap stored in DB for media/guests. */
 export const UNLIMITED = 999_999;

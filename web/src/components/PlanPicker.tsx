@@ -1,76 +1,73 @@
 "use client";
 
-import { guestLimitLabel, PLANS, type PlanId } from "@/lib/plans";
+import {
+  guestLimitLabel,
+  mediaLimitLabel,
+  PLANS,
+  SELECTABLE_PLANS,
+  type PlanId,
+} from "@/lib/plans";
 
 export function PlanPicker({
-  mode,
   value,
   onChange,
+  plans = SELECTABLE_PLANS,
 }: {
-  mode: "subscription" | "instant" | "onetime";
   value: PlanId;
   onChange: (id: PlanId) => void;
+  /** Optional subset; defaults to all selectable plans */
+  plans?: PlanId[];
+  /** @deprecated kept for call-site compatibility */
+  mode?: string;
 }) {
   return (
     <div className="space-y-3">
       <div className="grid gap-2">
-        {(Object.keys(PLANS) as PlanId[]).map((id) => {
+        {plans.map((id) => {
           const plan = PLANS[id];
-          const tier = plan[mode === "onetime" ? "instant" : mode];
           const selected = value === id;
-          const disabled = Boolean(plan.comingSoon);
           return (
             <button
               key={id}
               type="button"
-              disabled={disabled}
               onClick={() => onChange(id)}
-              className="rounded-xl border p-3 text-left transition disabled:cursor-not-allowed disabled:opacity-55"
+              className="rounded-xl border p-3 text-left transition"
               style={{
                 borderColor: selected ? "var(--navy)" : "var(--line)",
-                background: selected ? "#e8f0f4" : "#ffffff",
+                background: selected ? "var(--accent-soft)" : "var(--bg-elevated)",
               }}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="font-semibold text-[var(--navy)]">
-                    {plan.label}
-                    {plan.comingSoon ? (
-                      <span className="ml-2 text-[10px] uppercase tracking-[0.12em] text-[var(--muted)]">
-                        Coming soon
-                      </span>
-                    ) : null}
-                  </p>
-                  <p className="mt-1 text-sm text-[var(--muted)]">{tier.blurb}</p>
+                  <p className="font-semibold text-[var(--navy)]">{plan.label}</p>
+                  <p className="mt-1 text-sm text-[var(--muted)]">{plan.blurb}</p>
                 </div>
                 <p className="shrink-0 font-[family-name:var(--font-display)] text-lg text-[var(--navy)]">
-                  {tier.priceLabel}
+                  {plan.priceLabel}
                 </p>
               </div>
             </button>
           );
         })}
       </div>
-      {!PLANS[value].comingSoon ? (
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="rounded-xl border border-[var(--line)] bg-white px-3 py-2">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
-              Max people
-            </p>
-            <p className="mt-1 font-semibold text-[var(--navy)]">
-              {guestLimitLabel(PLANS[value].limits.maxGuests)}
-            </p>
-          </div>
-          <div className="rounded-xl border border-[var(--line)] bg-white px-3 py-2">
-            <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
-              Photos
-            </p>
-            <p className="mt-1 font-semibold text-[var(--navy)]">
-              {PLANS[value].limits.maxMedia}
-            </p>
-          </div>
+      <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="rounded-xl border border-[var(--line)] bg-white px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
+            Max people
+          </p>
+          <p className="mt-1 font-semibold text-[var(--navy)]">
+            {guestLimitLabel(PLANS[value].maxGuests)}
+          </p>
         </div>
-      ) : null}
+        <div className="rounded-xl border border-[var(--line)] bg-white px-3 py-2">
+          <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--muted)]">
+            Media
+          </p>
+          <p className="mt-1 font-semibold text-[var(--navy)]">
+            {mediaLimitLabel(PLANS[value].maxMedia)}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

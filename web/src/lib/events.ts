@@ -1,5 +1,7 @@
 import { createHash } from "node:crypto";
 import { prisma } from "@/lib/db";
+import { getEventPhase } from "@/lib/phase";
+import { getPlan, normalizePlanId } from "@/lib/plans";
 
 export function hashPasscode(passcode: string) {
   return createHash("sha256").update(passcode).digest("hex");
@@ -51,6 +53,14 @@ export async function assertOrganizer(eventId: string, userId: string) {
     );
   }
   return membership;
+}
+
+export function isStaffRole(role: string) {
+  return (
+    role === "organizer" ||
+    role === "co_organizer" ||
+    role === "photographer"
+  );
 }
 
 type UploadGateEvent = {
@@ -108,7 +118,7 @@ export async function assertCanUpload(
     );
   }
 
-  const isOrg = role === "organizer" || role === "co_organizer";
+  const isOrg = isStaffRole(role);
 
   if (!isOrg) {
     const openAt = event.uploadsOpenAt ?? event.startAt;
@@ -293,8 +303,10 @@ export function publicEventDto(event: {
   title: string;
   description: string;
   useCase: string;
+  eventType?: string;
   state: string;
   locationName?: string;
+  coverKey?: string | null;
   startAt: Date | null;
   endAt: Date | null;
   expiresAt: Date;
@@ -334,6 +346,12 @@ export function publicEventDto(event: {
   requireApproval?: boolean;
   publishMessage?: string;
   publishedAt?: Date | null;
+  disposableCamera?: boolean;
+  whiteLabel?: boolean;
+  customDomain?: string | null;
+  hideUntilEventEnd?: boolean;
+  featuredMediaId?: string | null;
+  featuredUntil?: Date | null;
 }) {
   const expired = isEventExpired(event.expiresAt);
   const started = hasEventStarted(event.startAt);
@@ -343,13 +361,18 @@ export function publicEventDto(event: {
     uploadsCloseAt: event.uploadsCloseAt,
     uploadsEnabled: event.uploadsEnabled !== false,
   });
+  const phase = getEventPhase(event);
   const computedState = expired
     ? "expired"
     : event.state === "ended"
       ? "ended"
-      : started
-        ? "live"
-        : "scheduled";
+      : phase === "countdown"
+        ? "scheduled"
+        : phase === "archive"
+          ? "ended"
+          : "live";
+  const planTier = normalizePlanId(event.planTier);
+  const plan = getPlan(planTier);
 
   return {
     id: event.id,
@@ -357,8 +380,11 @@ export function publicEventDto(event: {
     title: event.title,
     description: event.description,
     useCase: event.useCase,
+    eventType: event.eventType || "other",
     state: computedState,
+    phase,
     locationName: event.locationName ?? "",
+    coverKey: event.coverKey ?? null,
     startAt: event.startAt?.toISOString() ?? null,
     endAt: event.endAt?.toISOString() ?? null,
     expiresAt: event.expiresAt.toISOString(),
@@ -367,7 +393,7 @@ export function publicEventDto(event: {
     rsvpEnabled: Boolean(event.rsvpEnabled),
     commentsEnabled: event.commentsEnabled !== false,
     uploadsEnabled: event.uploadsEnabled !== false,
-    requireRsvpToUpload: event.requireRsvpToUpload !== false,
+    requireRsvpToUpload: Boolean(event.requireRsvpToUpload),
     allowPlusOnes: event.allowPlusOnes !== false,
     maxPlusOnes: event.maxPlusOnes ?? 2,
     uploadMode: event.uploadMode || "both",
@@ -375,18 +401,20 @@ export function publicEventDto(event: {
     hasStarted: started,
     uploadWindowOpen: uploadOpen,
     atmosphere: event.atmosphere || "bday",
-    themeColor: event.themeColor ?? "#698ea2",
+    themeColor: event.themeColor ?? "#0c0b0a",
     downloadPolicy: event.downloadPolicy || "members",
     downloadsEnabled: event.downloadsEnabled !== false,
     downloadOpensAt: event.downloadOpensAt?.toISOString() ?? null,
-    billingMode: event.billingMode || "subscription",
-    planTier: event.planTier || "free",
+    billingMode: event.billingMode || "free",
+    planTier,
+    planLabel: plan.label,
+    features: plan.features,
     instantFeeCents: event.instantFeeCents ?? 0,
     highlightsPublished: Boolean(event.highlightsPublished),
     highlightTemplate: event.highlightTemplate || "mosaic",
     highlightFilter: event.highlightFilter || "none",
-    maxGuests: event.maxGuests ?? 10,
-    maxMedia: event.maxMedia ?? 100,
+    maxGuests: event.maxGuests ?? plan.maxGuests,
+    maxMedia: event.maxMedia ?? plan.maxMedia,
     maxMediaPerGuest: event.maxMediaPerGuest ?? 10,
     uploadWindowHours: event.uploadWindowHours ?? null,
     uploadsOpenAt: event.uploadsOpenAt?.toISOString() ?? null,
@@ -394,10 +422,17 @@ export function publicEventDto(event: {
     mapsUrl: event.mapsUrl ?? "",
     inviteCopy: event.inviteCopy ?? "",
     inviteStickers: event.inviteStickers ?? "",
-    guestVisibility: event.guestVisibility || "own_only",
+    guestVisibility: event.guestVisibility || "all_members",
     requireApproval: Boolean(event.requireApproval),
     publishMessage: event.publishMessage ?? "",
     publishedAt: event.publishedAt?.toISOString() ?? null,
+    disposableCamera: Boolean(event.disposableCamera),
+    whiteLabel: Boolean(event.whiteLabel),
+    customDomain: event.customDomain ?? "",
+    hideUntilEventEnd: Boolean(event.hideUntilEventEnd),
+    featuredMediaId: event.featuredMediaId ?? null,
+    featuredUntil: event.featuredUntil?.toISOString() ?? null,
+    showBranding: plan.features.branding && !event.whiteLabel,
     joinUrl: `/e/${event.slug}`,
     createdAt: event.createdAt.toISOString(),
   };

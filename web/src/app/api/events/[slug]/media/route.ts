@@ -23,13 +23,8 @@ export async function GET(req: Request, ctx: Ctx) {
     const isOrg =
       membership.role === "organizer" || membership.role === "co_organizer";
 
-    if (!isOrg && !hasEventStarted(event.startAt)) {
-      return jsonError(
-        "EVENT_NOT_STARTED",
-        "The gallery opens when the event begins.",
-        403,
-      );
-    }
+    // Members can browse during countdown; hub is phase-aware.
+    void hasEventStarted;
 
     const download = await canDownload(event, user.id, membership);
 

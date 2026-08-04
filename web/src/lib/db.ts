@@ -19,7 +19,6 @@ function createClient() {
     globalForPrisma.pgPool ??
     new Pool({
       connectionString,
-      // Neon / most hosted Postgres use TLS in production
       ssl:
         process.env.NODE_ENV === "production" ||
         connectionString.includes("sslmode=require") ||
@@ -36,8 +35,18 @@ function createClient() {
   return new PrismaClient({ adapter });
 }
 
-export const prisma = globalForPrisma.prisma ?? createClient();
-
-if (process.env.NODE_ENV !== "production") {
-  globalForPrisma.prisma = prisma;
+function getPrisma() {
+  if (!globalForPrisma.prisma) {
+    globalForPrisma.prisma = createClient();
+  }
+  return globalForPrisma.prisma;
 }
+
+/** Lazy proxy so importing this module during build does not require DATABASE_URL. */
+export const prisma = new Proxy({} as PrismaClient, {
+  get(_target, prop, receiver) {
+    const client = getPrisma();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
+});
