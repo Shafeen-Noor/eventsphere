@@ -109,7 +109,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   const subtitle =
     mode === "signup"
       ? isOnetime
-        ? "Verify once, then create a single Pro event from $9 (sized to your guest list). Free events never need an account."
+        ? "Verify once, then create a paid event (Essential $19 or Premium $39). Free events never need an account."
         : isSubscribe
           ? "Monthly Pro for hosts who run more than one event. Free galleries stay account-free."
           : "Accounts unlock Pro. Free events start without signup."
@@ -128,12 +128,12 @@ export function AuthForm({ mode }: { mode: Mode }) {
         <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] px-4 py-3 text-sm text-[var(--muted)]">
           {isOnetime ? (
             <>
-              <p className="font-semibold text-[var(--navy)]">One Pro event — from $9</p>
+              <p className="font-semibold text-[var(--navy)]">One paid event — from $19</p>
               <p className="mt-1">Pick guests + storage at checkout. Payment simulated until Stripe.</p>
             </>
           ) : (
             <>
-              <p className="font-semibold text-[var(--navy)]">Pro subscription — $29/mo</p>
+              <p className="font-semibold text-[var(--navy)]">Enterprise — from $199/mo</p>
               <p className="mt-1">Create multiple Pro events each month after verify.</p>
             </>
           )}

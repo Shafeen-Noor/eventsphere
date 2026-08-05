@@ -142,8 +142,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   essential: {
     id: "essential",
     label: "Essential",
-    priceCents: 900,
-    priceLabel: "$9",
+    priceCents: 1900,
+    priceLabel: "$19",
     blurb: "50 guests · 500 media · 7 days · slideshow, polls, seating",
     maxGuests: 50,
     maxMedia: 500,
@@ -153,8 +153,8 @@ export const PLANS: Record<PlanId, PlanDefinition> = {
   premium: {
     id: "premium",
     label: "Premium",
-    priceCents: 2900,
-    priceLabel: "$29",
+    priceCents: 3900,
+    priceLabel: "$39",
     blurb: "200 guests · unlimited media · 30 days · AI, faces, moderation",
     maxGuests: 200,
     maxMedia: UNLIMITED,
