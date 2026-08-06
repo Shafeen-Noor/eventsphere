@@ -3,134 +3,296 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EventSphere — MVP</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
-  <style>
-    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.5}
-    .wrap{width:min(900px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
-    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
-    h1,h2{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:-.02em;margin:0}
-    h1{font-size:clamp(2rem,4vw,2.8rem)} h2{font-size:1.5rem;margin:2rem 0 .65rem}
-    .lede{color:var(--muted);max-width:60ch;margin:.75rem 0 0}
-    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
-    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin-top:.75rem}
-    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
-    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    .grid{display:grid;gap:.85rem;grid-template-columns:1fr 1fr;margin-top:1rem}
-    @media(max-width:700px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--paper);border:1px solid var(--line);padding:1rem 1.1rem}
-    ul{margin:.4rem 0 0;padding-left:1.15rem;color:var(--muted)}
-    li+li{margin-top:.25rem}
-    .good{color:var(--good);font-weight:700}
-  </style>
+  <title>EventSphere — MVP Product Report</title>
+  <link rel="stylesheet" href="report.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
 </head>
 <body>
+  <nav class="topbar">
+    <a href="index.html">← Materials</a>
+    <span class="sep">|</span>
+    <a href="#sec-1">1 · Summary</a>
+    <a href="#sec-2">2 · Problem</a>
+    <a href="#sec-3">3 · Product</a>
+    <a href="#sec-4">4 · User flows</a>
+    <a href="#sec-5">5 · Features</a>
+    <a href="#sec-6">6 · Plans</a>
+    <a href="#sec-7">7 · Scope</a>
+    <a href="#sec-8">8 · Tech</a>
+    <span class="sep">|</span>
+    <a href="readme.html">README →</a>
+  </nav>
+
   <div class="wrap">
-    <a class="back" href="index.html">← All materials</a>
-    <p class="kicker">EventSphere · MVP</p>
-    <h1>Minimum viable product — live today</h1>
-    <p class="lede">
-      EventSphere is a per-event digital experience: one QR code, one hub for photos,
-      guestbook, polls, feed, and host controls. No guest app install required.
-    </p>
-
-    <div class="grid">
-      <div class="card">
-        <strong>Live app</strong>
-        <p><a href="https://eventsphere-orcin.vercel.app" target="_blank">eventsphere-orcin.vercel.app</a></p>
+    <header class="hero">
+      <p class="kicker">EventSphere · Product report</p>
+      <h1>Minimum Viable Product Report</h1>
+      <p class="lede">
+        This document describes what EventSphere ships today: a live, browser-based event hub
+        where hosts share one QR code, guests contribute photos and messages without installing an app,
+        and paid plans unlock capacity and engagement features for the night.
+      </p>
+      <div class="meta">
+        <div><strong>Document type</strong> MVP product report</div>
+        <div><strong>Version</strong> 1.0</div>
+        <div><strong>Date</strong> August 2026</div>
+        <div><strong>Live product</strong> <a href="https://eventsphere-orcin.vercel.app">eventsphere-orcin.vercel.app</a></div>
+        <div><strong>Repository</strong> <a href="https://github.com/Shafeen-Noor/eventsphere">GitHub</a></div>
       </div>
-    </div>
+    </header>
 
-    <h2>Core user flow</h2>
-    <ol style="color:var(--muted);padding-left:1.2rem">
-      <li><strong style="color:var(--ink)">Create</strong> — host picks event type, name, date (no signup required)</li>
-      <li><strong style="color:var(--ink)">Share</strong> — QR code + link from host dashboard</li>
-      <li><strong style="color:var(--ink)">Join</strong> — guests enter by name in browser, upload photos, guestbook, reactions</li>
-      <li><strong style="color:var(--ink)">Engage</strong> — live feed, polls, challenges, seating, slideshow</li>
-      <li><strong style="color:var(--ink)">Upgrade</strong> — Essential ($19) or Premium ($39) when limits are hit</li>
-    </ol>
+    <nav class="toc">
+      <p class="kicker">Contents</p>
+      <ol>
+        <li><a href="#sec-1">Executive Summary</a></li>
+        <li><a href="#sec-2">Problem &amp; Product Thesis</a></li>
+        <li><a href="#sec-3">What the MVP Is (and Is Not)</a></li>
+        <li><a href="#sec-4">User Flows — Host, Guest, Partner</a></li>
+        <li><a href="#sec-5">Feature Inventory (Shipped)</a></li>
+        <li><a href="#sec-6">Plans, Limits &amp; Pricing</a></li>
+        <li><a href="#sec-7">MVP Scope — In vs Out</a></li>
+        <li><a href="#sec-8">Technical Architecture Summary</a></li>
+        <li><a href="#sec-9">Validation &amp; Next Milestones</a></li>
+      </ol>
+    </nav>
 
-    <h2>Plans (MVP pricing)</h2>
-    <table>
-      <thead>
-        <tr><th>Plan</th><th>Price</th><th>Guests</th><th>Uploads</th><th>Retention</th><th>Key features</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td><strong>Essential</strong></td>
-          <td>$19 / event</td>
-          <td>50</td>
-          <td>500</td>
-          <td>7 days</td>
-          <td>Slideshow, polls, seating, guestbook, ZIP download</td>
-        </tr>
-        <tr>
-          <td><strong>Premium</strong></td>
-          <td>$39 / event</td>
-          <td>200</td>
-          <td>Unlimited</td>
-          <td>30 days</td>
-          <td>AI recap, face search, moderation, analytics, multi-host</td>
-        </tr>
-        <tr>
-          <td><strong>Enterprise</strong></td>
-          <td>from $199 / mo</td>
-          <td>Unlimited</td>
-          <td>Unlimited</td>
-          <td>Custom</td>
-          <td>White-label, API access</td>
-        </tr>
-      </tbody>
-    </table>
-    <p class="lede" style="margin-top:.75rem;font-size:.9rem">Paid-only GTM model — see <a href="cac.html">CAC</a> economics.</p>
-
-    <h2>Shipped in MVP</h2>
-    <div class="grid">
-      <div class="card">
-        <strong>Marketing &amp; create</strong>
-        <ul>
-          <li>Landing page · pricing · enterprise</li>
-          <li>Create wizard (type → name → date)</li>
-          <li>Cookie-based host auth</li>
-        </ul>
+    <section id="sec-1">
+      <h2><span class="sec-num">01</span> Executive Summary</h2>
+      <p>
+        EventSphere’s MVP is a <strong>per-event digital experience</strong>, not a generic photo gallery.
+        Each event receives a branded mini-site: invite landing, guest hub, live feed, host dashboard, and QR entry point.
+        The product is deployed on Vercel and usable end-to-end without a mobile app install.
+      </p>
+      <div class="summary-grid">
+        <div class="card"><p class="kicker">Positioning</p><p class="num">One QR</p><p>Every memory in one place</p></div>
+        <div class="card"><p class="kicker">Guest friction</p><p class="num">Zero</p><p>Browser only · no app</p></div>
+        <div class="card"><p class="kicker">Monetization</p><p class="num">Per event</p><p>Essential &amp; Premium tiers</p></div>
+        <div class="card"><p class="kicker">GTM fit</p><p class="num">Partners</p><p>See <a href="cac.html">CAC report</a></p></div>
       </div>
-      <div class="card">
-        <strong>Host dashboard</strong>
-        <ul>
-          <li>QR + invite link · guest count</li>
-          <li>Media moderation · upgrade modal</li>
-          <li>Analytics · extend retention</li>
-        </ul>
-      </div>
-      <div class="card">
-        <strong>Guest hub</strong>
-        <ul>
-          <li>Photo / video upload · gallery</li>
-          <li>Guestbook · live feed · reactions</li>
-          <li>Polls · votes · challenges · seating</li>
-        </ul>
-      </div>
-      <div class="card">
-        <strong>APIs &amp; infra</strong>
-        <ul>
-          <li>Postgres + Prisma · S3 or local uploads</li>
-          <li>Slideshow route · Vercel production deploy</li>
-        </ul>
-      </div>
-    </div>
+      <p>
+        The MVP intentionally prioritizes <strong>the night-of experience</strong> (upload, feed, guestbook, polls, slideshow)
+        over full pre-event tooling (invitations, RSVP, ticketing). That broader journey is documented in the PRD and pitch deck
+        as the long-term vision; this report covers what is built and demonstrable now.
+      </p>
+    </section>
 
-    <h2>Not yet in MVP (honest scope)</h2>
-    <ul>
-      <li>Real Stripe checkout (payments simulated)</li>
-      <li>Production face recognition</li>
-      <li>Real email OTP auth</li>
-      <li>Full invitation / RSVP / ticketing suite from PRD</li>
-    </ul>
+    <section id="sec-2">
+      <h2><span class="sec-num">02</span> Problem &amp; Product Thesis</h2>
+      <h3>The fragmentation problem</h3>
+      <p>
+        Event hosts currently stitch together multiple tools: Evite or Eventbrite for invites, WhatsApp for coordination,
+        Google Photos or iCloud for memories. No single product owns the full journey from planning through post-event archive.
+        EventSphere’s thesis is to become that unified layer — starting with the highest-emotion, highest-urgency moment:
+        <strong>collecting and reliving guest-contributed media during and after the event</strong>.
+      </p>
+      <h3>Why QR + browser beats “download our app”</h3>
+      <ul>
+        <li><strong>Guest adoption:</strong> Wedding and party guests will not install an app for a four-hour event. A QR scan to a mobile web page removes that barrier.</li>
+        <li><strong>Host speed:</strong> Create flow requires no account for the first event; host gets a link and QR immediately.</li>
+        <li><strong>Partner distribution:</strong> Photographers and planners can say “scan this for tonight’s album” at the venue — natural fit for the partnership channel modeled in unit economics.</li>
+      </ul>
+    </section>
 
-    <h2>Tech stack</h2>
-    <p class="lede">Next.js · TypeScript · Prisma · PostgreSQL · AWS S3 · Vercel</p>
-    <p><a href="readme.html">Full README → setup &amp; deploy</a></p>
+    <section id="sec-3">
+      <h2><span class="sec-num">03</span> What the MVP Is (and Is Not)</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h4>The MVP IS</h4>
+          <ul>
+            <li>A live event website per occasion</li>
+            <li>Guest photo/video upload from phone camera</li>
+            <li>Guestbook, reactions, live feed, polls, votes, challenges</li>
+            <li>Host dashboard with QR, moderation, upgrade path</li>
+            <li>Slideshow mode for venue screens</li>
+            <li>Plan-based limits on guests, uploads, retention</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>The MVP IS NOT (yet)</h4>
+          <ul>
+            <li>Full invitation &amp; RSVP platform</li>
+            <li>Production Stripe billing (simulated checkout)</li>
+            <li>Production-grade face recognition</li>
+            <li>Real email OTP authentication</li>
+            <li>Printed photo books or physical fulfillment</li>
+            <li>Native iOS/Android apps</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-4">
+      <h2><span class="sec-num">04</span> User Flows</h2>
+      <h3>4.1 Host flow</h3>
+      <ol>
+        <li><strong>Land</strong> on marketing home → click Create Event</li>
+        <li><strong>Wizard:</strong> select event type (wedding, birthday, corporate, etc.) → name → date</li>
+        <li><strong>Dashboard:</strong> receive unique slug URL, QR code, guest count, upgrade prompts</li>
+        <li><strong>During event:</strong> display QR at entrance; optional slideshow on projector</li>
+        <li><strong>Moderate:</strong> approve/remove uploads; pin featured photos</li>
+        <li><strong>Upgrade:</strong> when guest or media limits hit, choose Essential or Premium (simulated payment in MVP)</li>
+      </ol>
+      <h3>4.2 Guest flow</h3>
+      <ol>
+        <li>Scan QR or open shared link</li>
+        <li>Enter display name (no account)</li>
+        <li>Use hub tabs: Gallery · Guestbook · Feed · Polls · etc.</li>
+        <li>Upload from camera roll or capture in-browser</li>
+        <li>React to others’ posts; participate in polls/challenges if enabled</li>
+      </ol>
+      <h3>4.3 Partner-influenced flow (GTM)</h3>
+      <p>
+        A photographer or planner introduces EventSphere during event setup. The host pays upfront (paid-only GTM in economics model)
+        or upgrades at the guest limit. Partner earns 20% commission on successful sale — see
+        <a href="cac.html#sec-4">Partnership channel</a> for funnel assumptions.
+      </p>
+    </section>
+
+    <section id="sec-5">
+      <h2><span class="sec-num">05</span> Feature Inventory (Shipped)</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Area</th><th>Feature</th><th>Plan availability</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Marketing</td><td>Landing, pricing, enterprise pages</td><td>All</td><td>Public marketing site</td></tr>
+            <tr><td>Create</td><td>Event wizard (type, name, date)</td><td>All</td><td>No signup required initially</td></tr>
+            <tr><td>Share</td><td>QR code + invite link</td><td>All</td><td>Host dashboard</td></tr>
+            <tr><td>Media</td><td>Photo &amp; video upload</td><td>All (limits vary)</td><td>S3 or local storage</td></tr>
+            <tr><td>Engagement</td><td>Guestbook</td><td>All</td><td>Text messages from guests</td></tr>
+            <tr><td>Engagement</td><td>Live feed &amp; reactions</td><td>All</td><td>Activity stream</td></tr>
+            <tr><td>Engagement</td><td>Polls &amp; votes</td><td>Essential+</td><td>Interactive prompts</td></tr>
+            <tr><td>Engagement</td><td>Challenges &amp; seating</td><td>Essential+</td><td>Party games / table finder</td></tr>
+            <tr><td>Engagement</td><td>Slideshow</td><td>Essential+</td><td>Full-screen venue display</td></tr>
+            <tr><td>Host</td><td>Moderation queue</td><td>Premium</td><td>Approve before publish</td></tr>
+            <tr><td>Host</td><td>Analytics snapshot</td><td>Premium</td><td>Upload &amp; guest stats</td></tr>
+            <tr><td>Host</td><td>Extend retention</td><td>Paid</td><td>Add-on for longer archive</td></tr>
+            <tr><td>AI</td><td>Recap / captions</td><td>Premium</td><td>When OPENAI_API_KEY set</td></tr>
+            <tr><td>Enterprise</td><td>Demo lead form</td><td>Enterprise page</td><td>Sales-led tier</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">Full API route list: <a href="readme.html#sec-9">Technical README § API reference</a></p>
+    </section>
+
+    <section id="sec-6">
+      <h2><span class="sec-num">06</span> Plans, Limits &amp; Pricing</h2>
+      <p>
+        The economics reports model <strong>Essential $19</strong> and <strong>Premium $39</strong> as the recommended GTM pricing
+        (profitable after partner commission and ads CAC). The live codebase may still display legacy prices until deployed;
+        limits below reflect the product structure.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th class="num">Recommended price</th>
+              <th class="num">Guests</th>
+              <th class="num">Media uploads</th>
+              <th class="num">Retention</th>
+              <th>Key unlocks</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Essential</strong></td>
+              <td class="num">$19 / event</td>
+              <td class="num">50</td>
+              <td class="num">500</td>
+              <td class="num">7 days</td>
+              <td>Slideshow, polls, seating, ZIP download, timeline</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Premium</strong></td>
+              <td class="num">$39 / event</td>
+              <td class="num">200</td>
+              <td class="num">Unlimited</td>
+              <td class="num">30 days</td>
+              <td>AI recap, faces, moderation, analytics, multi-host</td>
+            </tr>
+            <tr>
+              <td><strong>Enterprise</strong></td>
+              <td class="num">from $199 / mo</td>
+              <td class="num">Unlimited</td>
+              <td class="num">Unlimited</td>
+              <td class="num">Custom</td>
+              <td>White-label, API, sales-led</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="note">
+        Paid-only GTM (no free tier) is the assumption in <a href="cac.html">CAC</a> and <a href="ltv.html">LTV</a> reports.
+        A free trial tier remains in code for product-led experiments but is not used in investor economics.
+      </div>
+    </section>
+
+    <section id="sec-7">
+      <h2><span class="sec-num">07</span> MVP Scope — In vs Out</h2>
+      <h3>In scope (demonstrable today)</h3>
+      <ul>
+        <li>End-to-end create → share → guest join → upload → host view</li>
+        <li>20+ engagement API routes (guestbook, feed, polls, challenges, seating, audio, etc.)</li>
+        <li>Postgres persistence via Prisma; migrations applied on deploy</li>
+        <li>File storage via AWS S3 or local fallback for development</li>
+        <li>Production deployment on Vercel with environment-based configuration</li>
+      </ul>
+      <h3>Out of scope (post-MVP)</h3>
+      <ul>
+        <li>Real payment processing (Stripe integration)</li>
+        <li>Email/SMS invitation delivery</li>
+        <li>Ticketing and paid admission</li>
+        <li>Native mobile apps</li>
+        <li>Full PRD “before / during / after” feature parity with Eventbrite + GuestPix combined</li>
+      </ul>
+    </section>
+
+    <section id="sec-8">
+      <h2><span class="sec-num">08</span> Technical Architecture Summary</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Layer</th><th>Technology</th><th>Role</th></tr></thead>
+          <tbody>
+            <tr><td>Frontend</td><td>Next.js 16 (App Router), React, TypeScript</td><td>Marketing, create wizard, event hub, dashboard</td></tr>
+            <tr><td>Backend</td><td>Next.js Route Handlers</td><td>REST-style APIs under <code>/api</code></td></tr>
+            <tr><td>Database</td><td>PostgreSQL + Prisma ORM</td><td>Events, guests, media metadata, engagement data</td></tr>
+            <tr><td>Storage</td><td>AWS S3 (prod) / local disk (dev)</td><td>Binary media files</td></tr>
+            <tr><td>Auth</td><td>Cookie sessions</td><td>Host accounts; guests are anonymous with display name</td></tr>
+            <tr><td>Hosting</td><td>Vercel</td><td>CI/CD, edge, serverless functions</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Full setup, environment variables, API catalog, and deployment steps: <a href="readme.html">Technical README report</a>.</p>
+    </section>
+
+    <section id="sec-9">
+      <h2><span class="sec-num">09</span> Validation &amp; Next Milestones</h2>
+      <h3>What this MVP proves</h3>
+      <ul>
+        <li>Hosts can launch an event hub in under two minutes</li>
+        <li>Guests participate from mobile browser without friction</li>
+        <li>Engagement features (not just uploads) differentiate from simple gallery apps</li>
+        <li>Unit economics work at $19/$39 with partnership-led acquisition (<a href="cac.html">CAC</a>, <a href="ltv.html">LTV</a>)</li>
+      </ul>
+      <h3>Recommended next build priorities</h3>
+      <ol>
+        <li>Stripe checkout for Essential / Premium (replace simulated upgrade)</li>
+        <li>Partner referral tracking + commission reporting</li>
+        <li>Align live pricing display with economics model ($19 / $39)</li>
+        <li>Interview-backed refresh of funnel conversion rates in CAC model</li>
+        <li>Invitation landing + RSVP (first “before event” PRD slice)</li>
+      </ol>
+    </section>
+
+    <footer>
+      EventSphere MVP Report v1.0 · August 2026 ·
+      <a href="index.html">All materials</a> ·
+      <a href="cac.html">CAC</a> ·
+      <a href="ltv.html">LTV</a> ·
+      <a href="readme.html">README</a>
+    </footer>
   </div>
 </body>
 </html>

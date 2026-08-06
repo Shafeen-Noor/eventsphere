@@ -3,417 +3,771 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EventSphere — Customer Acquisition Cost (CAC)</title>
+  <title>EventSphere — Customer Acquisition Cost (CAC) Report</title>
+  <link rel="stylesheet" href="report.css" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --bg: #f4f1ea;
-      --paper: #fffcf7;
-      --ink: #0c0b0a;
-      --muted: #6b645c;
-      --line: #d8d2c8;
-      --good: #2f5d3a;
-      --bad: #9b2c2c;
-      --soft: #ebe6dc;
-      --note: #fff8e8;
-      --partner: #2f5d3a;
-      --ads: #5c4a3a;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--ink);
-      font-family: "DM Sans", system-ui, sans-serif;
-      line-height: 1.55;
-      font-size: 16px;
-    }
-    .topbar {
-      position: sticky;
-      top: 0;
-      z-index: 10;
-      background: rgba(244, 241, 234, 0.92);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--line);
-      padding: 0.65rem 1.25rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem 1.25rem;
-      align-items: center;
-      font-size: 0.85rem;
-    }
-    .topbar a { color: var(--ink); text-decoration: none; }
-    .topbar a:hover { text-decoration: underline; }
-    .topbar .sep { color: var(--line); }
-    .wrap { width: min(1040px, calc(100% - 2rem)); margin: 0 auto; padding: 2.5rem 0 4rem; }
-    .kicker {
-      font-size: 0.72rem;
-      font-weight: 700;
-      letter-spacing: 0.16em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 0 0 0.5rem;
-    }
-    h1, h2 {
-      font-family: "Cormorant Garamond", Georgia, serif;
-      letter-spacing: -0.02em;
-      line-height: 1.1;
-      margin: 0;
-    }
-    h1 { font-size: clamp(2.2rem, 5vw, 3.2rem); max-width: 22ch; }
-    h2 {
-      font-size: clamp(1.45rem, 3vw, 1.9rem);
-      margin-bottom: 0.5rem;
-      display: flex;
-      align-items: baseline;
-      gap: 0.65rem;
-      flex-wrap: wrap;
-    }
-    .sec-num {
-      font-size: 0.72rem;
-      font-family: "DM Sans", sans-serif;
-      font-weight: 700;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      border: 1px solid var(--line);
-      padding: 0.2rem 0.45rem;
-      border-radius: 4px;
-    }
-    .lede { color: var(--muted); max-width: 58ch; margin: 0.75rem 0 0; font-size: 1.02rem; }
-    .hero { border-bottom: 1px solid var(--line); padding-bottom: 2rem; margin-bottom: 2.5rem; }
-    .summary {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 0.85rem;
-      margin-top: 1.75rem;
-    }
-    @media (max-width: 820px) { .summary { grid-template-columns: 1fr 1fr; } }
-    @media (max-width: 480px) { .summary { grid-template-columns: 1fr; } }
-    .card {
-      background: var(--paper);
-      border: 1px solid var(--line);
-      padding: 1rem 1.05rem;
-    }
-    .card .num {
-      font-family: "Cormorant Garamond", Georgia, serif;
-      font-size: 1.85rem;
-      font-weight: 700;
-      margin: 0.1rem 0;
-      line-height: 1.1;
-    }
-    .card p { margin: 0.2rem 0 0; color: var(--muted); font-size: 0.88rem; }
-    section { margin: 3rem 0; scroll-margin-top: 4rem; }
-    .section-head { margin-bottom: 1.25rem; }
-    .badge {
-      display: inline-block;
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 0.22rem 0.5rem;
-      margin-bottom: 0.5rem;
-    }
-    .badge.partner { background: var(--partner); color: #fff; }
-    .badge.ads { background: var(--ads); color: #fff; }
-    .table-wrap {
-      overflow-x: auto;
-      margin-top: 0.75rem;
-      border: 1px solid var(--line);
-      background: var(--paper);
-    }
-    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; min-width: 520px; }
-    th, td {
-      text-align: left;
-      padding: 0.7rem 0.85rem;
-      border-bottom: 1px solid var(--line);
-      vertical-align: middle;
-    }
-    th {
-      font-size: 0.68rem;
-      letter-spacing: 0.07em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 700;
-      background: rgba(12, 11, 10, 0.03);
-    }
-    tr:last-child td { border-bottom: none; }
-    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-    tr.hi td { background: rgba(47, 93, 58, 0.06); }
-    tr.total td { font-weight: 700; background: var(--soft); }
-    .good { color: var(--good); font-weight: 700; }
-    .bad { color: var(--bad); font-weight: 700; }
-    .funnel {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: stretch;
-      gap: 0;
-      margin: 1rem 0;
-      background: var(--paper);
-      border: 1px solid var(--line);
-    }
-    .funnel-step {
-      flex: 1 1 120px;
-      padding: 0.85rem 1rem;
-      border-right: 1px solid var(--line);
-      min-width: 110px;
-    }
-    .funnel-step:last-child { border-right: none; }
-    .funnel-step .label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); font-weight: 700; }
-    .funnel-step .val { font-family: "Cormorant Garamond", serif; font-size: 1.5rem; font-weight: 700; margin: 0.15rem 0; }
-    .funnel-step .sub { font-size: 0.78rem; color: var(--muted); }
-    @media (max-width: 700px) {
-      .funnel-step { border-right: none; border-bottom: 1px solid var(--line); flex: 1 1 100%; }
-      .funnel-step:last-child { border-bottom: none; }
-    }
-    .note {
-      margin-top: 1rem;
-      background: var(--note);
-      border: 1px solid #ead9a8;
-      padding: 0.9rem 1.05rem;
-      font-size: 0.92rem;
-      border-radius: 2px;
-    }
-    .src { font-size: 0.78rem; color: var(--muted); margin-top: 0.65rem; }
-    footer {
-      margin-top: 3rem;
-      padding-top: 1rem;
-      border-top: 1px solid var(--line);
-      color: var(--muted);
-      font-size: 0.85rem;
-    }
-    @media print {
-      .topbar { position: static; }
-      section { break-inside: avoid; }
-    }
-  </style>
 </head>
 <body>
   <nav class="topbar">
     <a href="index.html">← Materials</a>
     <span class="sep">|</span>
-    <a href="#margins">1 · Margins</a>
-    <a href="#partners">2 · Partnerships</a>
-    <a href="#ads">3 · Paid ads</a>
-    <a href="#combined">Combined</a>
+    <a href="#sec-1">1 · Summary</a>
+    <a href="#sec-2">2 · Methodology</a>
+    <a href="#sec-3">3 · Pricing</a>
+    <a href="#sec-4">4 · Partnerships</a>
+    <a href="#sec-5">5 · Paid Ads</a>
+    <a href="#sec-6">6 · Combined</a>
+    <a href="#sec-7">7 · Pitch Tables</a>
+    <a href="#sec-8">8 · Assumptions</a>
     <span class="sep">|</span>
     <a href="ltv.html">LTV →</a>
   </nav>
 
   <div class="wrap">
     <header class="hero">
-      <p class="kicker">EventSphere · Unit economics</p>
-      <h1>Customer acquisition cost</h1>
+      <p class="kicker">EventSphere · Investor materials · Unit economics</p>
+      <h1>Customer Acquisition Cost Report</h1>
       <p class="lede">
-        Two channels, three tables. Partnerships are the core go-to-market strategy;
-        paid ads are a controlled backup. Pricing: Essential <strong>$19</strong> · Premium <strong>$39</strong>.
+        A formal analysis of how EventSphere acquires paying hosts under a paid-only go-to-market model.
+        Two channels are modeled at launch scale: partnership referrals (primary) and paid advertising (controlled backup).
+        All figures reflect per-event pricing — Essential at $19 and Premium at $39 — with no free tier.
       </p>
-      <div class="summary">
+
+      <div class="meta">
+        <div><strong>Document type</strong> Investor CAC analysis</div>
+        <div><strong>Version</strong> 1.0</div>
+        <div><strong>Date</strong> August 2026</div>
+        <div><strong>Author</strong> Shafeen Noor</div>
+        <div><strong>Model</strong> Paid-only GTM</div>
+      </div>
+
+      <div class="summary-grid">
         <div class="card">
-          <p class="kicker">Partners · CAC</p>
+          <p class="kicker">Blended CAC</p>
+          <p class="num">$13.18</p>
+          <p>105 paying events · both channels</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Partner CAC</p>
           <p class="num good">$6.40</p>
           <p>20% commission · pay after sale</p>
         </div>
         <div class="card">
-          <p class="kicker">Ads · CAC</p>
-          <p class="num">$22</p>
-          <p>$1,000 ÷ 45 customers</p>
+          <p class="kicker">Ads CAC</p>
+          <p class="num">$22.00</p>
+          <p>$1,000 budget ÷ 45 customers</p>
         </div>
         <div class="card">
-          <p class="kicker">Partners · profit</p>
-          <p class="num good">+$1,297</p>
-          <p>60 events / month · 68% margin</p>
-        </div>
-        <div class="card">
-          <p class="kicker">Combined · profit</p>
+          <p class="kicker">Contribution profit</p>
           <p class="num good">+$1,518</p>
-          <p>105 events · both channels</p>
+          <p>46% margin · one launch month</p>
         </div>
       </div>
     </header>
 
-    <!-- TABLE 1 -->
-    <section id="margins">
-      <div class="section-head">
-        <p class="kicker">Table 1</p>
-        <h2><span class="sec-num">01</span> Margins — per paid event</h2>
-        <p class="lede">What we keep after Stripe (2.9% + $0.30) and AWS, before and after acquisition.</p>
+    <nav class="toc" aria-label="Table of contents">
+      <p class="kicker">Contents</p>
+      <ol>
+        <li><a href="#sec-1">Executive Summary</a></li>
+        <li><a href="#sec-2">Scope, Methodology &amp; Definitions</a></li>
+        <li><a href="#sec-3">Pricing &amp; Unit Economics</a></li>
+        <li><a href="#sec-4">Channel 1 — Partnerships</a></li>
+        <li><a href="#sec-5">Channel 2 — Paid Advertising</a></li>
+        <li><a href="#sec-6">Combined Channel Analysis</a></li>
+        <li><a href="#sec-7">Summary Tables (Investor Pitch)</a></li>
+        <li><a href="#sec-8">Assumption Register</a></li>
+        <li><a href="#sec-9">Risks &amp; Limitations</a></li>
+        <li><a href="#sec-10">Appendix — Formulas</a></li>
+      </ol>
+    </nav>
+
+    <!-- SECTION 1 -->
+    <section id="sec-1">
+      <h2>1. Executive Summary</h2>
+      <p>
+        EventSphere is a pay-per-event digital experience platform: one QR code, one hub for photos, guestbook,
+        polls, and host controls. Revenue is collected once per event, not via monthly SaaS subscriptions.
+        This report quantifies the cost to acquire each paying host under EventSphere's launch go-to-market strategy,
+        which deliberately excludes a free tier and relies on two complementary acquisition channels.
+      </p>
+      <p>
+        The <strong>partnership channel</strong> is the core engine. Event vendors — photographers, planners, venues,
+        and DJs — already stand beside hosts at live events. They pitch EventSphere in context, earning a 20% commission
+        only after a successful sale. At modeled scale (30 active partners), this channel produces 60 paying events per month
+        at a blended CAC of <strong>$6.40</strong>, with contribution profit of <strong>$1,297</strong> and a
+        <strong>68%</strong> contribution margin. There is no upfront cash outlay for acquisition; commission is
+        variable and tied directly to revenue.
+      </p>
+      <p>
+        The <strong>paid advertising channel</strong> serves as a controlled backup and demand-generation lever.
+        A $1,000 monthly test budget yields 45 paying events at $22 CAC. The channel is profitable in aggregate
+        (+$221 contribution profit, 16% margin) but structurally dependent on Premium plan mix: Essential events
+        lose $5.47 per unit after ads CAC, while Premium events contribute +$11.85. Creative and targeting must
+        therefore skew toward higher-value events (weddings, corporate galas, large celebrations).
+      </p>
+      <p>
+        Combined, both channels deliver <strong>105 paying events</strong>, <strong>$3,312 gross revenue</strong>,
+        and <strong>$1,518 contribution profit</strong> in a representative launch month. Blended CAC is
+        <strong>$13.18</strong> against a blended gross margin of approximately <strong>$28.01</strong> per event
+        (weighted by plan mix), implying strong first-event economics and a healthy foundation for LTV analysis
+        (see companion <a href="ltv.html">LTV report</a>).
+      </p>
+
+      <div class="note">
+        <strong>Investment thesis in one line:</strong> Partnerships deliver capital-efficient, high-margin acquisition
+        with no upfront spend; paid ads extend reach when Premium-heavy, but should not carry Essential-heavy volume
+        at current price points and funnel conversion rates.
       </div>
+
+      <h3>Key findings at a glance</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Finding</th>
+              <th class="num">Value</th>
+              <th>Implication</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hi">
+              <td>Partner channel margin</td>
+              <td class="num good">68%</td>
+              <td>Primary GTM — scale partner count before ad spend</td>
+            </tr>
+            <tr>
+              <td>Ads channel margin</td>
+              <td class="num">16%</td>
+              <td>Viable as backup; monitor Essential share closely</td>
+            </tr>
+            <tr>
+              <td>Essential unit economics (ads)</td>
+              <td class="num bad">−$5.47</td>
+              <td>Do not optimize ads funnel for low-tier events</td>
+            </tr>
+            <tr>
+              <td>Premium unit economics (ads)</td>
+              <td class="num good">+$11.85</td>
+              <td>Premium creative and landing pages required</td>
+            </tr>
+            <tr class="total">
+              <td>Blended launch-month profit</td>
+              <td class="num good">+$1,518</td>
+              <td>Positive unit economics before repeat-event LTV</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section id="sec-2">
+      <h2>2. Scope, Methodology &amp; Definitions</h2>
+      <p>
+        This document covers customer acquisition cost for EventSphere's paid-only launch model as of August 2026.
+        It does not model Enterprise contracts (from $199/month), future price changes, or geographic expansion.
+        All currency is USD. Time horizon is one representative launch month unless otherwise stated.
+      </p>
+
+      <h3>2.1 Scope boundaries</h3>
+      <ul>
+        <li><strong>In scope:</strong> Essential ($19) and Premium ($39) per-event plans; Stripe payment processing; AWS infrastructure COGS; two acquisition channels (partnerships, paid ads).</li>
+        <li><strong>Out of scope:</strong> Customer support headcount, engineering salaries, office overhead, product development capex, tax, and multi-month cohort retention (addressed separately in LTV analysis).</li>
+        <li><strong>Customer definition:</strong> A "paying event" is one host who completes checkout for a single event. Repeat purchases by the same host are modeled in LTV, not here.</li>
+        <li><strong>GTM model:</strong> Paid-only — hosts encounter limits during event creation and must upgrade to publish. There is no permanently free tier.</li>
+      </ul>
+
+      <h3>2.2 Methodology</h3>
+      <p>
+        Unit economics are built bottom-up from list price, payment processing fees, and estimated AWS cost per event.
+        Channel P&amp;L statements apply funnel conversion assumptions to derive customer counts, then multiply by
+        per-plan economics. Combined figures are simple sums across channels with no deduplication (channels are
+        assumed to reach distinct customer segments in month one).
+      </p>
+      <p>
+        Sensitivity tables vary one input at a time while holding others constant, to isolate drivers of CAC and
+        contribution margin. All intermediate funnel steps are shown so investors can audit arithmetic independently.
+      </p>
+
+      <h3>2.3 Definitions</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Term</th>
+              <th>Definition</th>
+              <th>Formula / note</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>CAC</strong> (Customer Acquisition Cost)</td>
+              <td>Total acquisition spend divided by number of new paying events acquired in the period.</td>
+              <td>CAC = Acquisition cost ÷ Paying events</td>
+            </tr>
+            <tr>
+              <td><strong>COGS</strong> (Cost of Goods Sold)</td>
+              <td>Direct variable cost to deliver one paid event: Stripe fees + AWS infrastructure (storage, compute, egress).</td>
+              <td>Excluded from CAC; deducted from revenue before contribution profit</td>
+            </tr>
+            <tr>
+              <td><strong>Gross margin (GM)</strong></td>
+              <td>Revenue minus COGS for one event, before any acquisition cost.</td>
+              <td>GM = Price − Stripe − AWS</td>
+            </tr>
+            <tr>
+              <td><strong>Contribution profit</strong></td>
+              <td>Revenue minus COGS minus acquisition cost for a cohort or channel.</td>
+              <td>Also called contribution margin in dollar terms</td>
+            </tr>
+            <tr>
+              <td><strong>Contribution margin %</strong></td>
+              <td>Contribution profit as a percentage of gross revenue.</td>
+              <td>Contribution profit ÷ Revenue</td>
+            </tr>
+            <tr>
+              <td><strong>Blended CAC</strong></td>
+              <td>Weighted average CAC across channels by customer count.</td>
+              <td>Total acquisition ÷ Total paying events</td>
+            </tr>
+            <tr>
+              <td><strong>Partner commission</strong></td>
+              <td>20% of gross transaction value, paid to referring vendor after successful checkout.</td>
+              <td>Treated as variable CAC for partnership channel</td>
+            </tr>
+            <tr>
+              <td><strong>Pay-to-publish</strong></td>
+              <td>Conversion from partner pitch to completed payment.</td>
+              <td>Modeled at 67% for warm in-person introductions</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>2.4 Reporting conventions</h3>
+      <p>
+        Percentages are rounded to whole numbers unless precision matters for funnel math. Dollar figures use two
+        decimal places for per-unit metrics and whole dollars for channel totals where appropriate. Plan mix is
+        expressed as Essential / Premium (e.g., 35/65 means 35% Essential, 65% Premium). Positive contribution
+        is shown in green; negative per-unit outcomes after ads CAC are flagged in red.
+      </p>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section id="sec-3">
+      <h2>3. Pricing &amp; Unit Economics</h2>
+      <p>
+        EventSphere offers two consumer-facing paid tiers at launch. Both are priced per event, aligning revenue
+        with the host's natural buying moment — when they are actively planning or running a celebration.
+        Feature limits create upgrade pressure without a permanent free tier.
+      </p>
+
+      <h3>3.1 Plan overview and feature limits</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Attribute</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>List price (per event)</td>
+              <td class="num">$19.00</td>
+              <td class="num">$39.00</td>
+            </tr>
+            <tr>
+              <td>Guest capacity</td>
+              <td class="num">50</td>
+              <td class="num">200</td>
+            </tr>
+            <tr>
+              <td>Media uploads</td>
+              <td class="num">500</td>
+              <td class="num">Unlimited</td>
+            </tr>
+            <tr>
+              <td>Content retention</td>
+              <td class="num">7 days</td>
+              <td class="num">30 days</td>
+            </tr>
+            <tr>
+              <td>Slideshow, polls, seating, guestbook</td>
+              <td class="num">✓</td>
+              <td class="num">✓</td>
+            </tr>
+            <tr>
+              <td>AI recap, face search, moderation, analytics</td>
+              <td class="num">—</td>
+              <td class="num">✓</td>
+            </tr>
+            <tr>
+              <td>Typical use case</td>
+              <td class="num">Small parties, birthdays</td>
+              <td class="num">Weddings, corporate, large events</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.2 Stripe payment processing</h3>
+      <p>
+        Stripe charges 2.9% of transaction value plus a $0.30 fixed fee per successful charge. These fees are
+        deducted from gross revenue before any margin calculation and represent unavoidable COGS for card-present
+        and online checkout flows.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Component</th>
+              <th class="num">Essential ($19)</th>
+              <th class="num">Premium ($39)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Percentage fee (2.9%)</td>
+              <td class="num">$0.55</td>
+              <td class="num">$1.13</td>
+            </tr>
+            <tr>
+              <td>Fixed fee</td>
+              <td class="num">$0.30</td>
+              <td class="num">$0.30</td>
+            </tr>
+            <tr class="total">
+              <td>Total Stripe COGS</td>
+              <td class="num">$0.85</td>
+              <td class="num">$1.43</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">
+        Essential: (0.029 × $19) + $0.30 = $0.551 + $0.30 ≈ $0.85.
+        Premium: (0.029 × $39) + $0.30 = $1.131 + $0.30 ≈ $1.43.
+      </p>
+
+      <h3>3.3 AWS infrastructure COGS</h3>
+      <p>
+        Per-event AWS cost reflects S3 storage for guest uploads, CloudFront or equivalent egress for gallery and
+        slideshow delivery, and baseline compute for API and real-time feed. Premium events carry higher storage
+        and bandwidth load due to unlimited uploads and longer retention.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cost driver</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>S3 storage (uploads + thumbnails)</td>
+              <td class="num">$0.55</td>
+              <td class="num">$1.80</td>
+            </tr>
+            <tr>
+              <td>Data transfer / CDN egress</td>
+              <td class="num">$0.45</td>
+              <td class="num">$1.10</td>
+            </tr>
+            <tr>
+              <td>Compute &amp; database (allocated)</td>
+              <td class="num">$0.40</td>
+              <td class="num">$0.60</td>
+            </tr>
+            <tr class="total">
+              <td>Total AWS COGS</td>
+              <td class="num">$1.40</td>
+              <td class="num">$3.50</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>3.4 Gross margin and acquisition-adjusted profit</h3>
+      <p>
+        Gross margin is the foundation for all channel analysis. Partner commission (20% of list price) and paid
+        ads CAC ($22 blended) are applied separately to show contribution per plan per channel.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Line item</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>List price</td>
+              <td class="num">$19.00</td>
+              <td class="num">$39.00</td>
+            </tr>
+            <tr>
+              <td>Stripe COGS</td>
+              <td class="num">−$0.85</td>
+              <td class="num">−$1.43</td>
+            </tr>
+            <tr>
+              <td>AWS COGS</td>
+              <td class="num">−$1.40</td>
+              <td class="num">−$3.50</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Gross margin (GM)</strong></td>
+              <td class="num"><strong>$16.75</strong></td>
+              <td class="num"><strong>$34.07</strong></td>
+            </tr>
+            <tr>
+              <td>Gross margin %</td>
+              <td class="num">88.2%</td>
+              <td class="num">87.4%</td>
+            </tr>
+            <tr>
+              <td>Partner commission (20%)</td>
+              <td class="num">−$3.80</td>
+              <td class="num">−$7.80</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Profit after partner CAC</strong></td>
+              <td class="num good">+$12.95</td>
+              <td class="num good">+$26.27</td>
+            </tr>
+            <tr>
+              <td>Paid ads CAC (blended $22)</td>
+              <td class="num">−$22.00</td>
+              <td class="num">−$22.00</td>
+            </tr>
+            <tr class="total">
+              <td><strong>Profit after ads CAC</strong></td>
+              <td class="num bad">−$5.47</td>
+              <td class="num good">+$11.85</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        Essential events are economically attractive through the partnership channel (+$12.95 per event) but
+        destroy value when acquired via paid ads at current CAC. Premium events remain profitable under both
+        channels, which is why ad creative, landing pages, and audience targeting must emphasize high-intent,
+        high-value event types.
+      </p>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section id="sec-4">
+      <h2>4. Channel 1 — Partnerships</h2>
+      <span class="badge partner">Primary channel</span>
+      <p>
+        The partnership channel leverages vendors who are already physically present at events: wedding photographers,
+        planners, venues, and DJs. These partners introduce EventSphere to hosts during natural workflow moments —
+        for example, when sharing preview galleries or coordinating day-of logistics. The pitch is warm, in-person,
+        and contextual, which supports higher conversion than cold digital traffic.
+      </p>
+
+      <h3>4.1 Partner profile</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Attribute</th><th>Detail</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Partner types</td><td>Photographers, event planners, venues, DJs, caterers with client-facing touchpoints</td></tr>
+            <tr><td>Activation model</td><td>Onboarded with pitch deck, QR collateral, and unique referral tracking</td></tr>
+            <tr><td>Economic incentive</td><td>20% commission on gross sale, paid after successful checkout</td></tr>
+            <tr><td>Cash timing</td><td>No upfront CAC — commission is purely variable</td></tr>
+            <tr><td>Events touched per partner</td><td>5 per month (average active vendor calendar)</td></tr>
+            <tr><td>Launch cohort size</td><td>30 active partners per month</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.2 Funnel mathematics — step by step</h3>
+      <p>
+        The partnership funnel converts vendor reach into paying events through two sequential conversion rates:
+        pitch rate (share of touched events where the partner actually mentions EventSphere) and pay-to-publish
+        rate (share of pitched hosts who complete checkout).
+      </p>
+
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="label">Step 1 · Partners</div>
+          <div class="val">30</div>
+          <div class="sub">active / month</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Step 2 · Events / partner</div>
+          <div class="val">5</div>
+          <div class="sub">30 × 5 = 150 touched</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Step 3 · Pitch rate</div>
+          <div class="val">60%</div>
+          <div class="sub">150 × 60% = 90 pitches</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Step 4 · Pay rate</div>
+          <div class="val">67%</div>
+          <div class="sub">90 × 67% ≈ 60 paid</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Step 5 · Per partner</div>
+          <div class="val good">2.0</div>
+          <div class="sub">60 ÷ 30 customers</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Funnel step</th>
+              <th class="num">Input</th>
+              <th class="num">Rate</th>
+              <th class="num">Output</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1. Active partners</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td class="num">30</td>
+              <td>Launch cohort after onboarding sprint</td>
+            </tr>
+            <tr>
+              <td>2. Events touched</td>
+              <td class="num">30 partners</td>
+              <td class="num">× 5</td>
+              <td class="num">150</td>
+              <td>Average vendor calendar density</td>
+            </tr>
+            <tr>
+              <td>3. Pitches delivered</td>
+              <td class="num">150 events</td>
+              <td class="num">× 60%</td>
+              <td class="num">90</td>
+              <td>Partner remembers to pitch ~3 of 5 events</td>
+            </tr>
+            <tr class="hi">
+              <td>4. Paying events</td>
+              <td class="num">90 pitches</td>
+              <td class="num">× 67%</td>
+              <td class="num">60</td>
+              <td>Warm intro → checkout completion</td>
+            </tr>
+            <tr class="total">
+              <td>5. Customers per partner</td>
+              <td class="num">60 ÷ 30</td>
+              <td class="num">—</td>
+              <td class="num">2.0</td>
+              <td>Key operating metric for partner managers</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.3 Commission structure</h3>
+      <p>
+        Commission equals 20% of gross transaction value. Because payment is contingent on a completed sale,
+        EventSphere bears no acquisition cash risk if the pitch does not convert. This aligns partner incentives
+        with revenue and keeps the channel self-funding from day one.
+      </p>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Plan</th>
               <th class="num">Price</th>
-              <th class="num">Guests</th>
-              <th class="num">Media</th>
-              <th class="num">Retention</th>
-              <th class="num">Gross margin</th>
-              <th class="num">After partner CAC</th>
-              <th class="num">After ads CAC</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td><strong>Essential</strong></td>
-              <td class="num">$19</td>
-              <td class="num">50</td>
-              <td class="num">500</td>
-              <td class="num">7 days</td>
-              <td class="num">$16.75 <span class="muted" style="font-weight:400">(88%)</span></td>
-              <td class="num good">+$12.95</td>
-              <td class="num bad">−$5.47</td>
-            </tr>
-            <tr class="hi">
-              <td><strong>Premium</strong></td>
-              <td class="num">$39</td>
-              <td class="num">200</td>
-              <td class="num">Unlimited</td>
-              <td class="num">30 days</td>
-              <td class="num">$34.07 <span class="muted" style="font-weight:400">(87%)</span></td>
-              <td class="num good">+$26.27</td>
-              <td class="num good">+$11.85</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="src">Partner CAC = 20% of price. Ads CAC = $22 blended ($1,000 budget ÷ 45 customers).</p>
-    </section>
-
-    <!-- TABLE 2 -->
-    <section id="partners">
-      <div class="section-head">
-        <span class="badge partner">Primary channel</span>
-        <p class="kicker">Table 2</p>
-        <h2><span class="sec-num">02</span> Partnerships &amp; referrals</h2>
-        <p class="lede">Photographers, planners, venues, and DJs pitch EventSphere at events they already touch. Commission paid only after a successful sale.</p>
-      </div>
-
-      <div class="funnel">
-        <div class="funnel-step">
-          <div class="label">Partners</div>
-          <div class="val">30</div>
-          <div class="sub">active / month</div>
-        </div>
-        <div class="funnel-step">
-          <div class="label">Events touched</div>
-          <div class="val">5</div>
-          <div class="sub">per partner</div>
-        </div>
-        <div class="funnel-step">
-          <div class="label">Pitch rate</div>
-          <div class="val">60%</div>
-          <div class="sub">3 pitches each</div>
-        </div>
-        <div class="funnel-step">
-          <div class="label">Pay to publish</div>
-          <div class="val">67%</div>
-          <div class="sub">warm intro converts</div>
-        </div>
-        <div class="funnel-step">
-          <div class="label">Per partner</div>
-          <div class="val good">2.0</div>
-          <div class="sub">paying customers / mo</div>
-        </div>
-        <div class="funnel-step">
-          <div class="label">Network</div>
-          <div class="val good">60</div>
-          <div class="sub">paying events / mo</div>
-        </div>
-      </div>
-
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>Metric</th><th class="num">Value</th><th>Notes</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>Plan mix</td><td class="num">35% / 65%</td><td>21 Essential · 39 Premium</td></tr>
-            <tr><td>Blended CAC</td><td class="num">$6.40</td><td>$384 commission ÷ 60 customers</td></tr>
-            <tr><td>Gross revenue</td><td class="num">$1,917</td><td>21 × $19 + 39 × $39</td></tr>
-            <tr><td>Acquisition cost</td><td class="num">$384</td><td>20% commission · no upfront spend</td></tr>
-            <tr><td>COGS (Stripe + AWS)</td><td class="num">~$240</td><td></td></tr>
-            <tr class="total"><td>Contribution profit</td><td class="num good">+$1,297</td><td>68% of revenue</td></tr>
-          </tbody>
-        </table>
-      </div>
-
-      <div class="table-wrap" style="margin-top:0.85rem">
-        <table>
-          <thead>
-            <tr>
-              <th>Plan</th>
-              <th class="num">Customers</th>
-              <th class="num">Revenue</th>
-              <th class="num">Commission</th>
-              <th class="num">Profit / event</th>
-              <th class="num">Channel profit</th>
+              <th class="num">Commission (20%)</th>
+              <th class="num">Net to EventSphere (pre-COGS)</th>
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>Essential</td>
-              <td class="num">21</td>
-              <td class="num">$399</td>
-              <td class="num">$80</td>
-              <td class="num good">+$12.95</td>
-              <td class="num good">+$272</td>
+              <td class="num">$19.00</td>
+              <td class="num">$3.80</td>
+              <td class="num">$15.20</td>
             </tr>
-            <tr class="hi">
+            <tr>
               <td>Premium</td>
-              <td class="num">39</td>
-              <td class="num">$1,518</td>
-              <td class="num">$304</td>
-              <td class="num good">+$26.27</td>
-              <td class="num good">+$1,025</td>
-            </tr>
-            <tr class="total">
-              <td>Total</td>
-              <td class="num">60</td>
-              <td class="num">$1,917</td>
-              <td class="num">$384</td>
-              <td class="num"></td>
-              <td class="num good">+$1,297</td>
+              <td class="num">$39.00</td>
+              <td class="num">$7.80</td>
+              <td class="num">$31.20</td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      <h3>4.4 Monthly P&amp;L — partnership channel</h3>
+      <p>
+        Plan mix for the partnership channel is modeled at 35% Essential / 65% Premium, reflecting vendor skew
+        toward larger weddings and professionally planned events. That yields 21 Essential and 39 Premium customers
+        from 60 total paying events.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Line item</th><th class="num">Amount</th><th>Calculation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Paying events</td><td class="num">60</td><td>30 partners × 2.0 events/partner</td></tr>
+            <tr><td>Plan mix</td><td class="num">35% / 65%</td><td>21 Essential · 39 Premium</td></tr>
+            <tr><td>Essential revenue</td><td class="num">$399</td><td>21 × $19</td></tr>
+            <tr><td>Premium revenue</td><td class="num">$1,518</td><td>39 × $39</td></tr>
+            <tr class="hi"><td><strong>Gross revenue</strong></td><td class="num"><strong>$1,917</strong></td><td>Sum of plan revenue</td></tr>
+            <tr><td>Acquisition cost (commission)</td><td class="num">$384</td><td>20% × $1,917 (rounded)</td></tr>
+            <tr><td>COGS (Stripe + AWS)</td><td class="num">~$236</td><td>21 × $2.25 + 39 × $4.93</td></tr>
+            <tr class="total"><td><strong>Contribution profit</strong></td><td class="num good"><strong>+$1,297</strong></td><td>Revenue − commission − COGS</td></tr>
+            <tr><td>Blended CAC</td><td class="num">$6.40</td><td>$384 ÷ 60</td></tr>
+            <tr><td>Contribution margin</td><td class="num good">68%</td><td>$1,297 ÷ $1,917</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.5 Per-partner economics</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th class="num">Per partner / month</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Events touched</td><td class="num">5.0</td><td>From partner calendar</td></tr>
+            <tr><td>Pitches delivered</td><td class="num">3.0</td><td>60% of events touched</td></tr>
+            <tr><td>Paying customers referred</td><td class="num">2.0</td><td>67% of pitches convert</td></tr>
+            <tr><td>Revenue generated</td><td class="num">$63.90</td><td>$1,917 ÷ 30</td></tr>
+            <tr><td>Commission earned (partner)</td><td class="num">$12.80</td><td>$384 ÷ 30</td></tr>
+            <tr><td>Contribution profit (EventSphere)</td><td class="num good">$43.23</td><td>$1,297 ÷ 30</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>4.6 Sensitivity analysis — partnerships</h3>
+      <p><strong>Partner count sensitivity</strong> (holding 2.0 customers/partner and 35/65 mix constant):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">Partners</th>
+              <th class="num">Paying events</th>
+              <th class="num">Revenue</th>
+              <th class="num">Commission</th>
+              <th class="num">Contribution profit</th>
+              <th class="num">Margin</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">20</td><td class="num">40</td><td class="num">$1,278</td><td class="num">$256</td><td class="num">+$865</td><td class="num">68%</td></tr>
+            <tr class="hi"><td class="num">30</td><td class="num">60</td><td class="num">$1,917</td><td class="num">$384</td><td class="num good">+$1,297</td><td class="num good">68%</td></tr>
+            <tr><td class="num">50</td><td class="num">100</td><td class="num">$3,195</td><td class="num">$639</td><td class="num">+$2,162</td><td class="num">68%</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Conversion sensitivity</strong> (30 partners, 5 events each, 35/65 mix):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th class="num">Pitch rate</th>
+              <th class="num">Pay rate</th>
+              <th class="num">Customers</th>
+              <th class="num">Revenue</th>
+              <th class="num">Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Conservative</td>
+              <td class="num">50%</td>
+              <td class="num">55%</td>
+              <td class="num">41</td>
+              <td class="num">$1,310</td>
+              <td class="num">+$886</td>
+            </tr>
+            <tr class="hi">
+              <td>Base case</td>
+              <td class="num">60%</td>
+              <td class="num">67%</td>
+              <td class="num">60</td>
+              <td class="num">$1,917</td>
+              <td class="num good">+$1,297</td>
+            </tr>
+            <tr>
+              <td>Optimistic</td>
+              <td class="num">70%</td>
+              <td class="num">75%</td>
+              <td class="num">79</td>
+              <td class="num">$2,524</td>
+              <td class="num">+$1,708</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">
+        Conservative: 150 × 50% × 55% = 41.25 ≈ 41 customers.
+        Base: 150 × 60% × 67% = 60.3 ≈ 60.
+        Optimistic: 150 × 70% × 75% = 78.75 ≈ 79.
+      </p>
     </section>
 
-    <!-- TABLE 3 -->
-    <section id="ads">
-      <div class="section-head">
-        <span class="badge ads">Appendix · backup</span>
-        <p class="kicker">Table 3</p>
-        <h2><span class="sec-num">03</span> Paid advertising</h2>
-        <p class="lede">Full funnel from ad click to purchase. Works only when creative skews toward Premium events.</p>
-      </div>
+    <!-- SECTION 5 -->
+    <section id="sec-5">
+      <h2>5. Channel 2 — Paid Advertising</h2>
+      <span class="badge ads">Backup channel</span>
+      <p>
+        Paid advertising provides demand generation independent of partner coverage. It is budget-capped at
+        $1,000 per month in this model — sufficient to test creative, audiences, and landing pages without
+        committing capital that would be better deployed scaling the partnership program first.
+      </p>
+
+      <h3>5.1 Full funnel — impressions to purchase</h3>
+      <p>
+        The ads funnel begins with programmatic or social impressions, converts to clicks via CTR, moves visitors
+        into checkout via landing-page conversion, and completes with payment. Each stage is parameterized so
+        investors can stress-test assumptions.
+      </p>
 
       <div class="funnel">
         <div class="funnel-step">
-          <div class="label">Budget</div>
-          <div class="val">$1,000</div>
-          <div class="sub">/ month</div>
+          <div class="label">Impressions</div>
+          <div class="val">40,000</div>
+          <div class="sub">Monthly reach</div>
         </div>
         <div class="funnel-step">
-          <div class="label">Clicks</div>
-          <div class="val">1,000</div>
-          <div class="sub">2.5% CTR · $1 CPC</div>
+          <div class="label">CTR</div>
+          <div class="val">2.5%</div>
+          <div class="sub">→ 1,000 clicks</div>
         </div>
         <div class="funnel-step">
-          <div class="label">Start checkout</div>
+          <div class="label">Checkout start</div>
           <div class="val">9%</div>
-          <div class="sub">90 hosts</div>
+          <div class="sub">→ 90 hosts</div>
         </div>
         <div class="funnel-step">
-          <div class="label">Complete payment</div>
+          <div class="label">Payment complete</div>
           <div class="val">50%</div>
-          <div class="sub">45 paid</div>
+          <div class="sub">→ 45 paid</div>
         </div>
         <div class="funnel-step">
           <div class="label">Click → buy</div>
           <div class="val">4.5%</div>
-          <div class="sub">conversion rate</div>
+          <div class="sub">Compound rate</div>
         </div>
         <div class="funnel-step">
           <div class="label">CAC</div>
@@ -425,27 +779,111 @@
       <div class="table-wrap">
         <table>
           <thead>
-            <tr><th>Metric</th><th class="num">Value</th><th>Notes</th></tr>
+            <tr>
+              <th>Stage</th>
+              <th class="num">Volume</th>
+              <th class="num">Conversion</th>
+              <th class="num">Output</th>
+              <th>Rationale</th>
+            </tr>
           </thead>
           <tbody>
-            <tr><td>Plan mix</td><td class="num">40% / 60%</td><td>18 Essential · 27 Premium</td></tr>
-            <tr><td>Gross revenue</td><td class="num">$1,395</td><td>18 × $19 + 27 × $39</td></tr>
-            <tr><td>Acquisition cost</td><td class="num">$1,000</td><td>Upfront ad spend</td></tr>
-            <tr><td>COGS (Stripe + AWS)</td><td class="num">~$174</td><td></td></tr>
-            <tr class="total"><td>Contribution profit</td><td class="num">+$221</td><td>16% of revenue</td></tr>
+            <tr>
+              <td>Ad budget</td>
+              <td class="num">$1,000</td>
+              <td class="num">—</td>
+              <td class="num">—</td>
+              <td>Fixed monthly test cap</td>
+            </tr>
+            <tr>
+              <td>Impressions served</td>
+              <td class="num">40,000</td>
+              <td class="num">—</td>
+              <td class="num">40,000</td>
+              <td>Meta / Google display + search blend</td>
+            </tr>
+            <tr>
+              <td>Clicks</td>
+              <td class="num">40,000</td>
+              <td class="num">2.5% CTR</td>
+              <td class="num">1,000</td>
+              <td>Industry-typical for event-interest targeting</td>
+            </tr>
+            <tr>
+              <td>Cost per click (CPC)</td>
+              <td class="num">$1,000</td>
+              <td class="num">÷ 1,000</td>
+              <td class="num">$1.00</td>
+              <td>Efficient niche keywords + retargeting</td>
+            </tr>
+            <tr>
+              <td>Checkout started</td>
+              <td class="num">1,000 clicks</td>
+              <td class="num">9%</td>
+              <td class="num">90</td>
+              <td>Landing page → create flow entry</td>
+            </tr>
+            <tr class="hi">
+              <td>Payment completed</td>
+              <td class="num">90 checkouts</td>
+              <td class="num">50%</td>
+              <td class="num">45</td>
+              <td>Drop-off at plan selection / card entry</td>
+            </tr>
+            <tr class="total">
+              <td>Click-to-purchase (compound)</td>
+              <td class="num">1,000 clicks</td>
+              <td class="num">4.5%</td>
+              <td class="num">45</td>
+              <td>9% × 50% = 4.5% end-to-end</td>
+            </tr>
           </tbody>
         </table>
       </div>
 
-      <div class="table-wrap" style="margin-top:0.85rem">
+      <h3>5.2 Conversion rate explanations</h3>
+      <ul>
+        <li><strong>CTR (2.5%):</strong> Event-planning audiences on Meta and Google respond to visual creative (QR hub, live feed screenshots). 2.5% is conservative for retargeting and achievable for interest-based prospecting with strong creative.</li>
+        <li><strong>Click-to-checkout-start (9%):</strong> Not every click enters the create flow. Some bounce from landing page load time, mismatch of ad promise, or mobile friction. 9% reflects a focused landing page with a single CTA.</li>
+        <li><strong>Checkout-to-payment (50%):</strong> Hosts who start checkout have intent but may abandon at plan selection, price shock, or payment form. Paid-only model means no "save for later" free tier — 50% completion is realistic for cold traffic.</li>
+        <li><strong>Compound click-to-buy (4.5%):</strong> 1,000 × 4.5% = 45 paying customers. This is the single metric that determines CAC at fixed budget.</li>
+      </ul>
+
+      <h3>5.3 Monthly P&amp;L — paid ads channel</h3>
+      <p>
+        Ads-acquired customers skew slightly more Essential (40/65) than partner referrals, reflecting broader
+        top-of-funnel reach including smaller personal events. That mix pressure-tests unit economics.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Line item</th><th class="num">Amount</th><th>Calculation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Paying events</td><td class="num">45</td><td>$1,000 ÷ $22 CAC</td></tr>
+            <tr><td>Plan mix</td><td class="num">40% / 60%</td><td>18 Essential · 27 Premium</td></tr>
+            <tr><td>Essential revenue</td><td class="num">$342</td><td>18 × $19</td></tr>
+            <tr><td>Premium revenue</td><td class="num">$1,053</td><td>27 × $39</td></tr>
+            <tr class="hi"><td><strong>Gross revenue</strong></td><td class="num"><strong>$1,395</strong></td><td>Sum of plan revenue</td></tr>
+            <tr><td>Acquisition cost (ad spend)</td><td class="num">$1,000</td><td>Upfront cash outlay</td></tr>
+            <tr><td>COGS (Stripe + AWS)</td><td class="num">~$174</td><td>18 × $2.25 + 27 × $4.93</td></tr>
+            <tr class="total"><td><strong>Contribution profit</strong></td><td class="num"><strong>+$221</strong></td><td>Revenue − ad spend − COGS</td></tr>
+            <tr><td>Blended CAC</td><td class="num">$22.22</td><td>$1,000 ÷ 45 (reported as $22)</td></tr>
+            <tr><td>Contribution margin</td><td class="num">16%</td><td>$221 ÷ $1,395</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>5.4 Per-plan channel profit</h3>
+      <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Plan</th>
               <th class="num">Customers</th>
               <th class="num">Revenue</th>
-              <th class="num">CAC / ea</th>
-              <th class="num">Profit / event</th>
+              <th class="num">CAC each</th>
+              <th class="num">GM − CAC</th>
               <th class="num">Channel profit</th>
             </tr>
           </thead>
@@ -470,57 +908,491 @@
               <td>Total</td>
               <td class="num">45</td>
               <td class="num">$1,395</td>
-              <td class="num"></td>
-              <td class="num"></td>
+              <td class="num">—</td>
+              <td class="num">—</td>
               <td class="num">+$221</td>
             </tr>
           </tbody>
         </table>
       </div>
-      <div class="note">Essential loses money on ads at $22 CAC. Premium carries the channel — use wedding / big-event creative.</div>
+      <div class="warning">
+        Essential customers acquired via ads are value-destructive at $22 CAC (−$98 channel contribution from
+        Essential tier alone). The ads channel survives only because Premium volume and margin subsidize the blend.
+        Operational rule: pause or narrow campaigns if Premium share falls below ~55%.
+      </div>
+
+      <h3>5.5 Sensitivity analysis — paid ads</h3>
+      <p><strong>CTR sensitivity</strong> ($1,000 budget, $1 CPC implied, 9% checkout × 50% pay held constant):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">CTR</th>
+              <th class="num">Clicks</th>
+              <th class="num">Customers</th>
+              <th class="num">CAC</th>
+              <th class="num">Revenue (40/60)</th>
+              <th class="num">Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">2.0%</td><td class="num">800</td><td class="num">36</td><td class="num">$27.78</td><td class="num">$1,116</td><td class="num bad">−$54</td></tr>
+            <tr class="hi"><td class="num">2.5%</td><td class="num">1,000</td><td class="num">45</td><td class="num">$22.00</td><td class="num">$1,395</td><td class="num">+$221</td></tr>
+            <tr><td class="num">3.0%</td><td class="num">1,200</td><td class="num">54</td><td class="num">$18.52</td><td class="num">$1,674</td><td class="num good">+$496</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Click-to-buy sensitivity</strong> (1,000 clicks, $1,000 budget, 40/60 mix):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th class="num">Checkout start</th>
+              <th class="num">Complete pay</th>
+              <th class="num">Click→buy</th>
+              <th class="num">Customers</th>
+              <th class="num">CAC</th>
+              <th class="num">Profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Weak funnel</td><td class="num">7%</td><td class="num">45%</td><td class="num">3.2%</td><td class="num">32</td><td class="num">$31.25</td><td class="num bad">−$178</td></tr>
+            <tr class="hi"><td>Base case</td><td class="num">9%</td><td class="num">50%</td><td class="num">4.5%</td><td class="num">45</td><td class="num">$22.00</td><td class="num">+$221</td></tr>
+            <tr><td>Strong funnel</td><td class="num">12%</td><td class="num">55%</td><td class="num">6.6%</td><td class="num">66</td><td class="num">$15.15</td><td class="num good">+$631</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p><strong>Premium mix sensitivity</strong> (45 customers, $22 CAC, $1,000 spend):</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="num">Premium %</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+              <th class="num">Revenue</th>
+              <th class="num">Contribution profit</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="num">50%</td><td class="num">23</td><td class="num">22</td><td class="num">$1,295</td><td class="num bad">+$121</td></tr>
+            <tr class="hi"><td class="num">60%</td><td class="num">18</td><td class="num">27</td><td class="num">$1,395</td><td class="num">+$221</td></tr>
+            <tr><td class="num">75%</td><td class="num">11</td><td class="num">34</td><td class="num">$1,535</td><td class="num good">+$361</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
 
-    <!-- COMBINED -->
-    <section id="combined">
-      <div class="section-head">
-        <p class="kicker">Both channels</p>
-        <h2>One launch month — combined</h2>
-      </div>
+    <!-- SECTION 6 -->
+    <section id="sec-6">
+      <h2>6. Combined Channel Analysis</h2>
+      <p>
+        In a representative launch month, EventSphere runs both channels in parallel: 30 partners producing 60
+        referred events and a $1,000 ad test producing 45 direct-response events. Channels are assumed to reach
+        largely non-overlapping segments in month one (local vendor relationships vs. broad digital prospecting).
+      </p>
+
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Metric</th>
-              <th class="num">Partners</th>
+              <th class="num">Partnerships</th>
               <th class="num">Paid ads</th>
               <th class="num">Combined</th>
             </tr>
           </thead>
           <tbody>
             <tr><td>Paying events</td><td class="num">60</td><td class="num">45</td><td class="num"><strong>105</strong></td></tr>
+            <tr><td>Plan mix (E / P)</td><td class="num">35 / 65</td><td class="num">40 / 60</td><td class="num">37 / 63</td></tr>
             <tr><td>Gross revenue</td><td class="num">$1,917</td><td class="num">$1,395</td><td class="num"><strong>$3,312</strong></td></tr>
             <tr><td>Acquisition cost</td><td class="num">$384</td><td class="num">$1,000</td><td class="num"><strong>$1,384</strong></td></tr>
-            <tr><td>COGS</td><td class="num">~$240</td><td class="num">~$174</td><td class="num"><strong>~$414</strong></td></tr>
+            <tr><td>COGS (Stripe + AWS)</td><td class="num">~$236</td><td class="num">~$174</td><td class="num"><strong>~$410</strong></td></tr>
             <tr class="total">
               <td>Contribution profit</td>
               <td class="num good">+$1,297</td>
               <td class="num">+$221</td>
               <td class="num good"><strong>+$1,518</strong></td>
             </tr>
-            <tr><td>Blended CAC</td><td class="num">$6.40</td><td class="num">$22.22</td><td class="num"><strong>$13.18</strong></td></tr>
+            <tr><td>Channel CAC</td><td class="num">$6.40</td><td class="num">$22.22</td><td class="num">—</td></tr>
+            <tr class="hi"><td><strong>Blended CAC</strong></td><td class="num">—</td><td class="num">—</td><td class="num"><strong>$13.18</strong></td></tr>
             <tr><td>Contribution margin</td><td class="num good">68%</td><td class="num">16%</td><td class="num"><strong>46%</strong></td></tr>
           </tbody>
         </table>
       </div>
+
+      <h3>6.1 Blended unit economics</h3>
+      <p>
+        Combined plan mix across 105 events is approximately 37% Essential (39 events) and 63% Premium (66 events).
+        Blended gross revenue per event is $3,312 ÷ 105 = <strong>$31.54</strong>. Blended acquisition cost per
+        event is $1,384 ÷ 105 = <strong>$13.18</strong>. After COGS (~$3.90 blended), contribution profit per
+        event is approximately <strong>$14.46</strong>.
+      </p>
+
+      <div class="formula">
+        Blended CAC = ($384 + $1,000) ÷ (60 + 45) = $1,384 ÷ 105 = <strong>$13.18</strong><br />
+        Combined contribution margin = $1,518 ÷ $3,312 = <strong>45.8%</strong> ≈ 46%
+      </div>
+
+      <h3>6.2 Channel allocation guidance</h3>
+      <ul>
+        <li><strong>Prioritize partnerships</strong> until partner density saturates target metros — higher margin, zero upfront CAC, stronger trust transfer.</li>
+        <li><strong>Run ads as a laboratory</strong> — $1,000/month cap, Premium-weighted creative, strict ROAS monitoring by plan tier.</li>
+        <li><strong>Do not scale ads</strong> into Essential-heavy traffic without either improving click-to-buy above 6% or reducing CPC below $0.85.</li>
+        <li><strong>Reinvest contribution profit</strong> from partnerships into partner success (collateral, co-marketing) before increasing ad budget.</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section id="sec-7">
+      <h2>7. Summary Tables — Investor Pitch</h2>
+      <p>
+        The following three tables are designed for investor conversations. They progress from unit-level margin
+        health (Table 1), through the capital-efficient core channel (Table 2), to the controlled paid backup (Table 3).
+        Recommended pitch order: margins first, partnerships second, ads third with Premium caveat.
+      </p>
+
+      <h3>Table 1 — Margins per paid event</h3>
+      <p class="caption">What EventSphere retains after Stripe and AWS, before and after acquisition by channel.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th class="num">Price</th>
+              <th class="num">Guests</th>
+              <th class="num">Media</th>
+              <th class="num">Retention</th>
+              <th class="num">Gross margin</th>
+              <th class="num">After partner CAC</th>
+              <th class="num">After ads CAC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Essential</strong></td>
+              <td class="num">$19</td>
+              <td class="num">50</td>
+              <td class="num">500</td>
+              <td class="num">7 days</td>
+              <td class="num">$16.75 <span style="font-weight:400;color:var(--muted)">(88%)</span></td>
+              <td class="num good">+$12.95</td>
+              <td class="num bad">−$5.47</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Premium</strong></td>
+              <td class="num">$39</td>
+              <td class="num">200</td>
+              <td class="num">Unlimited</td>
+              <td class="num">30 days</td>
+              <td class="num">$34.07 <span style="font-weight:400;color:var(--muted)">(87%)</span></td>
+              <td class="num good">+$26.27</td>
+              <td class="num good">+$11.85</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Table 2 — Partnerships &amp; referrals (primary GTM)</h3>
+      <p class="caption">30 partners · 2.0 paying events per partner · 68% contribution margin · no upfront CAC.</p>
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="label">Partners</div>
+          <div class="val">30</div>
+          <div class="sub">active / month</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Per partner</div>
+          <div class="val good">2.0</div>
+          <div class="sub">paying events</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Network total</div>
+          <div class="val good">60</div>
+          <div class="sub">paying events / mo</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">CAC</div>
+          <div class="val good">$6.40</div>
+          <div class="sub">20% commission</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Profit</div>
+          <div class="val good">+$1,297</div>
+          <div class="sub">68% margin</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th class="num">Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Plan mix</td><td class="num">35% / 65%</td><td>21 Essential · 39 Premium</td></tr>
+            <tr><td>Gross revenue</td><td class="num">$1,917</td><td></td></tr>
+            <tr><td>Acquisition (commission)</td><td class="num">$384</td><td>Pay after sale only</td></tr>
+            <tr><td>COGS</td><td class="num">~$236</td><td>Stripe + AWS</td></tr>
+            <tr class="total"><td>Contribution profit</td><td class="num good">+$1,297</td><td>68% of revenue</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Table 3 — Paid advertising (controlled backup)</h3>
+      <p class="caption">$1,000/month test · 45 customers · Premium must subsidize Essential losses.</p>
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="label">Budget</div>
+          <div class="val">$1,000</div>
+          <div class="sub">/ month</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Impressions</div>
+          <div class="val">40k</div>
+          <div class="sub">2.5% CTR</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Paid events</div>
+          <div class="val">45</div>
+          <div class="sub">4.5% click→buy</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">CAC</div>
+          <div class="val">$22</div>
+          <div class="sub">blended</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Profit</div>
+          <div class="val">+$221</div>
+          <div class="sub">16% margin</div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th class="num">Value</th><th>Notes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Plan mix</td><td class="num">40% / 60%</td><td>18 Essential · 27 Premium</td></tr>
+            <tr><td>Gross revenue</td><td class="num">$1,395</td><td></td></tr>
+            <tr><td>Acquisition (ad spend)</td><td class="num">$1,000</td><td>Upfront cash</td></tr>
+            <tr><td>COGS</td><td class="num">~$174</td><td>Stripe + AWS</td></tr>
+            <tr class="total"><td>Contribution profit</td><td class="num">+$221</td><td>16% of revenue</td></tr>
+          </tbody>
+        </table>
+      </div>
+
       <div class="note">
-        <strong>Pitch order:</strong> Table 1 (healthy margins) → Table 2 (core GTM, 2 customers / partner, no upfront CAC) → Table 3 (backup, Premium-heavy).
-        See also <a href="ltv.html">LTV analysis →</a>
+        <strong>Pitch sequence:</strong> Table 1 establishes 87–88% gross margins → Table 2 shows scalable,
+        zero-upfront partner GTM at 68% contribution margin → Table 3 demonstrates optional paid demand with
+        explicit Premium dependency. Combined: 105 events, $13.18 blended CAC, $1,518 profit.
+        Continue to <a href="ltv.html">LTV analysis</a> for repeat-event upside.
+      </div>
+    </section>
+
+    <!-- SECTION 8 -->
+    <section id="sec-8">
+      <h2>8. Assumption Register</h2>
+      <p>
+        Every input used in this model is listed below for auditability. Changes to any assumption propagate
+        through funnel counts, revenue, and contribution profit as described in Section 10 (Appendix).
+      </p>
+
+      <h3>8.1 Pricing &amp; COGS</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Assumption</th><th class="num">Value</th><th>Source / rationale</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>P-01</td><td>Essential list price</td><td class="num">$19.00</td><td>Launch pricing (see MVP doc)</td></tr>
+            <tr><td>P-02</td><td>Premium list price</td><td class="num">$39.00</td><td>Launch pricing</td></tr>
+            <tr><td>P-03</td><td>Stripe rate</td><td class="num">2.9% + $0.30</td><td>Standard Stripe US card pricing</td></tr>
+            <tr><td>P-04</td><td>Essential Stripe COGS</td><td class="num">$0.85</td><td>Calculated</td></tr>
+            <tr><td>P-05</td><td>Premium Stripe COGS</td><td class="num">$1.43</td><td>Calculated</td></tr>
+            <tr><td>P-06</td><td>Essential AWS COGS</td><td class="num">$1.40</td><td>S3 + CDN + compute estimate</td></tr>
+            <tr><td>P-07</td><td>Premium AWS COGS</td><td class="num">$3.50</td><td>Higher storage + retention</td></tr>
+            <tr><td>P-08</td><td>Essential gross margin</td><td class="num">$16.75</td><td>$19 − $0.85 − $1.40</td></tr>
+            <tr><td>P-09</td><td>Premium gross margin</td><td class="num">$34.07</td><td>$39 − $1.43 − $3.50</td></tr>
+            <tr><td>P-10</td><td>Essential guest limit</td><td class="num">50</td><td>Product spec</td></tr>
+            <tr><td>P-11</td><td>Premium guest limit</td><td class="num">200</td><td>Product spec</td></tr>
+            <tr><td>P-12</td><td>Essential media limit</td><td class="num">500 uploads</td><td>Product spec</td></tr>
+            <tr><td>P-13</td><td>Premium media limit</td><td class="num">Unlimited</td><td>Product spec</td></tr>
+            <tr><td>P-14</td><td>Essential retention</td><td class="num">7 days</td><td>Product spec</td></tr>
+            <tr><td>P-15</td><td>Premium retention</td><td class="num">30 days</td><td>Product spec</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>8.2 Partnership channel</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Assumption</th><th class="num">Value</th><th>Source / rationale</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PT-01</td><td>Active partners per month</td><td class="num">30</td><td>Launch cohort target</td></tr>
+            <tr><td>PT-02</td><td>Events touched per partner</td><td class="num">5</td><td>Average vendor calendar</td></tr>
+            <tr><td>PT-03</td><td>Pitch rate</td><td class="num">60%</td><td>Partner compliance estimate</td></tr>
+            <tr><td>PT-04</td><td>Pay-to-publish rate</td><td class="num">67%</td><td>Warm in-person conversion</td></tr>
+            <tr><td>PT-05</td><td>Customers per partner</td><td class="num">2.0</td><td>Derived: 60 ÷ 30</td></tr>
+            <tr><td>PT-06</td><td>Total partner customers</td><td class="num">60</td><td>150 × 60% × 67%</td></tr>
+            <tr><td>PT-07</td><td>Partner commission rate</td><td class="num">20%</td><td>Contract terms</td></tr>
+            <tr><td>PT-08</td><td>Essential commission</td><td class="num">$3.80</td><td>20% × $19</td></tr>
+            <tr><td>PT-09</td><td>Premium commission</td><td class="num">$7.80</td><td>20% × $39</td></tr>
+            <tr><td>PT-10</td><td>Partner plan mix (E/P)</td><td class="num">35% / 65%</td><td>Vendor skew to larger events</td></tr>
+            <tr><td>PT-11</td><td>Partner gross revenue</td><td class="num">$1,917</td><td>21 × $19 + 39 × $39</td></tr>
+            <tr><td>PT-12</td><td>Total commission</td><td class="num">$384</td><td>20% of revenue</td></tr>
+            <tr><td>PT-13</td><td>Partner CAC</td><td class="num">$6.40</td><td>$384 ÷ 60</td></tr>
+            <tr><td>PT-14</td><td>Partner contribution profit</td><td class="num">$1,297</td><td>After COGS + commission</td></tr>
+            <tr><td>PT-15</td><td>Partner contribution margin</td><td class="num">68%</td><td>$1,297 ÷ $1,917</td></tr>
+            <tr><td>PT-16</td><td>Profit after comm — Essential</td><td class="num">$12.95</td><td>$16.75 − $3.80</td></tr>
+            <tr><td>PT-17</td><td>Profit after comm — Premium</td><td class="num">$26.27</td><td>$34.07 − $7.80</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>8.3 Paid ads channel</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Assumption</th><th class="num">Value</th><th>Source / rationale</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>AD-01</td><td>Monthly ad budget</td><td class="num">$1,000</td><td>Test cap</td></tr>
+            <tr><td>AD-02</td><td>Impressions</td><td class="num">40,000</td><td>At ~$25 CPM effective</td></tr>
+            <tr><td>AD-03</td><td>CTR</td><td class="num">2.5%</td><td>Event-interest targeting</td></tr>
+            <tr><td>AD-04</td><td>Clicks</td><td class="num">1,000</td><td>40,000 × 2.5%</td></tr>
+            <tr><td>AD-05</td><td>CPC</td><td class="num">$1.00</td><td>$1,000 ÷ 1,000</td></tr>
+            <tr><td>AD-06</td><td>Click-to-checkout-start</td><td class="num">9%</td><td>Landing page conversion</td></tr>
+            <tr><td>AD-07</td><td>Checkout starts</td><td class="num">90</td><td>1,000 × 9%</td></tr>
+            <tr><td>AD-08</td><td>Checkout-to-payment</td><td class="num">50%</td><td>Payment completion</td></tr>
+            <tr><td>AD-09</td><td>Paying customers</td><td class="num">45</td><td>90 × 50%</td></tr>
+            <tr><td>AD-10</td><td>Click-to-buy (compound)</td><td class="num">4.5%</td><td>9% × 50%</td></tr>
+            <tr><td>AD-11</td><td>Ads CAC</td><td class="num">$22.00</td><td>$1,000 ÷ 45</td></tr>
+            <tr><td>AD-12</td><td>Ads plan mix (E/P)</td><td class="num">40% / 60%</td><td>Broader top-of-funnel</td></tr>
+            <tr><td>AD-13</td><td>Ads gross revenue</td><td class="num">$1,395</td><td>18 × $19 + 27 × $39</td></tr>
+            <tr><td>AD-14</td><td>Ads contribution profit</td><td class="num">$221</td><td>After spend + COGS</td></tr>
+            <tr><td>AD-15</td><td>Ads contribution margin</td><td class="num">16%</td><td>$221 ÷ $1,395</td></tr>
+            <tr><td>AD-16</td><td>Profit after ads CAC — Essential</td><td class="num">−$5.47</td><td>$16.75 − $22 (rounded)</td></tr>
+            <tr><td>AD-17</td><td>Profit after ads CAC — Premium</td><td class="num">+$11.85</td><td>$34.07 − $22 (rounded)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>8.4 Combined</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Assumption</th><th class="num">Value</th><th>Source / rationale</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>CB-01</td><td>Total paying events</td><td class="num">105</td><td>60 + 45</td></tr>
+            <tr><td>CB-02</td><td>Combined gross revenue</td><td class="num">$3,312</td><td>$1,917 + $1,395</td></tr>
+            <tr><td>CB-03</td><td>Combined acquisition cost</td><td class="num">$1,384</td><td>$384 + $1,000</td></tr>
+            <tr><td>CB-04</td><td>Combined contribution profit</td><td class="num">$1,518</td><td>$1,297 + $221</td></tr>
+            <tr><td>CB-05</td><td>Blended CAC</td><td class="num">$13.18</td><td>$1,384 ÷ 105</td></tr>
+            <tr><td>CB-06</td><td>Combined contribution margin</td><td class="num">46%</td><td>$1,518 ÷ $3,312</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 9 -->
+    <section id="sec-9">
+      <h2>9. Risks &amp; Limitations</h2>
+
+      <h3>9.1 Model limitations</h3>
+      <ul>
+        <li><strong>Single-month snapshot:</strong> This report models one representative month, not a ramp curve or seasonal adjustment (wedding seasonality, holiday parties).</li>
+        <li><strong>No overlap deduplication:</strong> Combined totals assume partner and ad channels reach distinct customers. In practice, some hosts may encounter both a vendor pitch and an ad.</li>
+        <li><strong>Excludes fixed opex:</strong> Engineering, support, and G&amp;A are not allocated. Contribution profit is not net profit.</li>
+        <li><strong>Simulated payments:</strong> MVP currently simulates checkout; actual Stripe conversion and chargeback rates may differ slightly.</li>
+        <li><strong>AWS estimates:</strong> Per-event infrastructure cost will shift with usage patterns, image compression, and retention extensions.</li>
+      </ul>
+
+      <h3>9.2 Partnership risks</h3>
+      <ul>
+        <li><strong>Partner activation decay:</strong> Pitch rate may fall below 60% without ongoing partner success management and incentive programs.</li>
+        <li><strong>Commission pressure:</strong> Competitors or large vendors may negotiate above 20%, compressing margin.</li>
+        <li><strong>Geographic concentration:</strong> 30 partners in one metro does not generalize nationally without replication cost.</li>
+        <li><strong>Quality variance:</strong> A poorly pitched referral converts below 67% and can damage brand perception.</li>
+      </ul>
+
+      <h3>9.3 Paid ads risks</h3>
+      <ul>
+        <li><strong>Essential drag:</strong> At $22 CAC, Essential events lose $5.47 each — scaling ads without Premium skew destroys value.</li>
+        <li><strong>CPC inflation:</strong> Wedding and event keywords are seasonal and competitive; $1 CPC may rise in peak season.</li>
+        <li><strong>Funnel fragility:</strong> Click-to-buy at 4.5% is sensitive to landing page changes, mobile UX, and payment friction.</li>
+        <li><strong>Attribution error:</strong> Multi-touch journeys (ad → research → partner referral) are not modeled.</li>
+      </ul>
+
+      <h3>9.4 Strategic risks</h3>
+      <ul>
+        <li><strong>Paid-only friction:</strong> Requiring payment before publish may reduce top-of-funnel volume vs. freemium competitors; conversion assumptions must hold.</li>
+        <li><strong>Per-event pricing ceiling:</strong> Hosts who run many events may eventually demand subscription pricing, changing unit economics.</li>
+        <li><strong>LTV dependency:</strong> First-event contribution is strong for partners, but long-term value requires repeat events (see LTV report).</li>
+      </ul>
+    </section>
+
+    <!-- SECTION 10 -->
+    <section id="sec-10">
+      <h2>10. Appendix — Formulas</h2>
+      <p>All calculations in this report derive from the formulas below. Variables are defined in Section 2.</p>
+
+      <h3>10.1 Unit economics</h3>
+      <pre>Stripe COGS     = (Price × 0.029) + 0.30
+AWS COGS        = S3 + CDN + Compute   (see P-06, P-07)
+Gross margin    = Price − Stripe COGS − AWS COGS
+Partner comm    = Price × 0.20
+Profit|partner  = Gross margin − Partner comm
+Profit|ads      = Gross margin − Ads CAC</pre>
+
+      <h3>10.2 Partnership funnel</h3>
+      <pre>Events touched    = Partners × Events_per_partner
+Pitches           = Events_touched × Pitch_rate
+Paying events     = Pitches × Pay_rate
+Customers/partner = Paying events ÷ Partners
+
+Partner revenue   = (N_essential × $19) + (N_premium × $39)
+Commission        = Partner revenue × 0.20
+Partner CAC       = Commission ÷ Paying events
+Partner profit    = Partner revenue − Commission − COGS</pre>
+
+      <h3>10.3 Paid ads funnel</h3>
+      <pre>Clicks            = Impressions × CTR
+CPC               = Budget ÷ Clicks
+Checkout starts   = Clicks × Click_to_checkout_rate
+Paying events     = Checkout starts × Payment_completion_rate
+Click_to_buy      = Click_to_checkout_rate × Payment_completion_rate
+Ads CAC           = Budget ÷ Paying events
+Ads profit        = Revenue − Budget − COGS</pre>
+
+      <h3>10.4 Combined metrics</h3>
+      <pre>Total events      = Partner events + Ads events
+Total revenue     = Partner revenue + Ads revenue
+Total acquisition = Commission + Ad spend
+Blended CAC       = Total acquisition ÷ Total events
+Combined profit   = Partner profit + Ads profit
+Combined margin % = Combined profit ÷ Total revenue</pre>
+
+      <h3>10.5 Worked example — blended CAC</h3>
+      <div class="formula">
+        Partners: 60 events, $384 acquisition<br />
+        Ads: 45 events, $1,000 acquisition<br /><br />
+        Blended CAC = ($384 + $1,000) ÷ (60 + 45)<br />
+        = $1,384 ÷ 105<br />
+        = <strong>$13.18 per paying event</strong>
       </div>
     </section>
 
     <footer>
-      EventSphere · CAC model · Essential $19 / Premium $39 ·
-      <a href="index.html" style="color:inherit">All materials</a>
+      EventSphere · CAC Report v1.0 · August 2026 · Shafeen Noor ·
+      Essential $19 / Premium $39 · Paid-only GTM ·
+      <a href="index.html">All materials</a> ·
+      <a href="ltv.html">LTV report</a>
     </footer>
   </div>
 </body>
