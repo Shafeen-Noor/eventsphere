@@ -8,6 +8,8 @@ Every event gets its own interactive website — photos, guestbook, votes, feed,
 
 **https://shafeen-noor.github.io/eventsphere/**
 
+> **One-time setup (fixes 404):** In the repo go to **Settings → Pages → Build and deployment → Source → Deploy from a branch → Branch: `gh-pages` → Folder: `/ (root)` → Save.** The site goes live in ~1 minute.
+
 | Material | Link |
 |----------|------|
 | Hub | [index](https://shafeen-noor.github.io/eventsphere/) |
