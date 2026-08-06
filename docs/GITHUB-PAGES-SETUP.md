@@ -14,8 +14,7 @@ The site files are on the **`gh-pages`** branch. GitHub Pages must be turned on 
 
 - `index.html` — materials hub
 - `mvp.html`, `cac.html`, `ltv.html`
-- `pitch-deck.html`
-- `EventSphere-Timeless-Moments-Platform.pdf`
+- `EventSphere-Timeless-Moments-Platform.pdf` (pitch deck)
 - `readme.html`, `investor-onboarding.html`, `EventSphere-PRD.pdf`
 
 ## Auto-updates

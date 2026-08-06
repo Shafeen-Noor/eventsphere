@@ -16,7 +16,6 @@ Every event gets its own interactive website — photos, guestbook, votes, feed,
 | MVP | [mvp.html](https://shafeen-noor.github.io/eventsphere/mvp.html) |
 | CAC | [cac.html](https://shafeen-noor.github.io/eventsphere/cac.html) |
 | LTV | [ltv.html](https://shafeen-noor.github.io/eventsphere/ltv.html) |
-| Pitch deck (web) | [pitch-deck.html](https://shafeen-noor.github.io/eventsphere/pitch-deck.html) |
 | Pitch deck (PDF) | [EventSphere-Timeless-Moments-Platform.pdf](https://shafeen-noor.github.io/eventsphere/EventSphere-Timeless-Moments-Platform.pdf) |
 
 Source files live in [`/docs`](/docs).
