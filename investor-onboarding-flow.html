@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — Investor Onboarding Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy: #152935;
+      --steel: #698ea2;
+      --sand: #e4a576;
+      --mist: #ccd5d2;
+      --peach: #fde5d6;
+      --paper: #fff8f2;
+      --ink: #152935;
+      --muted: #5a7383;
+      --line: rgba(21, 41, 53, 0.12);
+      --ok: #4f7d62;
+      --frame: #1a2832;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Manrope, system-ui, sans-serif;
+      color: var(--ink);
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 80% 50% at 10% -10%, rgba(105, 142, 162, 0.28), transparent 55%),
+        radial-gradient(ellipse 60% 40% at 90% 10%, rgba(228, 165, 118, 0.22), transparent 50%),
+        linear-gradient(165deg, #eef3f5 0%, #f7ebe3 45%, #e8eef1 100%);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 22px;
+      background: rgba(255, 248, 242, 0.86);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .brand {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand span { color: var(--steel); font-weight: 500; font-size: 0.85rem; margin-left: 8px; }
+
+    .nav-dots {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .nav-dots button {
+      border: 1px solid var(--line);
+      background: white;
+      color: var(--muted);
+      font: 600 11px/1 Manrope, sans-serif;
+      padding: 7px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    .nav-dots button:hover { border-color: var(--steel); color: var(--navy); }
+    .nav-dots button.active {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: white;
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      font: 600 13px/1 Manrope, sans-serif;
+      border: 1px solid var(--line);
+      background: white;
+      padding: 9px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .controls button.primary {
+      background: var(--navy);
+      border-color: var(--navy);
+      color: white;
+    }
+
+    .stage {
+      padding: 28px 20px 48px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .phone {
+      width: min(390px, 100%);
+      aspect-ratio: 390 / 780;
+      max-height: calc(100vh - 120px);
+      background: var(--paper);
+      border-radius: 36px;
+      border: 10px solid var(--frame);
+      box-shadow:
+        0 30px 80px rgba(21, 41, 53, 0.22),
+        inset 0 0 0 1px rgba(255,255,255,0.08);
+      overflow: hidden;
+      position: relative;
+      display: none;
+      flex-direction: column;
+    }
+
+    .phone.active { display: flex; }
+
+    .notch {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .notch::after {
+      content: "";
+      width: 88px;
+      height: 10px;
+      background: #0d171d;
+      border-radius: 999px;
+    }
+
+    .screen {
+      flex: 1;
+      overflow: auto;
+      padding: 8px 22px 28px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .label {
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--steel);
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    h1, h2 {
+      font-family: Fraunces, Georgia, serif;
+      letter-spacing: -0.03em;
+      line-height: 1.08;
+    }
+
+    h1 { font-size: 2.35rem; margin-bottom: 10px; }
+    h2 { font-size: 1.55rem; margin-bottom: 8px; }
+
+    .sub {
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.45;
+      margin-bottom: 22px;
+    }
+
+    .spacer { flex: 1; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 16px;
+      font: 700 15px/1 Manrope, sans-serif;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease;
+    }
+
+    .btn:active { transform: scale(0.98); }
+    .btn-primary { background: var(--navy); color: white; }
+    .btn-accent { background: var(--sand); color: var(--navy); }
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: var(--navy);
+    }
+    .btn + .btn { margin-top: 10px; }
+
+    .field { margin-bottom: 14px; }
+    .field label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .field input, .field select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font: 500 15px/1.2 Manrope, sans-serif;
+      color: var(--ink);
+      outline: none;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--steel);
+      box-shadow: 0 0 0 3px rgba(105, 142, 162, 0.2);
+    }
+
+    .otp-box {
+      display: flex;
+      gap: 8px;
+      margin: 18px 0 28px;
+    }
+    .otp-box span {
+      flex: 1;
+      aspect-ratio: 1;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: white;
+      display: grid;
+      place-items: center;
+      font: 700 1.25rem/1 Fraunces, serif;
+    }
+
+    .tiers {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .tiers.three {
+      grid-template-columns: 1fr;
+    }
+    .tier {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 14px;
+      padding: 12px 12px 12px;
+      text-align: left;
+      cursor: pointer;
+      transition: 0.15s ease;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 4px 10px;
+      align-items: center;
+    }
+    .tier strong {
+      display: block;
+      font-size: 14px;
+    }
+    .tier small {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      grid-column: 1;
+    }
+    .tier .price {
+      font: 700 12px/1 Manrope, sans-serif;
+      color: var(--navy);
+      text-align: right;
+    }
+    .tier.active {
+      border-color: var(--navy);
+      background: rgba(105, 142, 162, 0.14);
+      box-shadow: 0 0 0 1px var(--navy);
+    }
+
+    .pay-card {
+      display: none;
+      background: linear-gradient(145deg, rgba(228, 165, 118, 0.28), rgba(105, 142, 162, 0.16));
+      border: 1px solid rgba(21, 41, 53, 0.12);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+    .pay-card.show { display: block; }
+    .pay-card strong { display: block; font-size: 13px; margin-bottom: 4px; }
+    .pay-card p { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .pay-card .amount {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.45rem;
+      margin-top: 6px;
+    }
+
+    .limits {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .limit {
+      background: rgba(21, 41, 53, 0.04);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .limit em {
+      display: block;
+      font-style: normal;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
+    .limit b { font-size: 14px; }
+
+    .row2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 14px;
+      margin-bottom: 12px;
+    }
+
+    .qr {
+      width: 140px;
+      height: 140px;
+      margin: 8px auto 12px;
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, #152935 10%, transparent 10%) 0 0 / 14px 14px,
+        linear-gradient(#152935 10%, transparent 10%) 0 0 / 14px 14px,
+        white;
+      box-shadow: inset 0 0 0 10px white, inset 0 0 0 16px #152935;
+      position: relative;
+    }
+    .qr::after {
+      content: "ES";
+      position: absolute;
+      inset: 42%;
+      background: white;
+      display: grid;
+      place-items: center;
+      font: 700 11px/1 Fraunces, serif;
+      border-radius: 4px;
+    }
+
+    .link-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .link-row code {
+      flex: 1;
+      font-size: 11px;
+      background: rgba(21,41,53,0.05);
+      padding: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mini {
+      border: none;
+      background: var(--navy);
+      color: white;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font: 700 12px/1 Manrope, sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .actions .btn { margin-top: 0; padding: 12px; font-size: 13px; }
+
+    .hero-welcome {
+      background: linear-gradient(145deg, #698ea2, #152935);
+      color: #f7f1ea;
+      border-radius: 18px;
+      padding: 16px;
+      margin-bottom: 14px;
+    }
+    .hero-welcome p { opacity: 0.8; font-size: 13px; margin-top: 4px; }
+
+    .tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+    .grid.live { grid-template-columns: repeat(2, 1fr); }
+    .tile {
+      aspect-ratio: 1;
+      border-radius: 10px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.25), transparent),
+        var(--tone, #698ea2);
+    }
+
+    .countdown {
+      text-align: center;
+      padding: 28px 10px;
+    }
+    .countdown .big {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 2.6rem;
+      letter-spacing: -0.03em;
+      margin: 8px 0 6px;
+    }
+
+    .closed-banner {
+      text-align: center;
+      padding: 36px 16px;
+      border-radius: 18px;
+      background: rgba(21, 41, 53, 0.06);
+      margin-bottom: 16px;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 0 20px 28px;
+    }
+
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px 12px;
+      border: 1px dashed rgba(21, 41, 53, 0.2);
+      border-radius: 18px;
+      background: rgba(255,255,255,0.55);
+      margin: 8px 0 16px;
+    }
+    .empty-state .glyph {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      background: rgba(105, 142, 162, 0.2);
+      display: grid;
+      place-items: center;
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.4rem;
+      margin-bottom: 12px;
+      color: var(--navy);
+    }
+    .empty-state h3 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.25rem;
+      margin-bottom: 6px;
+    }
+    .empty-state p {
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.4;
+      max-width: 240px;
+    }
+
+    .plan-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      background: rgba(105, 142, 162, 0.16);
+      color: var(--navy);
+      padding: 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 12px;
+    }
+
+    .included-card {
+      display: none;
+      background: rgba(79, 125, 98, 0.12);
+      border: 1px solid rgba(79, 125, 98, 0.25);
+      border-radius: 14px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .included-card.show { display: block; }
+    .included-card strong { color: var(--ok); display: block; margin-bottom: 2px; font-size: 13px; }
+
+    .path-instant .included-card { display: none !important; }
+    .path-sub #instantTiers,
+    .path-sub #payCard { display: none !important; }
+    .path-sub .instant-only-copy { display: none !important; }
+    .path-instant .sub-only-copy { display: none !important; }
+
+    @media (max-width: 720px) {
+      .nav-dots { display: none; }
+      .phone { max-height: none; aspect-ratio: auto; min-height: 640px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">EventSphere <span>investor walkthrough · account vs instant</span></div>
+    <nav class="nav-dots" id="dots" aria-label="Screens"></nav>
+    <div class="controls">
+      <button type="button" id="prev">← Back</button>
+      <button type="button" class="primary" id="next">Next →</button>
+    </div>
+  </header>
+
+  <main class="stage">
+    <!-- 1 Landing -->
+    <section class="phone active" data-title="1 · Landing" data-screen="0">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Landing</p>
+        <div class="spacer"></div>
+        <h1>Event<br />Sphere</h1>
+        <p class="sub">Best memories belong to everyone.</p>
+        <button class="btn btn-ghost" type="button" data-go="1">Create account</button>
+        <button class="btn btn-primary" type="button" id="goInstant">Create an instant event</button>
+        <p class="hint">Account → empty event list · Instant → one-time fee</p>
+        <div class="spacer"></div>
+      </div>
+    </section>
+
+    <!-- 2 Account signup + subscription -->
+    <section class="phone" data-title="2 · Account" data-screen="1">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Create account · subscription</p>
+        <h2>Who’s hosting?</h2>
+        <p class="sub">Password + org details, then pick Free, Pro, or Professional.</p>
+
+        <div class="field">
+          <label>Full name</label>
+          <input value="Alex Rivera" readonly />
+        </div>
+        <div class="field">
+          <label>Work email</label>
+          <input value="alex@northstudio.com" readonly />
+        </div>
+        <div class="field">
+          <label>Password</label>
+          <input type="password" value="••••••••••" readonly />
+        </div>
+        <div class="field">
+          <label>Organization</label>
+          <input value="North Studio" readonly />
+        </div>
+        <div class="field">
+          <label>Who are you?</label>
+          <select disabled>
+            <option>Event planner / agency</option>
+            <option>Venue / brand</option>
+            <option>Individual host</option>
+          </select>
+        </div>
+
+        <p class="label" style="margin-top:6px">Subscription plan</p>
+        <div class="tiers" id="accountTiers">
+          <button type="button" class="tier active" data-people="25 guests" data-storage="5 GB">
+            <strong>Free</strong>
+            <span class="price">$0 / mo</span>
+            <small>Core gallery · limited events</small>
+          </button>
+          <button type="button" class="tier" data-people="150 guests" data-storage="50 GB">
+            <strong>Pro</strong>
+            <span class="price">$29 / mo</span>
+            <small>RSVP · themes · downloads · privileges</small>
+          </button>
+          <button type="button" class="tier" data-people="Unlimited" data-storage="500 GB+">
+            <strong>Professional</strong>
+            <span class="price">$99 / mo</span>
+            <small>Orgs · multi-event · SLAs · white-label</small>
+          </button>
+        </div>
+
+        <div class="limits">
+          <div class="limit"><em>Max people</em><b id="acctPeople">25 guests</b></div>
+          <div class="limit"><em>Storage</em><b id="acctStorage">5 GB</b></div>
+        </div>
+
+        <button class="btn btn-primary" type="button" data-go="2">Continue to verify</button>
+      </div>
+    </section>
+
+    <!-- 3 OTP -->
+    <section class="phone" data-title="3 · Verify OTP" data-screen="2">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Security</p>
+        <h2>Verify OTP</h2>
+        <p class="sub">We sent a code to alex@northstudio.com</p>
+        <div class="otp-box" aria-hidden="true">
+          <span>4</span><span>8</span><span>2</span><span>1</span>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" type="button" data-go="3">Enter dashboard</button>
+      </div>
+    </section>
+
+    <!-- 4 My events (empty) -->
+    <section class="phone" data-title="4 · My events" data-screen="3">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Subscription dashboard</p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:4px">
+          <h2 style="margin:0">My events</h2>
+          <span class="plan-chip">Pro plan</span>
+        </div>
+        <p class="sub" style="margin-bottom:8px">North Studio · alex@northstudio.com</p>
+
+        <div class="empty-state">
+          <div class="glyph">∅</div>
+          <h3>No events yet</h3>
+          <p>Your list is empty. Create your first shared gallery for a wedding, party, or brand event.</p>
+        </div>
+
+        <button class="btn btn-primary" type="button" id="goSubCreate">+ Create a new event</button>
+        <p class="hint">Included in your subscription — no per-event checkout</p>
+      </div>
+    </section>
+
+    <!-- 5 Create event (subscription OR instant) -->
+    <section class="phone path-sub" id="createScreen" data-title="5 · Create event" data-screen="4">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label" id="createLabel">New event · subscription</p>
+        <h2 id="createTitle">Create a new event</h2>
+        <p class="sub instant-only-copy">Free is $0. Pro &amp; Professional are a <b>one-time fee for this event</b> — not a subscription.</p>
+        <p class="sub sub-only-copy">Uses your plan limits. No extra payment for this event.</p>
+
+        <div class="included-card show" id="includedCard">
+          <strong>Included with Pro</strong>
+          Up to 150 guests · 50 GB · RSVP, themes, downloads — covered by your monthly plan.
+        </div>
+
+        <div class="tiers" id="instantTiers">
+          <button type="button" class="tier active" data-pay="0" data-people="25 guests" data-storage="2 GB" data-fee="">
+            <strong>Free</strong>
+            <span class="price">$0</span>
+            <small>One event · core gallery</small>
+          </button>
+          <button type="button" class="tier" data-pay="49" data-people="150 guests" data-storage="25 GB" data-fee="$49">
+            <strong>Pro</strong>
+            <span class="price">$49 once</span>
+            <small>RSVP · themes · downloads · this event only</small>
+          </button>
+          <button type="button" class="tier" data-pay="149" data-people="Unlimited" data-storage="100 GB" data-fee="$149">
+            <strong>Professional</strong>
+            <span class="price">$149 once</span>
+            <small>Live wall · privileges · highlights · this event only</small>
+          </button>
+        </div>
+
+        <div class="limits" id="instLimits">
+          <div class="limit"><em>Max people</em><b id="instPeople">25 guests</b></div>
+          <div class="limit"><em>Storage</em><b id="instStorage">2 GB</b></div>
+        </div>
+
+        <div class="pay-card" id="payCard">
+          <strong>One-time payment</strong>
+          <p>Not a subscription. You pay once for this single event’s Pro / Professional features.</p>
+          <div class="amount" id="payAmount">$49</div>
+        </div>
+
+        <div class="field">
+          <label>Event name</label>
+          <input value="Sara’s Birthday" readonly />
+        </div>
+        <div class="field">
+          <label>RSVP</label>
+          <select disabled>
+            <option>Enabled · plus-ones up to 2</option>
+          </select>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Date</label>
+            <input value="28 Jul 2026" readonly />
+          </div>
+          <div class="field">
+            <label>Time</label>
+            <input value="9:00 PM" readonly />
+          </div>
+        </div>
+
+        <button class="btn btn-accent" type="button" id="instantCta" data-go="5">Create event</button>
+      </div>
+    </section>
+
+    <!-- 6 Share dashboard -->
+    <section class="phone" data-title="6 · Share" data-screen="5">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Host dashboard</p>
+        <h2>Invite everyone</h2>
+        <p class="sub">QR + link. Guests RSVP before the event goes live.</p>
+        <div class="card" style="text-align:center">
+          <div class="qr" aria-hidden="true"></div>
+          <p style="font-size:12px;color:var(--muted)">Scan to open invite</p>
+        </div>
+        <div class="card">
+          <div class="link-row">
+            <code>eventsphere.app/e/saras-bday</code>
+            <button class="mini" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-ghost" type="button">Guest list</button>
+          <button class="btn btn-ghost" type="button">Settings</button>
+        </div>
+        <p class="hint">Guest scans → countdown lounge until start</p>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" type="button" data-go="6">Simulate guest scan →</button>
+      </div>
+    </section>
+
+    <!-- 7 Guest countdown + live -->
+    <section class="phone" data-title="7 · Live wall" data-screen="6">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">Guest journey</p>
+        <div class="countdown card" id="preLive">
+          <p style="font-size:12px;letter-spacing:0.14em;text-transform:uppercase;color:var(--steel);font-weight:700">You’re invited</p>
+          <p class="big">02:14:36</p>
+          <p class="sub" style="margin:0">We look forward to seeing you.<br />Gallery unlocks at 9:00 PM.</p>
+        </div>
+        <div id="liveBlock" hidden>
+          <div class="hero-welcome">
+            <h2 style="color:inherit;margin:0;font-size:1.35rem">Welcome to Alex’s → Sara’s Birthday</h2>
+            <p>Event is live · uploads open</p>
+          </div>
+          <div class="tools">
+            <button class="btn btn-primary" type="button" style="margin:0">Camera</button>
+            <button class="btn btn-ghost" type="button" style="margin:0">Upload</button>
+          </div>
+          <p class="label" style="margin-top:4px">Live wall</p>
+          <div class="grid live">
+            <div class="tile" style="--tone:#698ea2"></div>
+            <div class="tile" style="--tone:#e4a576"></div>
+            <div class="tile" style="--tone:#152935"></div>
+            <div class="tile" style="--tone:#8aa9b8"></div>
+            <div class="tile" style="--tone:#c98b5e"></div>
+            <div class="tile" style="--tone:#4f7d62"></div>
+            <div class="tile" style="--tone:#6d8f9e"></div>
+            <div class="tile" style="--tone:#d4a07a"></div>
+          </div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost" type="button" id="toggleLive">Skip to live wall</button>
+        <button class="btn btn-primary" type="button" data-go="7" style="margin-top:10px">After event ends →</button>
+      </div>
+    </section>
+
+    <!-- 8 Closed + host gallery + highlights -->
+    <section class="phone" data-title="8 · Highlights" data-screen="7">
+      <div class="notch"></div>
+      <div class="screen">
+        <p class="label">After the event</p>
+        <div class="closed-banner" style="padding:20px 14px;margin-bottom:12px">
+          <h2 style="margin:0;font-size:1.35rem">Event closed</h2>
+          <p class="sub" style="margin:6px 0 0">Host curates · then publishes highlights to guests</p>
+        </div>
+        <p class="label">Host gallery</p>
+        <div class="grid" style="margin-bottom:14px">
+          <div class="tile" style="--tone:#698ea2"></div>
+          <div class="tile" style="--tone:#e4a576"></div>
+          <div class="tile" style="--tone:#152935"></div>
+          <div class="tile" style="--tone:#8aa9b8"></div>
+          <div class="tile" style="--tone:#c98b5e"></div>
+          <div class="tile" style="--tone:#4f7d62"></div>
+        </div>
+        <p class="label">Guest receives</p>
+        <h2 style="font-size:1.25rem">Your highlights from Sara’s Birthday</h2>
+        <div class="grid" style="margin-top:8px">
+          <div class="tile" style="--tone:#e4a576"></div>
+          <div class="tile" style="--tone:#698ea2"></div>
+          <div class="tile" style="--tone:#152935"></div>
+        </div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" type="button">Download all</button>
+        <button class="btn btn-ghost" type="button">Select to download</button>
+      </div>
+    </section>
+  </main>
+
+  <p class="footer-note">
+    Subscription: Account → OTP → <b>empty My events</b> → Create · Instant: one-time Pro / Professional fee
+  </p>
+
+  <script>
+    const phones = [...document.querySelectorAll(".phone")];
+    const dots = document.getElementById("dots");
+    const createScreen = document.getElementById("createScreen");
+    let index = 0;
+
+    phones.forEach((phone, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = phone.dataset.title;
+      btn.addEventListener("click", () => go(i));
+      dots.appendChild(btn);
+    });
+
+    function go(i) {
+      index = Math.max(0, Math.min(phones.length - 1, i));
+      phones.forEach((p, n) => p.classList.toggle("active", n === index));
+      [...dots.children].forEach((b, n) => b.classList.toggle("active", n === index));
+    }
+
+    function setCreateMode(mode) {
+      const isInstant = mode === "instant";
+      createScreen.classList.toggle("path-instant", isInstant);
+      createScreen.classList.toggle("path-sub", !isInstant);
+      document.getElementById("createLabel").textContent = isInstant
+        ? "Instant event · one-time only"
+        : "New event · subscription";
+      document.getElementById("createTitle").textContent = isInstant
+        ? "Create this event"
+        : "Create a new event";
+      document.getElementById("includedCard").classList.toggle("show", !isInstant);
+      document.getElementById("instLimits").style.display = isInstant ? "grid" : "none";
+      if (isInstant) {
+        syncInstantPay(document.querySelector("#instantTiers .tier.active"));
+      } else {
+        document.getElementById("instantCta").textContent = "Create event";
+      }
+    }
+
+    document.getElementById("prev").onclick = () => go(index - 1);
+    document.getElementById("next").onclick = () => go(index + 1);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); go(index + 1); }
+      if (e.key === "ArrowLeft") go(index - 1);
+    });
+
+    document.querySelectorAll("[data-go]").forEach((el) => {
+      el.addEventListener("click", () => go(Number(el.dataset.go)));
+    });
+
+    document.getElementById("goInstant").addEventListener("click", () => {
+      setCreateMode("instant");
+      go(4);
+    });
+    document.getElementById("goSubCreate").addEventListener("click", () => {
+      setCreateMode("subscription");
+      go(4);
+    });
+
+    function wireTiers(rootId, peopleId, storageId, onSelect) {
+      const root = document.getElementById(rootId);
+      const people = document.getElementById(peopleId);
+      const storage = document.getElementById(storageId);
+      root.addEventListener("click", (e) => {
+        const tier = e.target.closest(".tier");
+        if (!tier) return;
+        [...root.children].forEach((t) => t.classList.toggle("active", t === tier));
+        people.textContent = tier.dataset.people;
+        storage.textContent = tier.dataset.storage;
+        onSelect?.(tier);
+      });
+    }
+
+    wireTiers("accountTiers", "acctPeople", "acctStorage");
+
+    const payCard = document.getElementById("payCard");
+    const payAmount = document.getElementById("payAmount");
+    const instantCta = document.getElementById("instantCta");
+
+    function syncInstantPay(tier) {
+      if (!createScreen.classList.contains("path-instant")) return;
+      const pay = Number(tier.dataset.pay || 0);
+      if (pay > 0) {
+        payCard.classList.add("show");
+        payAmount.textContent = tier.dataset.fee;
+        instantCta.textContent = `Pay ${tier.dataset.fee} · create event`;
+      } else {
+        payCard.classList.remove("show");
+        instantCta.textContent = "Create free event";
+      }
+    }
+
+    wireTiers("instantTiers", "instPeople", "instStorage", syncInstantPay);
+
+    const toggleLive = document.getElementById("toggleLive");
+    const preLive = document.getElementById("preLive");
+    const liveBlock = document.getElementById("liveBlock");
+    toggleLive.addEventListener("click", () => {
+      const showingLive = !liveBlock.hidden;
+      liveBlock.hidden = showingLive;
+      preLive.hidden = !showingLive;
+      toggleLive.textContent = showingLive ? "Skip to live wall" : "Back to countdown";
+    });
+
+    setCreateMode("subscription");
+    go(0);
+  </script>
+</body>
+</html>

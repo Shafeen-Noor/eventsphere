@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — MVP</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.5}
+    .wrap{width:min(900px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
+    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
+    h1,h2{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:-.02em;margin:0}
+    h1{font-size:clamp(2rem,4vw,2.8rem)} h2{font-size:1.5rem;margin:2rem 0 .65rem}
+    .lede{color:var(--muted);max-width:60ch;margin:.75rem 0 0}
+    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
+    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin-top:.75rem}
+    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
+    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    .grid{display:grid;gap:.85rem;grid-template-columns:1fr 1fr;margin-top:1rem}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--paper);border:1px solid var(--line);padding:1rem 1.1rem}
+    ul{margin:.4rem 0 0;padding-left:1.15rem;color:var(--muted)}
+    li+li{margin-top:.25rem}
+    .good{color:var(--good);font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← All materials</a>
+    <p class="kicker">EventSphere · MVP</p>
+    <h1>Minimum viable product — live today</h1>
+    <p class="lede">
+      EventSphere is a per-event digital experience: one QR code, one hub for photos,
+      guestbook, polls, feed, and host controls. No guest app install required.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <strong>Live app</strong>
+        <p><a href="https://eventsphere-orcin.vercel.app" target="_blank">eventsphere-orcin.vercel.app</a></p>
+      </div>
+      <div class="card">
+        <strong>Demo event</strong>
+        <p><a href="https://eventsphere-orcin.vercel.app/e/demo" target="_blank">/e/demo</a> — seed with <code>npm run db:seed-demo</code></p>
+      </div>
+    </div>
+
+    <h2>Core user flow</h2>
+    <ol style="color:var(--muted);padding-left:1.2rem">
+      <li><strong style="color:var(--ink)">Create</strong> — host picks event type, name, date (no signup required)</li>
+      <li><strong style="color:var(--ink)">Share</strong> — QR code + link from host dashboard</li>
+      <li><strong style="color:var(--ink)">Join</strong> — guests enter by name in browser, upload photos, guestbook, reactions</li>
+      <li><strong style="color:var(--ink)">Engage</strong> — live feed, polls, challenges, seating, slideshow</li>
+      <li><strong style="color:var(--ink)">Upgrade</strong> — Essential ($19) or Premium ($39) when limits are hit</li>
+    </ol>
+
+    <h2>Plans (MVP pricing)</h2>
+    <table>
+      <thead>
+        <tr><th>Plan</th><th>Price</th><th>Guests</th><th>Uploads</th><th>Retention</th><th>Key features</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Essential</strong></td>
+          <td>$19 / event</td>
+          <td>50</td>
+          <td>500</td>
+          <td>7 days</td>
+          <td>Slideshow, polls, seating, guestbook, ZIP download</td>
+        </tr>
+        <tr>
+          <td><strong>Premium</strong></td>
+          <td>$39 / event</td>
+          <td>200</td>
+          <td>Unlimited</td>
+          <td>30 days</td>
+          <td>AI recap, face search, moderation, analytics, multi-host</td>
+        </tr>
+        <tr>
+          <td><strong>Enterprise</strong></td>
+          <td>from $199 / mo</td>
+          <td>Unlimited</td>
+          <td>Unlimited</td>
+          <td>Custom</td>
+          <td>White-label, API access</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="lede" style="margin-top:.75rem;font-size:.9rem">Paid-only GTM model — see <a href="cac.html">CAC</a> economics.</p>
+
+    <h2>Shipped in MVP</h2>
+    <div class="grid">
+      <div class="card">
+        <strong>Marketing &amp; create</strong>
+        <ul>
+          <li>Landing page · pricing · enterprise</li>
+          <li>Create wizard (type → name → date)</li>
+          <li>Cookie-based host auth</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong>Host dashboard</strong>
+        <ul>
+          <li>QR + invite link · guest count</li>
+          <li>Media moderation · upgrade modal</li>
+          <li>Analytics · extend retention</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong>Guest hub</strong>
+        <ul>
+          <li>Photo / video upload · gallery</li>
+          <li>Guestbook · live feed · reactions</li>
+          <li>Polls · votes · challenges · seating</li>
+        </ul>
+      </div>
+      <div class="card">
+        <strong>APIs &amp; infra</strong>
+        <ul>
+          <li>Postgres + Prisma · S3 or local uploads</li>
+          <li>Slideshow route · demo seed script</li>
+          <li>Vercel production deploy</li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>Not yet in MVP (honest scope)</h2>
+    <ul>
+      <li>Real Stripe checkout (payments simulated)</li>
+      <li>Production face recognition</li>
+      <li>Real email OTP auth</li>
+      <li>Full invitation / RSVP / ticketing suite from PRD</li>
+    </ul>
+
+    <h2>Tech stack</h2>
+    <p class="lede">Next.js · TypeScript · Prisma · PostgreSQL · AWS S3 · Vercel</p>
+    <p><a href="readme.html">Full README → setup &amp; deploy</a></p>
+  </div>
+</body>
+</html>
