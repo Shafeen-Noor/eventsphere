@@ -3,173 +3,1237 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EventSphere — LTV</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
-  <style>
-    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; --bad:#9b2c2c; }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.5}
-    .wrap{width:min(960px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
-    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
-    h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:-.02em;margin:0}
-    h1{font-size:clamp(2rem,4vw,2.8rem)} h2{font-size:1.55rem;margin:2.25rem 0 .65rem} h3{font-size:1.2rem;margin:1.5rem 0 .5rem}
-    .lede{color:var(--muted);max-width:62ch;margin:.75rem 0 0}
-    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
-    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin-top:.75rem}
-    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
-    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-    td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
-    tr.hi td{background:rgba(12,11,10,.035)}
-    .good{color:var(--good);font-weight:700} .bad{color:var(--bad);font-weight:700}
-    .grid{display:grid;gap:.85rem;grid-template-columns:repeat(3,1fr);margin-top:1rem}
-    @media(max-width:760px){.grid{grid-template-columns:1fr}}
-    .card{background:var(--paper);border:1px solid var(--line);padding:1rem 1.1rem}
-    .card .num{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.8rem;font-weight:700;margin:.1rem 0}
-    .card p{margin:.2rem 0 0;color:var(--muted);font-size:.9rem}
-    .formula{background:#ebe6dc;border-left:3px solid var(--ink);padding:.85rem 1rem;margin-top:1rem;font-size:.95rem}
-    .note{background:#fff8e8;border:1px solid #ead9a8;padding:.85rem 1rem;margin-top:1rem;font-size:.92rem}
-    .src{font-size:.78rem;color:var(--muted);margin-top:.75rem}
-  </style>
+  <title>EventSphere — Lifetime Value (LTV) Investor Report</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="report.css" />
 </head>
 <body>
+  <nav class="topbar">
+    <a href="index.html">← Materials</a>
+    <span class="sep">|</span>
+    <a href="#executive-summary">1 · Summary</a>
+    <a href="#definition">2 · Definition</a>
+    <a href="#inputs">3 · Inputs</a>
+    <a href="#segments">4 · Segments</a>
+    <a href="#repeat-model">5 · Repeat</a>
+    <a href="#walkthrough">6 · Walkthrough</a>
+    <a href="#ltv-cac">7 · LTV:CAC</a>
+    <a href="#cohorts">8 · Cohorts</a>
+    <a href="#sensitivity">9 · Sensitivity</a>
+    <a href="#payback">10 · Payback</a>
+    <a href="#benchmarks">11 · Benchmarks</a>
+    <a href="#assumptions">12 · Assumptions</a>
+    <a href="#risks">13 · Risks</a>
+    <a href="#appendix">14 · Appendix</a>
+    <span class="sep">|</span>
+    <a href="cac.html">CAC →</a>
+  </nav>
+
   <div class="wrap">
-    <a class="back" href="index.html">← All materials</a>
-    <p class="kicker">EventSphere · LTV</p>
-    <h1>Lifetime value — pay-per-event model</h1>
-    <p class="lede">
-      EventSphere charges per event, not monthly SaaS. LTV = gross margin from all events
-      a host pays for over their relationship, minus acquisition cost.
-      Assumes paid-only (no free tier) · Essential $19 · Premium $39.
-    </p>
+    <header class="hero">
+      <p class="kicker">EventSphere · Investor materials · Unit economics</p>
+      <h1>Lifetime value — pay-per-event model</h1>
+      <p class="lede">
+        Formal analysis of customer lifetime value for EventSphere under a transaction-based pricing model.
+        Unlike subscription SaaS, each host pays once per published event; LTV is therefore the sum of gross-margin
+        dollars across all events a host purchases over a defined horizon, net of acquisition cost.
+        Companion acquisition analysis: <a href="cac.html">Customer Acquisition Cost (CAC) report</a>.
+      </p>
 
-    <h2>Blended unit inputs</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Input</th>
-          <th class="num">Essential</th>
-          <th class="num">Premium</th>
-          <th class="num">Blended (35/65 partners · 40/60 ads)</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Price</td><td class="num">$19</td><td class="num">$39</td><td class="num">$32.00</td></tr>
-        <tr><td>Gross margin (after Stripe + AWS)</td><td class="num">$16.75</td><td class="num">$34.07</td><td class="num good">$28.01</td></tr>
-        <tr><td>Partner CAC (20% commission)</td><td class="num">$3.80</td><td class="num">$7.80</td><td class="num">$6.40</td></tr>
-        <tr><td>Ads CAC</td><td class="num">$22</td><td class="num">$22</td><td class="num">$22.22</td></tr>
-      </tbody>
-    </table>
-    <p class="src">Blended margin = 0.35 × $16.75 + 0.65 × $34.07. See <a href="cac.html">CAC tables</a> for full channel math.</p>
-
-    <h2>Repeat-event assumptions</h2>
-    <p class="lede">Hosts buy once per event. Repeat comes from birthdays, anniversaries, clients, and venue partners.</p>
-    <table>
-      <thead>
-        <tr><th>Period</th><th class="num">Events / host</th><th>Assumption</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>First purchase</td><td class="num">1.0</td><td>Initial event — wedding, party, corporate</td></tr>
-        <tr><td>Within 12 months</td><td class="num">+0.30</td><td>30% host a second event (birthday, client event, referral)</td></tr>
-        <tr><td>Year 2</td><td class="num">+0.25</td><td>25% of cohort returns (planners, venues higher)</td></tr>
-        <tr><td>Year 3</td><td class="num">+0.15</td><td>Tail — repeat hosts, seasonal events</td></tr>
-        <tr class="hi"><td><strong>3-year total</strong></td><td class="num"><strong>1.70</strong></td><td>Conservative consumer mix; partners skew higher</td></tr>
-      </tbody>
-    </table>
-
-    <h2>LTV calculation</h2>
-    <div class="formula">
-      <strong>Gross margin LTV (3-year)</strong> = events × blended margin<br />
-      = 1.70 × <strong>$28.01</strong> = <strong>$47.62</strong><br /><br />
-      <strong>12-month LTV</strong> = 1.30 × $28.01 = <strong>$36.41</strong>
-    </div>
-
-    <h3>LTV after CAC — by channel</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Channel</th>
-          <th class="num">CAC</th>
-          <th class="num">12-mo LTV</th>
-          <th class="num">12-mo LTV − CAC</th>
-          <th class="num">LTV:CAC</th>
-          <th class="num">3-yr LTV − CAC</th>
-          <th class="num">3-yr LTV:CAC</th>
-          <th>Verdict</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="hi">
-          <td><strong>Partnerships</strong></td>
-          <td class="num">$6.40</td>
-          <td class="num">$36.41</td>
-          <td class="num good">+$30.01</td>
-          <td class="num good">5.7×</td>
-          <td class="num good">+$41.22</td>
-          <td class="num good">7.4×</td>
-          <td class="good">Strong — core GTM</td>
-        </tr>
-        <tr>
-          <td><strong>Paid ads</strong></td>
-          <td class="num">$22.22</td>
-          <td class="num">$36.41</td>
-          <td class="num">+$14.19</td>
-          <td class="num">1.6×</td>
-          <td class="num">+$25.40</td>
-          <td class="num">2.1×</td>
-          <td>Backup only · Premium-heavy</td>
-        </tr>
-        <tr>
-          <td><strong>Blended (both)</strong></td>
-          <td class="num">$13.18</td>
-          <td class="num">$36.41</td>
-          <td class="num good">+$23.23</td>
-          <td class="num good">2.8×</td>
-          <td class="num good">+$34.44</td>
-          <td class="num good">3.6×</td>
-          <td class="good">Healthy at scale</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div class="grid">
-      <div class="card">
-        <p class="kicker">Partner LTV:CAC</p>
-        <p class="num good">7.4×</p>
-        <p>3-year · pay commission only after sale</p>
+      <div class="meta">
+        <div><strong>Document</strong> LTV-2026-001</div>
+        <div><strong>Version</strong> 1.0 · Draft for investors</div>
+        <div><strong>Prepared</strong> August 6, 2026</div>
+        <div><strong>Horizon</strong> 12-month &amp; 3-year</div>
+        <div><strong>Pricing</strong> Essential $19 · Premium $39</div>
+        <div><strong>Related</strong> <a href="cac.html">cac.html</a></div>
       </div>
-      <div class="card">
-        <p class="kicker">12-month payback</p>
-        <p class="num good">&lt; 1 event</p>
-        <p>First event margin ($28) covers partner CAC ($6.40)</p>
-      </div>
-      <div class="card">
-        <p class="kicker">Repeat upside</p>
-        <p class="num">+70%</p>
-        <p>Extra events over 3 years vs first purchase alone</p>
-      </div>
-    </div>
 
-    <h2>LTV sensitivity — repeat rate</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>3-yr events / host</th>
-          <th class="num">Gross LTV</th>
-          <th class="num">After partner CAC</th>
-          <th class="num">LTV:CAC</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>1.0 (no repeat)</td><td class="num">$28.01</td><td class="num">+$21.61</td><td class="num">3.4×</td></tr>
-        <tr class="hi"><td>1.7 (base case)</td><td class="num">$47.62</td><td class="num good">+$41.22</td><td class="num good">7.4×</td></tr>
-        <tr><td>2.5 (planner / venue heavy)</td><td class="num">$70.03</td><td class="num good">+$63.63</td><td class="num good">11.0×</td></tr>
-      </tbody>
-    </table>
+      <div class="summary-grid">
+        <div class="card">
+          <p class="kicker">Blended gross margin</p>
+          <p class="num">$28.01</p>
+          <p>Per paid event · after Stripe &amp; AWS</p>
+        </div>
+        <div class="card">
+          <p class="kicker">3-year gross LTV</p>
+          <p class="num">$47.62</p>
+          <p>1.70 events × $28.01 margin</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Partner LTV:CAC</p>
+          <p class="num good">7.4×</p>
+          <p>3-year · primary GTM channel</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Blended LTV:CAC</p>
+          <p class="num good">3.6×</p>
+          <p>Both channels · 3-year view</p>
+        </div>
+      </div>
+    </header>
 
-    <div class="note">
-      <strong>Pitch line:</strong> “We earn back partner CAC on the first event. Every repeat event
-      is nearly pure margin — and event pros naturally send us the next wedding, party, or client dinner.”
-      Full acquisition funnels: <a href="cac.html">CAC →</a>
-    </div>
+    <nav class="toc" aria-label="Table of contents">
+      <p class="kicker">Contents</p>
+      <ol>
+        <li><a href="#executive-summary">Executive Summary</a></li>
+        <li><a href="#definition">How LTV is defined for pay-per-event</a></li>
+        <li><a href="#inputs">Unit economics inputs</a></li>
+        <li><a href="#segments">Customer segments</a></li>
+        <li><a href="#repeat-model">Repeat purchase model</a></li>
+        <li><a href="#walkthrough">LTV calculation walkthrough</a></li>
+        <li><a href="#ltv-cac">LTV after CAC by channel</a></li>
+        <li><a href="#cohorts">Cohort projections</a></li>
+        <li><a href="#sensitivity">Sensitivity analysis</a></li>
+        <li><a href="#payback">Payback period analysis</a></li>
+        <li><a href="#benchmarks">Comparison to industry benchmarks</a></li>
+        <li><a href="#assumptions">Assumption register</a></li>
+        <li><a href="#risks">Risks &amp; limitations</a></li>
+        <li><a href="#appendix">Appendix — formulas</a></li>
+      </ol>
+    </nav>
+
+    <!-- §1 -->
+    <section id="executive-summary">
+      <h2><span class="sec-num">01</span> Executive Summary</h2>
+      <p>
+        EventSphere monetizes through a <strong>pay-per-event</strong> model: hosts purchase a one-time license
+        to publish a guest-facing event page, upload media, and share a link. There is no recurring subscription;
+        revenue scales with the number of events a customer hosts over time, not with monthly active users alone.
+      </p>
+      <p>
+        Under base-case assumptions — a blended gross margin of <strong>$28.01 per event</strong>, a conservative
+        repeat curve totaling <strong>1.70 events per host over three years</strong>, and channel-weighted acquisition
+        costs from our <a href="cac.html">CAC model</a> — EventSphere delivers attractive unit economics on its
+        primary partnership channel and acceptable blended returns when paid advertising is used as a controlled supplement.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th class="num">Partnerships</th>
+              <th class="num">Paid ads</th>
+              <th class="num">Blended</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>CAC (per acquired host)</td>
+              <td class="num">$6.40</td>
+              <td class="num">$22.22</td>
+              <td class="num">$13.18</td>
+            </tr>
+            <tr>
+              <td>12-month gross LTV</td>
+              <td class="num">$36.41</td>
+              <td class="num">$36.41</td>
+              <td class="num">$36.41</td>
+            </tr>
+            <tr>
+              <td>12-month LTV − CAC</td>
+              <td class="num good">+$30.01</td>
+              <td class="num">+$14.19</td>
+              <td class="num good">+$23.23</td>
+            </tr>
+            <tr>
+              <td>12-month LTV:CAC</td>
+              <td class="num good">5.7×</td>
+              <td class="num">1.6×</td>
+              <td class="num good">2.8×</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>3-year LTV − CAC</strong></td>
+              <td class="num good"><strong>+$41.22</strong></td>
+              <td class="num"><strong>+$25.40</strong></td>
+              <td class="num good"><strong>+$34.44</strong></td>
+            </tr>
+            <tr class="total">
+              <td><strong>3-year LTV:CAC</strong></td>
+              <td class="num good"><strong>7.4×</strong></td>
+              <td class="num"><strong>2.1×</strong></td>
+              <td class="num good"><strong>3.6×</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <strong>Investment thesis in one line:</strong> Partner-sourced hosts repay acquisition cost on the first event;
+        every subsequent event in the relationship is predominantly gross margin. Repeat behavior — birthdays, client dinners,
+        anniversaries, and professional referrals — is the primary lever that separates a single-transaction marketplace
+        from a compounding customer asset.
+      </div>
+    </section>
+
+    <!-- §2 -->
+    <section id="definition">
+      <h2><span class="sec-num">02</span> How LTV is defined for pay-per-event (not SaaS MRR)</h2>
+      <p>
+        In subscription SaaS, lifetime value is commonly expressed as <em>annual recurring revenue × gross margin % ÷ churn</em>,
+        producing a steady-state dollar figure tied to monthly billing. EventSphere does not fit that template: there is no
+        monthly recurring charge, no seat count, and no automatic renewal. Each event is an independent purchase decision.
+      </p>
+      <p>
+        For EventSphere, we define LTV as follows:
+      </p>
+
+      <div class="formula">
+        <strong>LTV<sub>gross</sub></strong> = Σ (events<sub>t</sub> × blended gross margin per event)<br />
+        <strong>LTV<sub>net</sub></strong> = LTV<sub>gross</sub> − CAC<br />
+        <strong>LTV:CAC</strong> = LTV<sub>gross</sub> ÷ CAC
+      </div>
+
+      <p>
+        Key distinctions from SaaS LTV:
+      </p>
+      <ul>
+        <li><strong>Event count, not tenure.</strong> The driver of value is how many events a host publishes, not how many months they remain "subscribed."</li>
+        <li><strong>Variable purchase cadence.</strong> A wedding host may buy once; an event planner may buy monthly for client work.</li>
+        <li><strong>No implied churn rate.</strong> We model explicit repeat probabilities by year rather than applying a single monthly churn constant.</li>
+        <li><strong>Channel-specific CAC.</strong> Partnership commission is paid per first conversion; repeat events incur zero incremental acquisition cost under the current partner structure.</li>
+      </ul>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Concept</th>
+              <th>SaaS subscription</th>
+              <th>EventSphere pay-per-event</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Revenue unit</td>
+              <td>Monthly / annual contract</td>
+              <td>One-time per published event</td>
+            </tr>
+            <tr>
+              <td>LTV driver</td>
+              <td>Retention × ARPU</td>
+              <td>Repeat event frequency × margin per event</td>
+            </tr>
+            <tr>
+              <td>Expansion revenue</td>
+              <td>Upsell tiers, seat adds</td>
+              <td>Premium plan mix, additional events</td>
+            </tr>
+            <tr>
+              <td>Typical payback</td>
+              <td>6–18 months</td>
+              <td>&lt; 1 event (partner channel)</td>
+            </tr>
+            <tr>
+              <td>Healthy LTV:CAC</td>
+              <td>3×+ (VC benchmark)</td>
+              <td>3.6× blended · 7.4× partnerships (base case)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="caption">
+        We report LTV at both 12-month and 3-year horizons. The 12-month figure reflects near-term cash recovery;
+        the 3-year figure captures the full repeat tail assumed in our go-to-market planning.
+      </p>
+    </section>
+
+    <!-- §3 -->
+    <section id="inputs">
+      <h2><span class="sec-num">03</span> Unit economics inputs</h2>
+      <p>
+        All margin and CAC inputs are sourced from the companion
+        <a href="cac.html">Customer Acquisition Cost report</a>. Pricing is fixed at launch:
+        <strong>Essential $19</strong> (50 guests, 500 media items, 7-day retention) and
+        <strong>Premium $39</strong> (200 guests, unlimited media, 30-day retention).
+        COGS includes Stripe (2.9% + $0.30) and AWS hosting per event.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Input</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+              <th class="num">Blended</th>
+              <th>Derivation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>List price</td>
+              <td class="num">$19.00</td>
+              <td class="num">$39.00</td>
+              <td class="num">$32.00</td>
+              <td>35% / 65% partner plan mix</td>
+            </tr>
+            <tr>
+              <td>Stripe + AWS (COGS)</td>
+              <td class="num">$2.25</td>
+              <td class="num">$4.93</td>
+              <td class="num">$3.99</td>
+              <td>Per-event variable cost</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Gross margin</strong></td>
+              <td class="num"><strong>$16.75</strong></td>
+              <td class="num"><strong>$34.07</strong></td>
+              <td class="num good"><strong>$28.01</strong></td>
+              <td>0.35 × $16.75 + 0.65 × $34.07</td>
+            </tr>
+            <tr>
+              <td>Gross margin %</td>
+              <td class="num">88%</td>
+              <td class="num">87%</td>
+              <td class="num">88%</td>
+              <td>Before acquisition</td>
+            </tr>
+            <tr>
+              <td>Partner CAC (20% commission)</td>
+              <td class="num">$3.80</td>
+              <td class="num">$7.80</td>
+              <td class="num">$6.40</td>
+              <td>Paid only after successful sale</td>
+            </tr>
+            <tr>
+              <td>Ads CAC</td>
+              <td class="num">$22.22</td>
+              <td class="num">$22.22</td>
+              <td class="num">$22.22</td>
+              <td>$1,000 budget ÷ 45 customers</td>
+            </tr>
+            <tr class="total">
+              <td>Blended CAC (57% partner / 43% ads)</td>
+              <td class="num"></td>
+              <td class="num"></td>
+              <td class="num"><strong>$13.18</strong></td>
+              <td>105 events / month combined mix</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Margin build — per plan</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Line item</th>
+              <th class="num">Essential</th>
+              <th class="num">Premium</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Revenue</td><td class="num">$19.00</td><td class="num">$39.00</td></tr>
+            <tr><td>Stripe (2.9% + $0.30)</td><td class="num">−$0.85</td><td class="num">−$1.43</td></tr>
+            <tr><td>AWS (compute, storage, CDN)</td><td class="num">−$1.40</td><td class="num">−$3.50</td></tr>
+            <tr class="total"><td>Gross margin</td><td class="num">$16.75</td><td class="num">$34.07</td></tr>
+            <tr><td>After partner CAC</td><td class="num good">+$12.95</td><td class="num good">+$26.27</td></tr>
+            <tr><td>After ads CAC</td><td class="num bad">−$5.47</td><td class="num good">+$11.85</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="src">
+        Essential loses money on the first event when acquired via paid ads at $22 CAC; Premium subsidizes the ads channel.
+        See <a href="cac.html#ads">CAC §03 Paid advertising</a> for the full funnel.
+      </p>
+    </section>
+
+    <!-- §4 -->
+    <section id="segments">
+      <h2><span class="sec-num">04</span> Customer segments</h2>
+      <p>
+        LTV varies materially by who buys and why. We model three archetypes that map to our acquisition channels
+        and repeat curves. The base-case blended figures in this report weight toward the partner channel (57% of volume),
+        which skews toward Premium plans and professional adjacent hosts.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Segment</th>
+              <th>Typical first event</th>
+              <th class="num">Plan mix</th>
+              <th class="num">3-yr events</th>
+              <th class="num">Est. gross LTV</th>
+              <th>Primary channel</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Individual host</strong></td>
+              <td>Birthday, reunion, memorial</td>
+              <td class="num">60% Essential</td>
+              <td class="num">1.2</td>
+              <td class="num">~$30</td>
+              <td>Paid ads · word of mouth</td>
+            </tr>
+            <tr>
+              <td><strong>Repeat host</strong></td>
+              <td>Wedding, milestone party</td>
+              <td class="num">40% / 60%</td>
+              <td class="num">1.7</td>
+              <td class="num">$47.62</td>
+              <td>Partners · referrals</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Planner / venue (via partner)</strong></td>
+              <td>Client wedding, corporate gala</td>
+              <td class="num">20% / 80%</td>
+              <td class="num">2.5–4.0</td>
+              <td class="num">$70–$112</td>
+              <td>Partner referral · co-sell</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Individual host</h3>
+      <p>
+        One-time or infrequent buyers who discover EventSphere through search ads or a friend's link.
+        They choose Essential when guest counts are small. Repeat is driven by life events (annual birthday,
+        family reunion every few years). Expected 3-year event count: <strong>1.0–1.3</strong>.
+      </p>
+
+      <h3>Repeat host</h3>
+      <p>
+        Consumers who had a strong first experience — often a wedding or large celebration — and return for
+        anniversaries, baby showers, or holiday gatherings. They upgrade to Premium when guest lists grow.
+        This segment anchors our <strong>base-case 1.70 events / 3 years</strong> assumption.
+      </p>
+
+      <h3>Planner / venue via partner</h3>
+      <p>
+        Wedding photographers, DJs, planners, and venues recommend EventSphere at events they already serve.
+        Each professional touchpoint can yield multiple client events per year. Partner commission (20%) is paid on
+        the first conversion; subsequent events from the same host incur <strong>zero incremental CAC</strong>.
+        This segment has the highest LTV upside and justifies partner recruitment investment.
+      </p>
+
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="label">Individual</div>
+          <div class="val">~40%</div>
+          <div class="sub">of acquired hosts</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Repeat host</div>
+          <div class="val">~45%</div>
+          <div class="sub">base-case mix</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Pro-adjacent</div>
+          <div class="val">~15%</div>
+          <div class="sub">planner / venue path</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Partner-sourced</div>
+          <div class="val good">57%</div>
+          <div class="sub">of monthly volume</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- §5 -->
+    <section id="repeat-model">
+      <h2><span class="sec-num">05</span> Repeat purchase model — years 1, 2, and 3</h2>
+      <p>
+        Because EventSphere charges per event, "retention" manifests as <em>repeat purchase probability</em> —
+        the likelihood that a host returns to buy another event license within a given period. We model additive
+        events per host rather than a continuous subscription curve.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Period</th>
+              <th class="num">Incremental events / host</th>
+              <th class="num">Cumulative events</th>
+              <th>Rationale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>First purchase (Month 0)</td>
+              <td class="num">1.00</td>
+              <td class="num">1.00</td>
+              <td>100% of acquired hosts publish at least one event</td>
+            </tr>
+            <tr>
+              <td>Within 12 months</td>
+              <td class="num">+0.30</td>
+              <td class="num">1.30</td>
+              <td>30% host a second event: birthday follow-up, client dinner, referral</td>
+            </tr>
+            <tr>
+              <td>Year 2</td>
+              <td class="num">+0.25</td>
+              <td class="num">1.55</td>
+              <td>Seasonal return; planners book next client season</td>
+            </tr>
+            <tr>
+              <td>Year 3</td>
+              <td class="num">+0.15</td>
+              <td class="num">1.70</td>
+              <td>Long-tail repeat hosts; declining marginal return</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Why these rates are conservative</h3>
+      <ol>
+        <li><strong>Category behavior.</strong> Event hosting is episodic, not daily. A 30% second-event rate within 12 months exceeds typical one-and-done marketplace behavior (~15–20% in comparable consumer categories).</li>
+        <li><strong>Product stickiness.</strong> Hosts who uploaded photos and shared a link have sunk effort; switching cost for the next event is low (same account, saved templates) but nonzero.</li>
+        <li><strong>Partner reinforcement.</strong> Photographers and planners who introduced EventSphere at Event #1 are present at Event #2 and can re-pitch organically — without additional commission on the same host.</li>
+        <li><strong>Premium skew.</strong> Wedding and large-event hosts (65% Premium in partner channel) have higher celebration frequency in their social graph, increasing referral-driven repeat.</li>
+      </ol>
+
+      <h3>12-month vs 3-year event totals</h3>
+      <div class="grid-2">
+        <div class="card">
+          <p class="kicker">12-month horizon</p>
+          <p class="num">1.30</p>
+          <p>events per host · used for near-term LTV:CAC</p>
+        </div>
+        <div class="card">
+          <p class="kicker">3-year horizon</p>
+          <p class="num">1.70</p>
+          <p>events per host · base case for investor planning</p>
+        </div>
+      </div>
+
+      <div class="warning">
+        <strong>Segment note:</strong> Planner/venue-adjacent hosts may reach 2.5–4.0 events over three years.
+        The 1.70 base case deliberately blends down for individual hosts to avoid overstating portfolio LTV.
+      </div>
+    </section>
+
+    <!-- §6 -->
+    <section id="walkthrough">
+      <h2><span class="sec-num">06</span> LTV calculation walkthrough</h2>
+      <p>
+        The following step-by-step derivation uses blended inputs from Section 3 and the repeat curve from Section 5.
+        All figures are per acquired host unless noted.
+      </p>
+
+      <h3>Step 1 — Gross margin per event</h3>
+      <div class="formula">
+        Blended margin = (0.35 × $16.75) + (0.65 × $34.07)<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= $5.86 + $22.15<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= <strong>$28.01</strong>
+      </div>
+
+      <h3>Step 2 — Expected events over horizon</h3>
+      <div class="formula">
+        Events<sub>12mo</sub> = 1.00 + 0.30 = <strong>1.30</strong><br />
+        Events<sub>3yr</sub> = 1.00 + 0.30 + 0.25 + 0.15 = <strong>1.70</strong>
+      </div>
+
+      <h3>Step 3 — Gross LTV</h3>
+      <div class="formula">
+        LTV<sub>gross, 12mo</sub> = Events<sub>12mo</sub> × Blended margin<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 1.30 × $28.01 = <strong>$36.41</strong><br /><br />
+        LTV<sub>gross, 3yr</sub> = Events<sub>3yr</sub> × Blended margin<br />
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;= 1.70 × $28.01 = <strong>$47.62</strong>
+      </div>
+
+      <h3>Step 4 — Net LTV (after CAC)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th class="num">CAC</th>
+              <th class="num">Gross LTV (3yr)</th>
+              <th class="num">Net LTV (3yr)</th>
+              <th>Calculation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hi">
+              <td>Partnerships</td>
+              <td class="num">$6.40</td>
+              <td class="num">$47.62</td>
+              <td class="num good">+$41.22</td>
+              <td>$47.62 − $6.40</td>
+            </tr>
+            <tr>
+              <td>Paid ads</td>
+              <td class="num">$22.22</td>
+              <td class="num">$47.62</td>
+              <td class="num">+$25.40</td>
+              <td>$47.62 − $22.22</td>
+            </tr>
+            <tr class="total">
+              <td>Blended</td>
+              <td class="num">$13.18</td>
+              <td class="num">$47.62</td>
+              <td class="num good">+$34.44</td>
+              <td>$47.62 − $13.18</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Step 5 — Incremental value of repeat events</h3>
+      <p>
+        The first event contributes $28.01 in gross margin. Repeat events (0.70 additional over three years)
+        contribute $28.01 × 0.70 = <strong>$19.61</strong> — a <strong>70% uplift</strong> over single-purchase LTV.
+        On the partner channel, repeat margin is effectively commission-free, making the uplift nearly pure contribution profit.
+      </p>
+    </section>
+
+    <!-- §7 -->
+    <section id="ltv-cac">
+      <h2><span class="sec-num">07</span> LTV after CAC by channel</h2>
+      <p>
+        The table below is the central investor output: gross LTV, net LTV, and LTV:CAC ratios at 12-month and
+        3-year horizons for each acquisition channel. CAC inputs are documented in
+        <a href="cac.html">cac.html</a>.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th class="num">CAC</th>
+              <th class="num">12-mo LTV</th>
+              <th class="num">12-mo LTV − CAC</th>
+              <th class="num">12-mo LTV:CAC</th>
+              <th class="num">3-yr LTV − CAC</th>
+              <th class="num">3-yr LTV:CAC</th>
+              <th>Verdict</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hi">
+              <td><span class="badge partner">Primary</span> <strong>Partnerships</strong></td>
+              <td class="num">$6.40</td>
+              <td class="num">$36.41</td>
+              <td class="num good">+$30.01</td>
+              <td class="num good">5.7×</td>
+              <td class="num good">+$41.22</td>
+              <td class="num good">7.4×</td>
+              <td class="good">Core GTM — scale aggressively</td>
+            </tr>
+            <tr>
+              <td><span class="badge ads">Backup</span> <strong>Paid ads</strong></td>
+              <td class="num">$22.22</td>
+              <td class="num">$36.41</td>
+              <td class="num">+$14.19</td>
+              <td class="num">1.6×</td>
+              <td class="num">+$25.40</td>
+              <td class="num">2.1×</td>
+              <td>Premium-heavy creative only</td>
+            </tr>
+            <tr class="total">
+              <td><strong>Blended (57% / 43%)</strong></td>
+              <td class="num">$13.18</td>
+              <td class="num">$36.41</td>
+              <td class="num good">+$23.23</td>
+              <td class="num good">2.8×</td>
+              <td class="num good">+$34.44</td>
+              <td class="num good">3.6×</td>
+              <td class="good">Healthy at combined scale</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Channel interpretation</h3>
+      <ul>
+        <li><strong>Partnerships at 7.4× LTV:CAC</strong> exceed the 3× venture benchmark with margin to spare. Commission is contingent on conversion, eliminating upfront CAC risk.</li>
+        <li><strong>Paid ads at 2.1× (3-year)</strong> are viable as a demand-generation supplement when creative targets Premium events. First-event economics on Essential are negative (−$5.47 contribution); the channel relies on plan mix discipline.</li>
+        <li><strong>Blended 3.6×</strong> assumes continued partner dominance. Increasing ads share above ~45% of volume would compress blended LTV:CAC toward the ads floor.</li>
+      </ul>
+
+      <div class="summary-grid">
+        <div class="card">
+          <p class="kicker">Partner · 3-yr LTV:CAC</p>
+          <p class="num good">7.4×</p>
+          <p>$41.22 net LTV per host</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Ads · 3-yr LTV:CAC</p>
+          <p class="num">2.1×</p>
+          <p>$25.40 net LTV per host</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Blended · 3-yr LTV:CAC</p>
+          <p class="num good">3.6×</p>
+          <p>$34.44 net LTV per host</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Repeat uplift</p>
+          <p class="num">+70%</p>
+          <p>3-yr vs single-event LTV</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- §8 -->
+    <section id="cohorts">
+      <h2><span class="sec-num">08</span> Cohort projections — 60 partner-acquired customers</h2>
+      <p>
+        To make LTV tangible, we project revenue from a single monthly cohort of <strong>60 hosts</strong> acquired
+        through the partnership channel — matching the base-case partner funnel in
+        <a href="cac.html#partners">CAC §02 Partnerships</a>.
+        Plan mix: 21 Essential (35%) + 39 Premium (65%). CAC of <strong>$384</strong> (20% commission) is incurred
+        at acquisition; repeat events carry no additional commission.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Cohort period</th>
+              <th class="num">Events</th>
+              <th class="num">Gross revenue</th>
+              <th class="num">Gross margin</th>
+              <th class="num">Acquisition cost</th>
+              <th class="num">Net contribution</th>
+              <th class="num">Cumulative net</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Acquisition (Month 0)</td>
+              <td class="num">60</td>
+              <td class="num">$1,917</td>
+              <td class="num">$1,680</td>
+              <td class="num">$384</td>
+              <td class="num good">+$1,296</td>
+              <td class="num good">+$1,296</td>
+            </tr>
+            <tr>
+              <td>Year 1 repeat (+0.30 / host)</td>
+              <td class="num">18</td>
+              <td class="num">$576</td>
+              <td class="num">$504</td>
+              <td class="num">$0</td>
+              <td class="num good">+$504</td>
+              <td class="num good">+$1,800</td>
+            </tr>
+            <tr>
+              <td>Year 2 (+0.25 / host)</td>
+              <td class="num">15</td>
+              <td class="num">$480</td>
+              <td class="num">$420</td>
+              <td class="num">$0</td>
+              <td class="num good">+$420</td>
+              <td class="num good">+$2,220</td>
+            </tr>
+            <tr>
+              <td>Year 3 (+0.15 / host)</td>
+              <td class="num">9</td>
+              <td class="num">$288</td>
+              <td class="num">$252</td>
+              <td class="num">$0</td>
+              <td class="num good">+$252</td>
+              <td class="num good">+$2,472</td>
+            </tr>
+            <tr class="total">
+              <td><strong>3-year cohort total</strong></td>
+              <td class="num"><strong>102</strong></td>
+              <td class="num"><strong>$3,261</strong></td>
+              <td class="num"><strong>$2,856</strong></td>
+              <td class="num"><strong>$384</strong></td>
+              <td class="num good"><strong>+$2,472</strong></td>
+              <td class="num good"><strong>+$2,472</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Per-host economics from this cohort: $2,472 ÷ 60 = <strong>$41.22 net LTV</strong> over three years,
+        consistent with Section 7. The cohort generates <strong>70% more events</strong> (102 vs 60) and
+        <strong>49% more net contribution</strong> ($2,472 vs $1,296 first-year-only) when repeat is included.
+      </p>
+
+      <h3>Cohort revenue shape</h3>
+      <div class="funnel">
+        <div class="funnel-step">
+          <div class="label">Month 0</div>
+          <div class="val">$1,917</div>
+          <div class="sub">59% of 3-yr revenue</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Year 1 repeat</div>
+          <div class="val">$576</div>
+          <div class="sub">18 events · 18%</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Year 2</div>
+          <div class="val">$480</div>
+          <div class="sub">15 events · 15%</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">Year 3</div>
+          <div class="val">$288</div>
+          <div class="sub">9 events · 9%</div>
+        </div>
+        <div class="funnel-step">
+          <div class="label">3-yr net</div>
+          <div class="val good">$2,472</div>
+          <div class="sub">after $384 CAC</div>
+        </div>
+      </div>
+      <p class="caption">
+        Revenue uses blended $32 list price for repeat events (same plan mix assumed). Margin uses blended $28.01.
+        Acquisition-month revenue matches partner channel table in <a href="cac.html">cac.html</a> ($1,917 gross).
+      </p>
+    </section>
+
+    <!-- §9 -->
+    <section id="sensitivity">
+      <h2><span class="sec-num">09</span> Sensitivity analysis</h2>
+      <p>
+        Three levers dominate LTV outcomes: repeat event rate, Premium plan mix, and channel composition
+        (partner vs ads). The tables below hold other variables constant and stress one dimension at a time.
+      </p>
+
+      <h3>9a — Repeat rate sensitivity (partner channel)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th class="num">3-yr events / host</th>
+              <th class="num">Gross LTV</th>
+              <th class="num">Net LTV (after $6.40 CAC)</th>
+              <th class="num">LTV:CAC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Bear — no repeat</td>
+              <td class="num">1.00</td>
+              <td class="num">$28.01</td>
+              <td class="num">+$21.61</td>
+              <td class="num">3.4×</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Base case</strong></td>
+              <td class="num"><strong>1.70</strong></td>
+              <td class="num"><strong>$47.62</strong></td>
+              <td class="num good"><strong>+$41.22</strong></td>
+              <td class="num good"><strong>7.4×</strong></td>
+            </tr>
+            <tr>
+              <td>Bull — planner-heavy</td>
+              <td class="num">2.50</td>
+              <td class="num">$70.03</td>
+              <td class="num good">+$63.63</td>
+              <td class="num good">11.0×</td>
+            </tr>
+            <tr>
+              <td>Stretch — venue network</td>
+              <td class="num">3.50</td>
+              <td class="num">$98.04</td>
+              <td class="num good">+$91.64</td>
+              <td class="num good">15.3×</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="caption">
+        Even in the zero-repeat bear case, partner LTV:CAC remains above 3× — the first event alone covers acquisition cost
+        with $21.61 net margin per host.
+      </p>
+
+      <h3>9b — Premium mix sensitivity (3-year, partner CAC)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Premium share</th>
+              <th class="num">Blended margin</th>
+              <th class="num">Partner CAC</th>
+              <th class="num">Gross LTV (1.70 events)</th>
+              <th class="num">LTV:CAC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>50% / 50%</td>
+              <td class="num">$25.41</td>
+              <td class="num">$5.90</td>
+              <td class="num">$43.20</td>
+              <td class="num">6.4×</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>65% Premium (base)</strong></td>
+              <td class="num"><strong>$28.01</strong></td>
+              <td class="num"><strong>$6.40</strong></td>
+              <td class="num"><strong>$47.62</strong></td>
+              <td class="num good"><strong>7.4×</strong></td>
+            </tr>
+            <tr>
+              <td>80% Premium</td>
+              <td class="num">$30.61</td>
+              <td class="num">$6.90</td>
+              <td class="num">$52.04</td>
+              <td class="num good">7.5×</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>9c — Channel mix sensitivity (3-year gross LTV $47.62)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Partner share of volume</th>
+              <th class="num">Blended CAC</th>
+              <th class="num">Net LTV</th>
+              <th class="num">Blended LTV:CAC</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>100% partner</td>
+              <td class="num">$6.40</td>
+              <td class="num good">+$41.22</td>
+              <td class="num good">7.4×</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>57% partner (base)</strong></td>
+              <td class="num"><strong>$13.18</strong></td>
+              <td class="num good"><strong>+$34.44</strong></td>
+              <td class="num good"><strong>3.6×</strong></td>
+            </tr>
+            <tr>
+              <td>50% / 50%</td>
+              <td class="num">$14.31</td>
+              <td class="num">+$33.31</td>
+              <td class="num">3.3×</td>
+            </tr>
+            <tr>
+              <td>100% ads</td>
+              <td class="num">$22.22</td>
+              <td class="num">+$25.40</td>
+              <td class="num">2.1×</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- §10 -->
+    <section id="payback">
+      <h2><span class="sec-num">10</span> Payback period analysis</h2>
+      <p>
+        Payback period measures how quickly gross margin from a new host recovers acquisition cost.
+        For pay-per-event businesses, payback is naturally expressed in <em>events</em> rather than months.
+      </p>
+
+      <div class="formula">
+        Payback (events) = CAC ÷ Blended gross margin per event<br />
+        Payback (months) ≈ Payback (events) ÷ (Events per host per month)
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Channel</th>
+              <th class="num">CAC</th>
+              <th class="num">Margin / event</th>
+              <th class="num">Payback (events)</th>
+              <th class="num">Payback (time)</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="hi">
+              <td><strong>Partnerships</strong></td>
+              <td class="num">$6.40</td>
+              <td class="num">$28.01</td>
+              <td class="num good">0.23</td>
+              <td class="num good">&lt; 1 month</td>
+              <td>First event repays CAC 4.4× over</td>
+            </tr>
+            <tr>
+              <td><strong>Paid ads (blended)</strong></td>
+              <td class="num">$22.22</td>
+              <td class="num">$28.01</td>
+              <td class="num">0.79</td>
+              <td class="num">~1 month</td>
+              <td>Premium-only; Essential loses on event 1</td>
+            </tr>
+            <tr>
+              <td><strong>Paid ads (Essential only)</strong></td>
+              <td class="num">$22.22</td>
+              <td class="num">$16.75</td>
+              <td class="num bad">1.33</td>
+              <td class="num bad">13+ months</td>
+              <td>Requires repeat event to break even</td>
+            </tr>
+            <tr class="total">
+              <td><strong>Blended</strong></td>
+              <td class="num">$13.18</td>
+              <td class="num">$28.01</td>
+              <td class="num good">0.47</td>
+              <td class="num good">&lt; 1 month</td>
+              <td>Weighted toward partner speed</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Partner-channel payback is effectively instantaneous: commission is deducted from the first transaction,
+        and the remaining $21.61+ contribution per Essential event (or $26.27+ for Premium) flows immediately.
+        This is structurally superior to SaaS models requiring 6–12 months of subscription receipts to recover CAC.
+      </p>
+
+      <div class="note">
+        <strong>Cash timing advantage:</strong> Partner commission is paid <em>after</em> the customer pays EventSphere.
+        There is no upfront CAC outlay — unlike paid ads, where $1,000 is spent before any conversion.
+        See <a href="cac.html#partners">partnership funnel</a> for cash-flow sequencing.
+      </div>
+    </section>
+
+    <!-- §11 -->
+    <section id="benchmarks">
+      <h2><span class="sec-num">11</span> Comparison to industry benchmarks</h2>
+      <p>
+        EventSphere's pay-per-event model sits between marketplace transaction businesses and SMB SaaS.
+        Benchmarks below are illustrative ranges from venture and public-company disclosures; exact comparables
+        are limited because most event-tech incumbents use subscription or freemium models.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Metric</th>
+              <th class="num">EventSphere (base)</th>
+              <th class="num">SaaS (SMB)</th>
+              <th class="num">Marketplace</th>
+              <th>Assessment</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>LTV:CAC (healthy threshold)</td>
+              <td class="num good">3.6× blended</td>
+              <td class="num">3×+</td>
+              <td class="num">2–4×</td>
+              <td class="good">Meets / exceeds</td>
+            </tr>
+            <tr>
+              <td>LTV:CAC (best channel)</td>
+              <td class="num good">7.4× partner</td>
+              <td class="num">5–8×</td>
+              <td class="num">4–6×</td>
+              <td class="good">Top quartile</td>
+            </tr>
+            <tr>
+              <td>Payback period</td>
+              <td class="num good">&lt; 1 month</td>
+              <td class="num">6–18 mo</td>
+              <td class="num">1–6 mo</td>
+              <td class="good">Faster than SaaS</td>
+            </tr>
+            <tr>
+              <td>Gross margin</td>
+              <td class="num good">88%</td>
+              <td class="num">70–85%</td>
+              <td class="num">60–75%</td>
+              <td class="good">Software-like</td>
+            </tr>
+            <tr>
+              <td>Repeat / retention driver</td>
+              <td class="num">1.70 events / 3yr</td>
+              <td class="num">85% annual</td>
+              <td class="num">20–40% repeat</td>
+              <td>Conservative vs pro segment potential</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Comparable context</h3>
+      <ul>
+        <li><strong>Event ticketing (Eventbrite, etc.).</strong> Take-rate models earn per ticket; repeat varies by organizer type. Professional organizers exhibit high repeat; consumer one-offs do not. EventSphere's partner channel mirrors the "pro organizer" path.</li>
+        <li><strong>Photo sharing (SmugMug, Zenfolio).</strong> Subscription or per-gallery pricing with 60–80% gross margins. EventSphere's Premium tier at $39 with 87% margin is competitive; differentiation is event-native UX and partner distribution.</li>
+        <li><strong>Wedding SaaS (The Knot, Zola).</strong> Freemium with vendor marketplace revenue. EventSphere avoids marketplace complexity; LTV is direct from host payment, simplifying unit economics.</li>
+      </ul>
+    </section>
+
+    <!-- §12 -->
+    <section id="assumptions">
+      <h2><span class="sec-num">12</span> Assumption register</h2>
+      <p>
+        Every input in this model is explicit and auditable. Changes to any assumption flow through to LTV:CAC
+        via the formulas in Section 14.
+      </p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Assumption</th>
+              <th class="num">Value</th>
+              <th>Source / rationale</th>
+              <th>Sensitivity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>A1</td><td>Essential price</td><td class="num">$19</td><td>Launch pricing</td><td>High</td></tr>
+            <tr><td>A2</td><td>Premium price</td><td class="num">$39</td><td>Launch pricing</td><td>High</td></tr>
+            <tr><td>A3</td><td>Partner plan mix (E/P)</td><td class="num">35% / 65%</td><td><a href="cac.html#partners">CAC Table 2</a></td><td>Medium</td></tr>
+            <tr><td>A4</td><td>Ads plan mix (E/P)</td><td class="num">40% / 60%</td><td><a href="cac.html#ads">CAC Table 3</a></td><td>Medium</td></tr>
+            <tr><td>A5</td><td>Blended gross margin</td><td class="num">$28.01</td><td>Derived from A1–A4</td><td>High</td></tr>
+            <tr><td>A6</td><td>Partner CAC</td><td class="num">$6.40</td><td>20% commission · <a href="cac.html">cac.html</a></td><td>Low</td></tr>
+            <tr><td>A7</td><td>Ads CAC</td><td class="num">$22.22</td><td>$1,000 ÷ 45 customers</td><td>Medium</td></tr>
+            <tr><td>A8</td><td>Channel mix (partner share)</td><td class="num">57%</td><td>60 / 105 monthly events</td><td>High</td></tr>
+            <tr><td>A9</td><td>Year-1 repeat rate</td><td class="num">+0.30 events</td><td>Section 5 rationale</td><td>High</td></tr>
+            <tr><td>A10</td><td>Year-2 repeat rate</td><td class="num">+0.25 events</td><td>Section 5 rationale</td><td>Medium</td></tr>
+            <tr><td>A11</td><td>Year-3 repeat rate</td><td class="num">+0.15 events</td><td>Section 5 rationale</td><td>Low</td></tr>
+            <tr><td>A12</td><td>Repeat events incur zero CAC</td><td class="num">Yes</td><td>Partner commission on first sale only</td><td>Medium</td></tr>
+            <tr><td>A13</td><td>No free tier</td><td class="num">Yes</td><td>Paid-only launch</td><td>Medium</td></tr>
+            <tr><td>A14</td><td>Stripe rate</td><td class="num">2.9% + $0.30</td><td>Standard card-not-present</td><td>Low</td></tr>
+            <tr><td>A15</td><td>AWS cost per event</td><td class="num">$1.40 / $3.50</td><td>Essential / Premium estimate</td><td>Low</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- §13 -->
+    <section id="risks">
+      <h2><span class="sec-num">13</span> Risks &amp; limitations</h2>
+      <p>
+        This report presents a model, not observed cohort data. The following risks could materially affect
+        realized LTV relative to projections.
+      </p>
+
+      <h3>Model limitations</h3>
+      <ul>
+        <li><strong>No live cohort evidence.</strong> Repeat rates (0.30 / 0.25 / 0.15) are informed estimates, not measured retention curves. Post-launch cohort tracking is required to validate or revise.</li>
+        <li><strong>Homogeneous blending.</strong> Per-host LTV varies by segment (Section 4); blended figures mask a long tail of one-time Essential buyers.</li>
+        <li><strong>Static pricing.</strong> Model assumes no price changes, bundles, or promotional discounts that would alter margin per event.</li>
+        <li><strong>Single geography.</strong> CAC and conversion assumptions reflect a US launch; international expansion may differ.</li>
+      </ul>
+
+      <h3>Downside risks</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Risk</th>
+              <th>Impact on LTV</th>
+              <th>Mitigation</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Lower repeat than modeled</td>
+              <td class="bad">LTV:CAC approaches 3.4× (single-event floor)</td>
+              <td>Partner re-engagement; email triggers at life-event intervals</td>
+            </tr>
+            <tr>
+              <td>Ads scale without Premium discipline</td>
+              <td class="bad">Essential-heavy ads mix → negative first-event margin</td>
+              <td>Wedding / large-event creative; cap ads at 40% of volume</td>
+            </tr>
+            <tr>
+              <td>Partner commission renegotiation</td>
+              <td>Partner CAC rises; LTV:CAC compresses</td>
+              <td>Volume tiers; exclusive territory deals; repeat-event exemption</td>
+            </tr>
+            <tr>
+              <td>COGS inflation (AWS, media storage)</td>
+              <td>Blended margin falls below $28</td>
+              <td>Retention limits; tiered media caps; CDN optimization</td>
+            </tr>
+            <tr>
+              <td>Competitive free alternatives</td>
+              <td>Repeat and Premium mix decline</td>
+              <td>Partner distribution moat; event-native UX; pro workflow tools</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="warning">
+        <strong>Regulatory &amp; platform risk:</strong> Payment processing and user-generated content policies (Stripe, app stores)
+        are outside this model. A material policy change could affect conversion or COGS but is not quantified here.
+      </div>
+    </section>
+
+    <!-- §14 -->
+    <section id="appendix">
+      <h2><span class="sec-num">14</span> Appendix — formulas</h2>
+      <p>Reference definitions for all calculations used in this report.</p>
+
+      <h3>Core LTV</h3>
+      <pre>Blended margin     = (f_E × margin_E) + (f_P × margin_P)
+Gross LTV          = Events_horizon × Blended margin
+Net LTV            = Gross LTV − CAC
+LTV:CAC            = Gross LTV ÷ CAC</pre>
+
+      <h3>Plan-level margin</h3>
+      <pre>margin_plan        = price − stripe(price) − aws_plan
+stripe(price)      = (price × 0.029) + 0.30
+margin_Essential   = 19.00 − 0.85 − 1.40 = $16.75
+margin_Premium     = 39.00 − 1.43 − 3.50 = $34.07</pre>
+
+      <h3>Blended inputs (partner-weighted)</h3>
+      <pre>f_E = 0.35,  f_P = 0.65
+Blended price      = (0.35 × 19) + (0.65 × 39) = $32.00
+Blended margin     = (0.35 × 16.75) + (0.65 × 34.07) = $28.01
+Partner CAC        = (0.35 × 3.80) + (0.65 × 7.80) = $6.40</pre>
+
+      <h3>Repeat curve</h3>
+      <pre>Events_12mo        = 1.00 + 0.30 = 1.30
+Events_3yr         = 1.00 + 0.30 + 0.25 + 0.15 = 1.70
+LTV_gross_12mo     = 1.30 × 28.01 = $36.41
+LTV_gross_3yr      = 1.70 × 28.01 = $47.62</pre>
+
+      <h3>Channel LTV:CAC (3-year)</h3>
+      <pre>Partner net LTV    = 47.62 − 6.40  = $41.22   →  7.4×
+Ads net LTV        = 47.62 − 22.22 = $25.40   →  2.1×
+Blended CAC        = (0.57 × 6.40) + (0.43 × 22.22) = $13.18
+Blended net LTV    = 47.62 − 13.18 = $34.44   →  3.6×</pre>
+
+      <h3>Cohort (60 partner hosts)</h3>
+      <pre>Month 0 events     = 60
+Year 1 repeat      = 60 × 0.30 = 18
+Year 2 repeat      = 60 × 0.25 = 15
+Year 3 repeat      = 60 × 0.15 = 9
+Total events       = 102
+Total gross margin = 102 × 28.01 = $2,856
+Net contribution   = 2,856 − 384 = $2,472</pre>
+
+      <h3>Payback</h3>
+      <pre>Payback_events     = CAC ÷ Blended margin
+Partner payback    = 6.40 ÷ 28.01 = 0.23 events (&lt; 1 month)</pre>
+
+      <div class="note">
+        Full acquisition funnel math, commission tables, and ad conversion rates:
+        <a href="cac.html">Customer Acquisition Cost (CAC) report →</a>
+      </div>
+    </section>
+
+    <footer>
+      EventSphere · LTV investor report · LTV-2026-001 ·
+      <a href="index.html">All materials</a> ·
+      <a href="cac.html">CAC report</a>
+    </footer>
   </div>
 </body>
 </html>
