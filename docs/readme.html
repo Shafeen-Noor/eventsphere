@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — README</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.6}
+    .wrap{width:min(820px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
+    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
+    h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:2.4rem;margin:0;letter-spacing:-.02em}
+    h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.4rem;margin:2rem 0 .5rem}
+    .lede{color:var(--muted);margin:.75rem 0 0}
+    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
+    pre{background:var(--paper);border:1px solid var(--line);padding:1rem;overflow:auto;font-family:"IBM Plex Mono",monospace;font-size:.82rem;line-height:1.45}
+    code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:rgba(0,0,0,.06);padding:.1em .35em;border-radius:3px}
+    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin:.75rem 0}
+    th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--line)}
+    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← All materials</a>
+    <p class="kicker">EventSphere · README</p>
+    <h1>EventSphere</h1>
+    <p class="lede"><strong>One QR Code. Every Memory.</strong></p>
+    <p>Every event gets its own interactive website — photos, guestbook, votes, feed, slideshow, and more. Guests scan a QR code; hosts run a live dashboard.</p>
+
+    <h2>Quick start (local)</h2>
+    <ol>
+      <li>Create a free Postgres database at <a href="https://neon.tech">Neon</a> (or Supabase / local Postgres).</li>
+      <li>Copy the <strong>pooled</strong> connection string.</li>
+    </ol>
+    <pre>cd web
+cp .env.example .env
+# Edit .env — set DATABASE_URL to your Postgres URL
+npm install
+npx prisma migrate deploy
+npm run db:seed-demo   # optional: /e/demo
+npm run dev</pre>
+    <p>Open <a href="http://localhost:3000">http://localhost:3000</a>.</p>
+
+    <h2>Core flow</h2>
+    <ol>
+      <li><strong>Create</strong> an event (no signup) — type, name, date</li>
+      <li><strong>Share</strong> the QR / link from the host dashboard</li>
+      <li><strong>Guests</strong> join by name and use the event hub</li>
+      <li><strong>Upgrade</strong> to Essential ($19) or Premium ($39)</li>
+    </ol>
+
+    <h2>Plans</h2>
+    <table>
+      <thead><tr><th></th><th>Essential</th><th>Premium</th><th>Enterprise</th></tr></thead>
+      <tbody>
+        <tr><td>Price</td><td>$19/event</td><td>$39/event</td><td>from $199/mo</td></tr>
+        <tr><td>Guests</td><td>50</td><td>200+</td><td>unlimited</td></tr>
+        <tr><td>Uploads</td><td>500</td><td>unlimited</td><td>unlimited</td></tr>
+        <tr><td>Retention</td><td>7 days</td><td>30 days</td><td>custom</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Environment</h2>
+    <pre>DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
+AWS_REGION="ap-southeast-2"
+AWS_S3_BUCKET="your-eventsphere-bucket"
+AWS_ACCESS_KEY_ID="..."
+AWS_SECRET_ACCESS_KEY="..."
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+# Optional AI captions / recap
+# OPENAI_API_KEY="..."</pre>
+    <p>If <code>AWS_S3_BUCKET</code> is not set, uploads fall back to local disk (<code>.data/uploads</code>).</p>
+
+    <h2>Deploy on Vercel</h2>
+    <ol>
+      <li>Import the GitHub repo in Vercel.</li>
+      <li>Set <strong>Root Directory:</strong> <code>web</code></li>
+      <li>Add <code>DATABASE_URL</code>, AWS vars, and <code>NEXT_PUBLIC_APP_URL</code></li>
+      <li>Deploy. Build runs <code>prisma migrate deploy</code> then <code>next build</code>.</li>
+    </ol>
+
+    <p style="margin-top:2rem"><a href="https://github.com/Shafeen-Noor/eventsphere/blob/master/README.md">View on GitHub →</a></p>
+  </div>
+</body>
+</html>

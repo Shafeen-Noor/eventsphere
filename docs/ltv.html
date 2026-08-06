@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — LTV</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; --bad:#9b2c2c; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.5}
+    .wrap{width:min(960px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
+    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
+    h1,h2,h3{font-family:"Cormorant Garamond",Georgia,serif;letter-spacing:-.02em;margin:0}
+    h1{font-size:clamp(2rem,4vw,2.8rem)} h2{font-size:1.55rem;margin:2.25rem 0 .65rem} h3{font-size:1.2rem;margin:1.5rem 0 .5rem}
+    .lede{color:var(--muted);max-width:62ch;margin:.75rem 0 0}
+    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
+    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin-top:.75rem}
+    th,td{text-align:left;padding:.6rem .7rem;border-bottom:1px solid var(--line)}
+    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+    td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+    tr.hi td{background:rgba(12,11,10,.035)}
+    .good{color:var(--good);font-weight:700} .bad{color:var(--bad);font-weight:700}
+    .grid{display:grid;gap:.85rem;grid-template-columns:repeat(3,1fr);margin-top:1rem}
+    @media(max-width:760px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--paper);border:1px solid var(--line);padding:1rem 1.1rem}
+    .card .num{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.8rem;font-weight:700;margin:.1rem 0}
+    .card p{margin:.2rem 0 0;color:var(--muted);font-size:.9rem}
+    .formula{background:#ebe6dc;border-left:3px solid var(--ink);padding:.85rem 1rem;margin-top:1rem;font-size:.95rem}
+    .note{background:#fff8e8;border:1px solid #ead9a8;padding:.85rem 1rem;margin-top:1rem;font-size:.92rem}
+    .src{font-size:.78rem;color:var(--muted);margin-top:.75rem}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <a class="back" href="index.html">← All materials</a>
+    <p class="kicker">EventSphere · LTV</p>
+    <h1>Lifetime value — pay-per-event model</h1>
+    <p class="lede">
+      EventSphere charges per event, not monthly SaaS. LTV = gross margin from all events
+      a host pays for over their relationship, minus acquisition cost.
+      Assumes paid-only (no free tier) · Essential $19 · Premium $39.
+    </p>
+
+    <h2>Blended unit inputs</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Input</th>
+          <th class="num">Essential</th>
+          <th class="num">Premium</th>
+          <th class="num">Blended (35/65 partners · 40/60 ads)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Price</td><td class="num">$19</td><td class="num">$39</td><td class="num">$32.00</td></tr>
+        <tr><td>Gross margin (after Stripe + AWS)</td><td class="num">$16.75</td><td class="num">$34.07</td><td class="num good">$28.01</td></tr>
+        <tr><td>Partner CAC (20% commission)</td><td class="num">$3.80</td><td class="num">$7.80</td><td class="num">$6.40</td></tr>
+        <tr><td>Ads CAC</td><td class="num">$22</td><td class="num">$22</td><td class="num">$22.22</td></tr>
+      </tbody>
+    </table>
+    <p class="src">Blended margin = 0.35 × $16.75 + 0.65 × $34.07. See <a href="cac.html">CAC tables</a> for full channel math.</p>
+
+    <h2>Repeat-event assumptions</h2>
+    <p class="lede">Hosts buy once per event. Repeat comes from birthdays, anniversaries, clients, and venue partners.</p>
+    <table>
+      <thead>
+        <tr><th>Period</th><th class="num">Events / host</th><th>Assumption</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>First purchase</td><td class="num">1.0</td><td>Initial event — wedding, party, corporate</td></tr>
+        <tr><td>Within 12 months</td><td class="num">+0.30</td><td>30% host a second event (birthday, client event, referral)</td></tr>
+        <tr><td>Year 2</td><td class="num">+0.25</td><td>25% of cohort returns (planners, venues higher)</td></tr>
+        <tr><td>Year 3</td><td class="num">+0.15</td><td>Tail — repeat hosts, seasonal events</td></tr>
+        <tr class="hi"><td><strong>3-year total</strong></td><td class="num"><strong>1.70</strong></td><td>Conservative consumer mix; partners skew higher</td></tr>
+      </tbody>
+    </table>
+
+    <h2>LTV calculation</h2>
+    <div class="formula">
+      <strong>Gross margin LTV (3-year)</strong> = events × blended margin<br />
+      = 1.70 × <strong>$28.01</strong> = <strong>$47.62</strong><br /><br />
+      <strong>12-month LTV</strong> = 1.30 × $28.01 = <strong>$36.41</strong>
+    </div>
+
+    <h3>LTV after CAC — by channel</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Channel</th>
+          <th class="num">CAC</th>
+          <th class="num">12-mo LTV</th>
+          <th class="num">12-mo LTV − CAC</th>
+          <th class="num">LTV:CAC</th>
+          <th class="num">3-yr LTV − CAC</th>
+          <th class="num">3-yr LTV:CAC</th>
+          <th>Verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hi">
+          <td><strong>Partnerships</strong></td>
+          <td class="num">$6.40</td>
+          <td class="num">$36.41</td>
+          <td class="num good">+$30.01</td>
+          <td class="num good">5.7×</td>
+          <td class="num good">+$41.22</td>
+          <td class="num good">7.4×</td>
+          <td class="good">Strong — core GTM</td>
+        </tr>
+        <tr>
+          <td><strong>Paid ads</strong></td>
+          <td class="num">$22.22</td>
+          <td class="num">$36.41</td>
+          <td class="num">+$14.19</td>
+          <td class="num">1.6×</td>
+          <td class="num">+$25.40</td>
+          <td class="num">2.1×</td>
+          <td>Backup only · Premium-heavy</td>
+        </tr>
+        <tr>
+          <td><strong>Blended (both)</strong></td>
+          <td class="num">$13.18</td>
+          <td class="num">$36.41</td>
+          <td class="num good">+$23.23</td>
+          <td class="num good">2.8×</td>
+          <td class="num good">+$34.44</td>
+          <td class="num good">3.6×</td>
+          <td class="good">Healthy at scale</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="grid">
+      <div class="card">
+        <p class="kicker">Partner LTV:CAC</p>
+        <p class="num good">7.4×</p>
+        <p>3-year · pay commission only after sale</p>
+      </div>
+      <div class="card">
+        <p class="kicker">12-month payback</p>
+        <p class="num good">&lt; 1 event</p>
+        <p>First event margin ($28) covers partner CAC ($6.40)</p>
+      </div>
+      <div class="card">
+        <p class="kicker">Repeat upside</p>
+        <p class="num">+70%</p>
+        <p>Extra events over 3 years vs first purchase alone</p>
+      </div>
+    </div>
+
+    <h2>LTV sensitivity — repeat rate</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>3-yr events / host</th>
+          <th class="num">Gross LTV</th>
+          <th class="num">After partner CAC</th>
+          <th class="num">LTV:CAC</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1.0 (no repeat)</td><td class="num">$28.01</td><td class="num">+$21.61</td><td class="num">3.4×</td></tr>
+        <tr class="hi"><td>1.7 (base case)</td><td class="num">$47.62</td><td class="num good">+$41.22</td><td class="num good">7.4×</td></tr>
+        <tr><td>2.5 (planner / venue heavy)</td><td class="num">$70.03</td><td class="num good">+$63.63</td><td class="num good">11.0×</td></tr>
+      </tbody>
+    </table>
+
+    <div class="note">
+      <strong>Pitch line:</strong> “We earn back partner CAC on the first event. Every repeat event
+      is nearly pure margin — and event pros naturally send us the next wedding, party, or client dinner.”
+      Full acquisition funnels: <a href="cac.html">CAC →</a>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — Investor &amp; Pitch Materials</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f4f1ea;
+      --paper: #fffcf7;
+      --ink: #0c0b0a;
+      --muted: #6b645c;
+      --line: #d8d2c8;
+      --accent: #2f5d3a;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "DM Sans", system-ui, sans-serif;
+      line-height: 1.5;
+    }
+    .wrap { width: min(960px, calc(100% - 2rem)); margin: 0 auto; padding: 3rem 0 4rem; }
+    .kicker {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 0.6rem;
+    }
+    h1 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      letter-spacing: -0.02em;
+      line-height: 1.08;
+      margin: 0;
+      max-width: 18ch;
+    }
+    .lede { color: var(--muted); max-width: 58ch; margin: 0.9rem 0 0; font-size: 1.05rem; }
+    .hero { border-bottom: 1px solid var(--line); padding-bottom: 2rem; margin-bottom: 2rem; }
+    .grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-top: 1.5rem; }
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 1.25rem 1.3rem;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .card:hover { border-color: var(--ink); transform: translateY(-2px); }
+    .card h2 {
+      font-family: "Cormorant Garamond", Georgia, serif;
+      font-size: 1.55rem;
+      margin: 0 0 0.35rem;
+      letter-spacing: -0.02em;
+    }
+    .card p { margin: 0; color: var(--muted); font-size: 0.92rem; }
+    .tag {
+      display: inline-block;
+      margin-top: 0.75rem;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .live {
+      margin-top: 2rem;
+      background: var(--paper);
+      border: 1px solid var(--line);
+      padding: 1rem 1.2rem;
+      font-size: 0.95rem;
+    }
+    .live a { color: var(--accent); font-weight: 600; }
+    footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.85rem; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="hero">
+      <p class="kicker">EventSphere · Materials hub</p>
+      <h1>One QR Code. Every Memory.</h1>
+      <p class="lede">
+        MVP, unit economics (CAC &amp; LTV), pitch deck, and product docs —
+        everything for judges and investors in one place.
+      </p>
+      <div class="live">
+        <strong>Live product:</strong>
+        <a href="https://eventsphere-orcin.vercel.app" target="_blank" rel="noopener">eventsphere-orcin.vercel.app</a>
+        · Demo event: <a href="https://eventsphere-orcin.vercel.app/e/demo" target="_blank" rel="noopener">/e/demo</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <a class="card" href="mvp.html">
+        <h2>MVP</h2>
+        <p>What's built, core flow, plans, tech stack, and live demo links.</p>
+        <span class="tag">Product</span>
+      </a>
+
+      <a class="card" href="cac.html">
+        <h2>CAC</h2>
+        <p>Customer acquisition cost — partnerships vs paid ads, funnels, margins, three-table pitch view.</p>
+        <span class="tag">Unit economics</span>
+      </a>
+
+      <a class="card" href="ltv.html">
+        <h2>LTV</h2>
+        <p>Lifetime value, repeat-event assumptions, LTV:CAC ratios by channel.</p>
+        <span class="tag">Unit economics</span>
+      </a>
+
+      <a class="card" href="pitch-deck.html">
+        <h2>Pitch Deck</h2>
+        <p>Interactive slide deck — problem, demo, pricing, GTM, close.</p>
+        <span class="tag">Presentation</span>
+      </a>
+
+      <a class="card" href="EventSphere-Timeless-Moments-Platform.pdf">
+        <h2>Timeless Moments Platform</h2>
+        <p>Full PDF pitch deck — 12 slides, market, competitive analysis, business model.</p>
+        <span class="tag">PDF · Download</span>
+      </a>
+
+      <a class="card" href="readme.html">
+        <h2>README</h2>
+        <p>Developer setup, environment variables, deploy instructions, plan table.</p>
+        <span class="tag">Technical</span>
+      </a>
+
+      <a class="card" href="investor-onboarding.html">
+        <h2>Investor Onboarding</h2>
+        <p>Step-by-step flow for investors reviewing the product and metrics.</p>
+        <span class="tag">Process</span>
+      </a>
+
+      <a class="card" href="EventSphere-PRD.pdf">
+        <h2>Product Requirements</h2>
+        <p>Full PRD PDF — feature scope and product vision.</p>
+        <span class="tag">PDF · Download</span>
+      </a>
+    </div>
+
+    <footer>
+      EventSphere · Shafeen Noor ·
+      <a href="https://github.com/Shafeen-Noor/eventsphere" style="color:inherit">GitHub repo</a>
+    </footer>
+  </div>
+</body>
+</html>

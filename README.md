@@ -4,6 +4,21 @@
 
 Every event gets its own interactive website — photos, guestbook, votes, feed, slideshow, and more. Guests scan a QR code; hosts run a live dashboard.
 
+## Pitch & investor materials (GitHub Pages)
+
+**https://shafeen-noor.github.io/eventsphere/**
+
+| Material | Link |
+|----------|------|
+| Hub | [index](https://shafeen-noor.github.io/eventsphere/) |
+| MVP | [mvp.html](https://shafeen-noor.github.io/eventsphere/mvp.html) |
+| CAC | [cac.html](https://shafeen-noor.github.io/eventsphere/cac.html) |
+| LTV | [ltv.html](https://shafeen-noor.github.io/eventsphere/ltv.html) |
+| Pitch deck (web) | [pitch-deck.html](https://shafeen-noor.github.io/eventsphere/pitch-deck.html) |
+| Pitch deck (PDF) | [EventSphere-Timeless-Moments-Platform.pdf](https://shafeen-noor.github.io/eventsphere/EventSphere-Timeless-Moments-Platform.pdf) |
+
+Source files live in [`/docs`](/docs).
+
 ## Quick start (local)
 
 1. Create a free Postgres database at [Neon](https://neon.tech) (or Supabase / local Postgres).

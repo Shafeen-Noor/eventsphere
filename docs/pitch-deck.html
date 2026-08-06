@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EventSphere — Final Pitch</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Literata:opsz,wght@7..72,600;7..72,700&display=swap" rel="stylesheet" />
+  <style>
+    :root { --bg:#ebe6dc; --paper:#f7f3eb; --ink:#2a241f; --muted:#6f6458; --line:#d4ccc0; --accent:#5c4a3a; --good:#3f6b4a; --note:#fff6d6; --note-ink:#5c4a1a; }
+    *{box-sizing:border-box} html,body{margin:0;height:100%;background:#1c1916;color:var(--ink);font-family:"DM Sans",system-ui,sans-serif}
+    .slide{display:none;height:100%;padding:clamp(1.5rem,4vh,3rem) clamp(1.5rem,5vw,4rem) 3rem;background:var(--bg);flex-direction:column;justify-content:center}
+    .slide.active{display:flex}
+    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .7rem}
+    h1{font-family:Literata,Georgia,serif;font-size:clamp(2.1rem,5vw,3.3rem);margin:0;letter-spacing:-.03em;line-height:1.08;max-width:16ch}
+    h2{font-family:Literata,Georgia,serif;font-size:clamp(1.5rem,3.2vw,2.2rem);margin:0 0 1rem;letter-spacing:-.025em;line-height:1.15}
+    .lede{margin:.85rem 0 0;font-size:1.1rem;color:var(--muted);max-width:46ch;line-height:1.45}
+    .quote{font-family:Literata,Georgia,serif;font-size:clamp(1.3rem,2.6vw,1.85rem);line-height:1.35;margin:0;max-width:28ch}
+    .grid{display:grid;gap:.85rem;margin-top:1rem}
+    .grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}.grid-4{grid-template-columns:repeat(4,1fr)}
+    @media(max-width:860px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+    .card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:1rem 1.1rem}
+    .card .num{font-family:Literata,Georgia,serif;font-size:1.7rem;font-weight:700;margin:0}
+    .card .lbl,.card p{margin:.25rem 0 0;color:var(--muted);font-size:.9rem;line-height:1.4}
+    table{width:100%;border-collapse:collapse;font-size:.86rem;margin-top:.4rem}
+    th,td{text-align:left;padding:.5rem .35rem;border-bottom:1px solid var(--line);vertical-align:top}
+    th{color:var(--muted);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase}
+    tr.hi td{background:rgba(92,74,58,.08);font-weight:600}
+    .src{font-size:.74rem;color:var(--muted);margin-top:.8rem;line-height:1.4;max-width:72ch}
+    .src a{color:var(--accent)}
+    ul{margin:.4rem 0 0;padding-left:1.1rem;color:var(--muted);line-height:1.5}
+    li+li{margin-top:.28rem}
+    .say{margin-top:.85rem;background:var(--note);color:var(--note-ink);border:1px solid #e6d7a0;border-radius:10px;padding:.65rem .8rem;font-size:.8rem;line-height:1.4}
+    .foot{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:space-between;align-items:center;padding:.55rem 1.1rem;color:#cfc6b8;font-size:.75rem;background:linear-gradient(transparent,rgba(28,25,22,.9))}
+    .nav button{border:1px solid #5a5248;background:#2a241f;color:#f3efe7;border-radius:999px;padding:.32rem .75rem;font:inherit;font-size:.75rem;cursor:pointer}
+    .good{color:var(--good);font-weight:700}
+    .paste{white-space:pre-wrap;font-size:.78rem;line-height:1.45;background:#fff;border:1px solid var(--line);border-radius:12px;padding:.85rem;max-height:55vh;overflow:auto}
+  </style>
+</head>
+<body>
+<p style="position:fixed;top:0;left:0;right:0;z-index:99;margin:0;padding:.45rem 1rem;background:rgba(28,25,22,.92);font-family:system-ui,sans-serif;font-size:.75rem"><a href="index.html" style="color:#f3efe7">← All materials</a></p>
+<div class="deck" id="deck">
+
+<section class="slide active">
+  <p class="kicker">EventSphere · Final pitch</p>
+  <h1>The best moments belong to everyone.</h1>
+  <p class="lede">Shafeen Noor · Early live product · Fair pricing sized to the night</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Problem</p>
+  <p class="quote">Every event ends the same way: the memories are scattered across different people’s phones.</p>
+  <div class="grid grid-3">
+    <div class="card"><strong>Friends</strong><p>“AirDrop me those.” “Who has the group photo?”</p></div>
+    <div class="card"><strong>Birthdays &amp; weddings</strong><p>Dozens of phones. No complete album.</p></div>
+    <div class="card"><strong>After</strong><p>The hard part isn’t taking photos — it’s collecting them.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <p class="kicker">Discovery</p>
+  <h2>I heard the same job everywhere</h2>
+  <p class="lede">Hosts don’t want another social network. Guests won’t download an app for one night. Everyone wants one private place.</p>
+  <ul>
+    <li>“I’m not making an account for a birthday.” → Free, no account</li>
+    <li>“Don’t make guests install anything.” → Browser QR / link</li>
+    <li>“I need control at a bigger party.” → Pro size packs + approval + collage wall</li>
+  </ul>
+  <div class="say">Set your real interview counts when you present. Prefer truth over a bigger number.</div>
+</section>
+
+<section class="slide">
+  <p class="kicker">Demo</p>
+  <h2>Live product today</h2>
+  <p class="lede">https://eventsphere-orcin.vercel.app</p>
+  <div class="grid grid-2">
+    <div class="card"><strong>Shipped</strong><p>Free no-account events · animated invite · QR join · guest camera · gallery · Pro controls · highlight collage wall · printable host invite</p></div>
+    <div class="card"><strong>Honest</strong><p>Early product — thinner than the full PRD. No face AI yet. Consumers first, platform later.</p></div>
+  </div>
+</section>
+
+<section class="slide">
+  <p class="kicker">Market · with sources</p>
+  <h2>People already pay for this job</h2>
+  <table>
+    <tr><th>Product</th><th>Price</th><th>Source</th></tr>
+    <tr><td>PartySnap Spark → Apex</td><td>$25–$120 / event</td><td>partysnap.app/pricing</td></tr>
+    <tr><td>GuestPix party / wedding</td><td>$39–$119 / event</td><td>guestpix.com pricing pages</td></tr>
+    <tr class="hi"><td>EventSphere Pro one-time</td><td>$9–$39 by size</td><td>Our live tiers</td></tr>
+    <tr><td>GuestPix traction claim</td><td>150k+ events</td><td>guestpix.com/party-about-us</td></tr>
+  </table>
+  <p class="src">Wedding photography market ≈ $25B (2025) — Fortune Business Insights. We sit in the guest-capture wedge of that spend.</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Why not $49 flat</p>
+  <h2>Size the night. Price the night.</h2>
+  <p class="lede">A 25-guest birthday shouldn’t pay reception prices. Pro one-time is a size pack — guests + storage — from $9 to $39.</p>
+  <div class="grid grid-4">
+    <div class="card"><p class="num">$9</p><p class="lbl">25 guests · 400 photos</p></div>
+    <div class="card"><p class="num">$15</p><p class="lbl">50 guests · 800 photos</p></div>
+    <div class="card"><p class="num">$25</p><p class="lbl">100 guests · 1,400 photos</p></div>
+    <div class="card"><p class="num">$39</p><p class="lbl">150 guests · 2,000 photos</p></div>
+  </div>
+  <p class="lede">Plus Free $0 (10 / 100 / 24h) and Pro subscription $29/mo for hosts who repeat.</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Unit economics · AWS</p>
+  <h2>What storage costs me — what I charge</h2>
+  <table>
+    <tr><th>Pack</th><th>Peak media</th><th>Est. AWS*</th><th>I charge</th><th>After Stripe≈</th><th>Margin</th></tr>
+    <tr><td>Cozy 25</td><td>400 · ~1.8 GB</td><td>~$0.80</td><td>$9</td><td>~$8.44</td><td class="good">~$7.60</td></tr>
+    <tr><td>Party 50</td><td>800 · ~3.5 GB</td><td>~$1.40</td><td>$15</td><td>~$14.27</td><td class="good">~$12.90</td></tr>
+    <tr><td>Gather 100</td><td>1,400 · ~6.2 GB</td><td>~$2.20</td><td>$25</td><td>~$23.98</td><td class="good">~$21.80</td></tr>
+    <tr class="hi"><td>Celebration 150</td><td>2,000 · ~8.8 GB</td><td>~$3.00</td><td>$39</td><td>~$37.57</td><td class="good">~$34.50</td></tr>
+  </table>
+  <p class="src">*AWS us-east-1 style estimate: S3 Standard $0.023/GB-mo (7-day retain), CloudFront ~$0.085/GB for browse + host download, ~4.5 MB/media stored, buffer for requests. Stripe ≈ 2.9% + $0.30. Not a formal audit — pitch-grade, conservative enough that I don’t lose money on media.</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Talk track</p>
+  <h2>Small profit. Fair for a birthday.</h2>
+  <p class="quote">AWS costs me about one to three dollars to host a full Pro event. I charge nine to thirty-nine. After payment fees I keep a small operating margin — enough to run the product, not a luxury markup.</p>
+  <ul>
+    <li>Competitors charge $25–$120 for one night.</li>
+    <li>I undercut the mid-shelf for small parties and still cover cloud cost.</li>
+    <li>$29/mo subscription is for planners who run events every month.</li>
+  </ul>
+</section>
+
+<section class="slide">
+  <p class="kicker">Why us</p>
+  <h2>Same job. Better consumer offer.</h2>
+  <table>
+    <tr><th></th><th>Typical competitor</th><th>EventSphere</th></tr>
+    <tr><td>Try tonight</td><td>App / forced signup</td><td><strong>Free, no account</strong></td></tr>
+    <tr><td>One party</td><td>Often $49–$89 flat</td><td><strong>$9–$39 by size</strong></td></tr>
+    <tr><td>Feel</td><td>Utility gallery</td><td><strong>Invite + collage wall</strong></td></tr>
+    <tr><td>Repeat hosts</td><td>Buy again</td><td><strong>$29/mo</strong></td></tr>
+  </table>
+</section>
+
+<section class="slide">
+  <p class="kicker">GTM</p>
+  <h2>How we get users</h2>
+  <div class="grid grid-2">
+    <div class="card"><strong>Week 0–4</strong><p>Free wedge · founder demos · real dinners &amp; birthdays</p></div>
+    <div class="card"><strong>Month 2–6</strong><p>Convert free → sized Pro pack → $29/mo for repeats</p></div>
+  </div>
+  <p class="lede">Offer ladder: Free tonight → Pro pack for the party → Subscribe if you host often → Professional later.</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Close</p>
+  <p class="quote">One event. One story. Priced for the room you’re actually in.</p>
+  <div class="grid grid-3" style="margin-top:1.3rem">
+    <div class="card"><p class="num">$0</p><p class="lbl">Free · no account</p></div>
+    <div class="card"><p class="num">$9–$39</p><p class="lbl">Pro · one event by size</p></div>
+    <div class="card"><p class="num">$29</p><p class="lbl">Pro · monthly</p></div>
+  </div>
+  <p class="lede">Demo · https://eventsphere-orcin.vercel.app · Thank you</p>
+</section>
+
+<section class="slide">
+  <p class="kicker">Canva paste pack</p>
+  <h2>Copy into your cute Canva deck</h2>
+  <p class="lede">I couldn’t edit Canva while signed out (editor shows Sign up). Paste these blocks into new/updated slides — keep your animations &amp; poppers.</p>
+  <div class="paste">SLIDE — Pricing rethink
+Title: Not everyone needs a $49 night
+Body: Pro one-time is sized to the guest list.
+$9 → 25 guests · 400 photos
+$15 → 50 guests · 800 photos
+$25 → 100 guests · 1,400 photos
+$39 → 150 guests · 2,000 photos
+Free stays $0 · Subscription $29/mo for repeat hosts
+
+SLIDE — AWS cost honesty
+Title: What cloud storage costs me
+Body: I host media on AWS (S3 + delivery).
+A full Pro event costs me roughly $0.80–$3.00 in AWS, depending on size.
+I charge $9–$39.
+After Stripe fees I keep a small operating profit — enough to run EventSphere without overcharging a birthday.
+
+SLIDE — Why this wins
+Title: Fair price. Real product.
+Bullets:
+• Competitors: $25–$120 per event (PartySnap, GuestPix — public pricing)
+• We undercut for small parties and still cover AWS
+• Free no-account wedge guests actually use
+• Live demo today — early, but real</div>
+</section>
+
+</div>
+<div class="foot">
+  <span id="pos">1 / 12</span>
+  <div class="nav">
+    <button type="button" id="prev">← Prev</button>
+    <button type="button" id="next">Next →</button>
+  </div>
+</div>
+<script>
+const slides=[...document.querySelectorAll(".slide")]; let i=0;
+function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,idx)=>s.classList.toggle("active",idx===i));document.getElementById("pos").textContent=`${i+1} / ${slides.length}`;}
+document.getElementById("prev").onclick=()=>show(i-1);
+document.getElementById("next").onclick=()=>show(i+1);
+window.addEventListener("keydown",e=>{if(e.key==="ArrowRight"||e.key===" "){e.preventDefault();show(i+1)} if(e.key==="ArrowLeft")show(i-1)});
+</script>
+</body>
+</html>
