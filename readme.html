@@ -3,84 +3,912 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EventSphere — README</title>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
-  <style>
-    :root { --bg:#f4f1ea; --paper:#fffcf7; --ink:#0c0b0a; --muted:#6b645c; --line:#d8d2c8; --good:#2f5d3a; }
-    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--ink);font-family:"DM Sans",system-ui,sans-serif;line-height:1.6}
-    .wrap{width:min(820px,calc(100% - 2rem));margin:0 auto;padding:2.5rem 0 4rem}
-    .kicker{font-size:.72rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 .6rem}
-    h1{font-family:"Cormorant Garamond",Georgia,serif;font-size:2.4rem;margin:0;letter-spacing:-.02em}
-    h2{font-family:"Cormorant Garamond",Georgia,serif;font-size:1.4rem;margin:2rem 0 .5rem}
-    .lede{color:var(--muted);margin:.75rem 0 0}
-    a{color:var(--good)} .back{font-size:.85rem;margin-bottom:1.5rem;display:inline-block}
-    pre{background:var(--paper);border:1px solid var(--line);padding:1rem;overflow:auto;font-family:"IBM Plex Mono",monospace;font-size:.82rem;line-height:1.45}
-    code{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:rgba(0,0,0,.06);padding:.1em .35em;border-radius:3px}
-    table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--paper);border:1px solid var(--line);margin:.75rem 0}
-    th,td{text-align:left;padding:.55rem .65rem;border-bottom:1px solid var(--line)}
-    th{font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-  </style>
+  <title>EventSphere — Technical Documentation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="report.css" />
 </head>
 <body>
+  <nav class="topbar">
+    <a href="index.html">← Materials</a>
+    <span class="sep">|</span>
+    <a href="#overview">1 · Overview</a>
+    <a href="#structure">2 · Structure</a>
+    <a href="#stack">3 · Stack</a>
+    <a href="#setup">4 · Setup</a>
+    <a href="#env">5 · Env vars</a>
+    <a href="#database">6 · Database</a>
+    <a href="#plans">7 · Plans</a>
+    <a href="#routes">8 · Routes</a>
+    <a href="#api">9 · API</a>
+    <a href="#storage">10 · Storage</a>
+    <a href="#deploy">11 · Deploy</a>
+    <a href="#pages">12 · GitHub Pages</a>
+    <a href="#limitations">13 · Limitations</a>
+    <a href="#troubleshooting">14 · Troubleshooting</a>
+    <span class="sep">|</span>
+    <a href="mvp.html">MVP</a>
+    <a href="cac.html">CAC</a>
+    <a href="ltv.html">LTV</a>
+  </nav>
+
   <div class="wrap">
-    <a class="back" href="index.html">← All materials</a>
-    <p class="kicker">EventSphere · README</p>
-    <h1>EventSphere</h1>
-    <p class="lede"><strong>One QR Code. Every Memory.</strong></p>
-    <p>Every event gets its own interactive website — photos, guestbook, votes, feed, slideshow, and more. Guests scan a QR code; hosts run a live dashboard.</p>
+    <header class="hero">
+      <p class="kicker">EventSphere · Technical documentation</p>
+      <h1>EventSphere README</h1>
+      <p class="lede">
+        Complete developer reference for the EventSphere platform — a per-event digital experience
+        where guests scan one QR code to upload photos, sign the guestbook, vote in polls, and browse
+        a live feed, while hosts manage everything from a real-time dashboard.
+      </p>
+      <div class="meta">
+        <div><strong>Document</strong> readme.html</div>
+        <div><strong>Version</strong> MVP · Aug 2026</div>
+        <div><strong>Live app</strong> <a href="https://eventsphere-orcin.vercel.app">eventsphere-orcin.vercel.app</a></div>
+        <div><strong>App root</strong> <code>web/</code></div>
+        <div><strong>Runtime</strong> Node 20+ · Next.js 16</div>
+        <div><strong>Related</strong> <a href="mvp.html">MVP</a> · <a href="cac.html">CAC</a> · <a href="ltv.html">LTV</a></div>
+      </div>
+    </header>
 
-    <h2>Quick start (local)</h2>
-    <ol>
-      <li>Create a free Postgres database at <a href="https://neon.tech">Neon</a> (or Supabase / local Postgres).</li>
-      <li>Copy the <strong>pooled</strong> connection string.</li>
-    </ol>
-    <pre>cd web
-cp .env.example .env
-# Edit .env — set DATABASE_URL to your Postgres URL
-npm install
+    <nav class="toc" aria-label="Table of contents">
+      <strong>Contents</strong>
+      <ol>
+        <li><a href="#overview">Executive overview</a></li>
+        <li><a href="#structure">Repository structure</a></li>
+        <li><a href="#stack">Technology stack</a></li>
+        <li><a href="#setup">Prerequisites &amp; local setup</a></li>
+        <li><a href="#env">Environment variables</a></li>
+        <li><a href="#database">Database &amp; migrations</a></li>
+        <li><a href="#plans">Plans &amp; pricing</a></li>
+        <li><a href="#routes">Application routes</a></li>
+        <li><a href="#api">API reference</a></li>
+        <li><a href="#storage">Storage (S3 vs local)</a></li>
+        <li><a href="#deploy">Deployment on Vercel</a></li>
+        <li><a href="#pages">GitHub Pages materials hub</a></li>
+        <li><a href="#limitations">Known limitations</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+      </ol>
+    </nav>
+
+    <!-- 1. Executive overview -->
+    <section id="overview">
+      <h2>1. Executive overview</h2>
+      <p>
+        EventSphere turns every celebration into its own interactive website. Hosts create an event in
+        under a minute — no app install for guests — and share a QR code or link. Guests join by name,
+        upload photos and video, leave guestbook messages, react to media, and participate in polls,
+        challenges, and seating lookups. Hosts run a live dashboard with moderation, analytics, and
+        upgrade controls.
+      </p>
+      <p><strong>Product vision:</strong> <em>One QR Code. Every Memory.</em> Replace disposable cameras,
+        scattered group chats, and ad-hoc photo sharing with a single branded hub that works in any mobile browser.</p>
+
+      <div class="summary-grid">
+        <div class="card">
+          <div class="num">1</div>
+          <p>Create event — type, name, date, atmosphere</p>
+        </div>
+        <div class="card">
+          <div class="num">2</div>
+          <p>Share QR + invite link from host dashboard</p>
+        </div>
+        <div class="card">
+          <div class="num">3</div>
+          <p>Guests join, upload, guestbook, feed</p>
+        </div>
+        <div class="card">
+          <div class="num">4</div>
+          <p>Upgrade when limits are hit (Essential / Premium)</p>
+        </div>
+      </div>
+
+      <div class="note">
+        <strong>Live production URL:</strong>
+        <a href="https://eventsphere-orcin.vercel.app">https://eventsphere-orcin.vercel.app</a>
+        — deployed from the <code>web/</code> directory on Vercel with PostgreSQL (Neon) and S3 storage.
+        See the <a href="mvp.html">MVP report</a> for shipped features and user flows.
+      </div>
+
+      <p>
+        Business model is pay-per-event with optional Enterprise subscription. Recommended go-to-market pricing
+        (used in investor materials) is Essential <strong>$19</strong> and Premium <strong>$39</strong> per event;
+        the codebase currently charges <strong>$9</strong> and <strong>$29</strong> respectively for MVP testing.
+        Unit economics are documented in the <a href="cac.html">CAC report</a> and
+        <a href="ltv.html">LTV report</a>.
+      </p>
+    </section>
+
+    <!-- 2. Repository structure -->
+    <section id="structure">
+      <h2>2. Repository structure</h2>
+      <p>The monorepo separates the Next.js application, static investor materials, and design artifacts.</p>
+
+      <pre>eventsphere/
+├── web/                          # Next.js 16 application (deploy root on Vercel)
+│   ├── src/
+│   │   ├── app/                  # App Router pages + API route handlers
+│   │   ├── components/           # React UI (EventHub, HostDashboard, Gallery, …)
+│   │   ├── lib/                  # Domain logic (auth, events, plans, storage, ai)
+│   │   └── generated/prisma/     # Prisma client output
+│   ├── prisma/
+│   │   ├── schema.prisma         # PostgreSQL schema
+│   │   └── migrations/           # SQL migration history
+│   ├── scripts/seed-demo.ts     # Demo event seeder
+│   ├── public/                   # Static assets
+│   ├── .env.example              # Environment template
+│   └── package.json
+├── docs/                         # GitHub Pages materials (this report)
+│   ├── index.html                # Materials hub
+│   ├── readme.html               # This document
+│   ├── mvp.html                  # MVP feature summary
+│   ├── cac.html                  # Customer acquisition cost
+│   ├── ltv.html                  # Lifetime value model
+│   └── report.css                # Shared report stylesheet
+├── design-options/               # Pitch deck HTML prototypes
+│   └── pitch-final.html
+├── .github/workflows/pages.yml   # Sync docs/ → gh-pages branch
+└── README.md                     # Root quick-start</pre>
+
+      <h3>Key directories</h3>
+      <ul>
+        <li><strong><code>web/src/app/</code></strong> — Next.js App Router. Marketing pages at root; event hub at <code>/e/[slug]</code>; 41 API route handlers under <code>api/</code>.</li>
+        <li><strong><code>web/src/lib/plans.ts</code></strong> — Single source of truth for plan tiers, limits, and feature flags.</li>
+        <li><strong><code>web/src/lib/storage.ts</code></strong> — S3 presigned uploads with local disk fallback.</li>
+        <li><strong><code>docs/</code></strong> — Static HTML reports published to GitHub Pages. Not bundled into the Next.js app.</li>
+        <li><strong><code>design-options/</code></strong> — Archived pitch/design explorations; not deployed.</li>
+      </ul>
+    </section>
+
+    <!-- 3. Technology stack -->
+    <section id="stack">
+      <h2>3. Technology stack</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h4>Frontend</h4>
+          <ul>
+            <li><strong>Next.js 16</strong> — App Router, React Server Components, API routes</li>
+            <li><strong>React 19</strong> — Client components for camera capture, polls, feed</li>
+            <li><strong>TypeScript 5</strong> — Strict typing across lib and components</li>
+            <li><strong>Tailwind CSS 4</strong> — Utility styling via PostCSS</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Backend &amp; data</h4>
+          <ul>
+            <li><strong>Prisma 7</strong> — ORM with PostgreSQL adapter (<code>@prisma/adapter-pg</code>)</li>
+            <li><strong>PostgreSQL</strong> — Neon / Supabase / Vercel Postgres in production</li>
+            <li><strong>jose</strong> — Session token signing (HTTP-only cookies)</li>
+            <li><strong>zod</strong> — Request validation on all API routes</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>Media &amp; storage</h4>
+          <ul>
+            <li><strong>AWS S3</strong> — Presigned PUT/GET for guest uploads</li>
+            <li><strong>sharp</strong> — Server-side thumbnail generation (WebP)</li>
+            <li><strong>jszip</strong> — Host ZIP download of all event media</li>
+            <li><strong>Local fallback</strong> — <code>.data/uploads/</code> when S3 is not configured</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>AI &amp; deployment</h4>
+          <ul>
+            <li><strong>OpenAI API</strong> — Optional captions, recaps, event Q&amp;A (<code>gpt-4o-mini</code> default)</li>
+            <li><strong>Vercel</strong> — Production hosting; build runs Prisma migrate + Next build</li>
+            <li><strong>GitHub Pages</strong> — Static materials hub on <code>gh-pages</code> branch</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Prerequisites & local setup -->
+    <section id="setup">
+      <h2>4. Prerequisites &amp; local setup</h2>
+
+      <h3>Prerequisites</h3>
+      <ul>
+        <li><strong>Node.js 20+</strong> and npm (or pnpm/yarn)</li>
+        <li><strong>PostgreSQL</strong> — free tier at <a href="https://neon.tech">Neon</a> recommended; use the <em>pooled</em> connection string</li>
+        <li><strong>AWS S3 bucket</strong> (optional for local dev — uploads fall back to disk)</li>
+        <li><strong>OpenAI API key</strong> (optional — AI features use heuristic fallbacks without it)</li>
+      </ul>
+
+      <h3>Step-by-step local setup</h3>
+      <ol>
+        <li><strong>Clone the repository</strong></li>
+      </ol>
+      <pre>git clone https://github.com/Shafeen-Noor/eventsphere.git
+cd eventsphere/web</pre>
+
+      <ol start="2">
+        <li><strong>Create environment file</strong> — copy the template and edit values:</li>
+      </ol>
+      <pre>cp .env.example .env</pre>
+
+      <ol start="3">
+        <li><strong>Set <code>DATABASE_URL</code></strong> in <code>.env</code> to your Postgres connection string (must include <code>?sslmode=require</code> for Neon):</li>
+      </ol>
+      <pre>DATABASE_URL="postgresql://USER:PASSWORD@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require"</pre>
+
+      <ol start="4">
+        <li><strong>Install dependencies</strong> — Prisma client is generated automatically via <code>postinstall</code>:</li>
+      </ol>
+      <pre>npm install</pre>
+
+      <ol start="5">
+        <li><strong>Apply database migrations</strong>:</li>
+      </ol>
+      <pre>npx prisma migrate deploy
+# or for development with migration creation:
+npm run db:migrate</pre>
+
+      <ol start="6">
+        <li><strong>Start the development server</strong>:</li>
+      </ol>
+      <pre>npm run dev</pre>
+
+      <ol start="7">
+        <li><strong>Open the app</strong> at <a href="http://localhost:3000">http://localhost:3000</a>, click <strong>Create event</strong>, and walk through the wizard.</li>
+      </ol>
+
+      <div class="note">
+        <strong>Optional — seed a demo event:</strong> run <code>npm run db:seed-demo</code> after migrations
+        to populate a sample wedding with media placeholders (requires S3 or local storage configured).
+      </div>
+    </section>
+
+    <!-- 5. Environment variables -->
+    <section id="env">
+      <h2>5. Environment variables</h2>
+      <p>All variables are read from <code>web/.env</code> locally and from Vercel project settings in production.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Variable</th>
+              <th>Required</th>
+              <th>Description</th>
+              <th>Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>DATABASE_URL</code></td>
+              <td><span class="good">Required</span></td>
+              <td>PostgreSQL connection string. Use Neon’s <strong>pooled</strong> endpoint (<code>-pooler</code>) for serverless. Prisma reads this at runtime and during <code>migrate deploy</code>.</td>
+              <td><code>postgresql://…?sslmode=require</code></td>
+            </tr>
+            <tr>
+              <td><code>AWS_REGION</code></td>
+              <td>Optional*</td>
+              <td>S3 bucket region. Must match the bucket’s actual region in AWS console. Defaults to <code>us-east-1</code> if omitted.</td>
+              <td><code>ap-southeast-2</code></td>
+            </tr>
+            <tr>
+              <td><code>AWS_S3_BUCKET</code></td>
+              <td>Optional*</td>
+              <td>S3 bucket name for media storage. When unset, the app uses local disk at <code>web/.data/uploads/</code>.</td>
+              <td><code>your-eventsphere-bucket</code></td>
+            </tr>
+            <tr>
+              <td><code>AWS_ACCESS_KEY_ID</code></td>
+              <td>Optional*</td>
+              <td>IAM access key with <code>s3:PutObject</code>, <code>s3:GetObject</code>, <code>s3:DeleteObject</code> on the bucket. Can use <code>AWS_PROFILE</code> instead locally.</td>
+              <td><code>AKIA…</code></td>
+            </tr>
+            <tr>
+              <td><code>AWS_SECRET_ACCESS_KEY</code></td>
+              <td>Optional*</td>
+              <td>Secret for the IAM user above. Pair with access key ID.</td>
+              <td><code>…</code></td>
+            </tr>
+            <tr>
+              <td><code>AWS_SESSION_TOKEN</code></td>
+              <td>Optional</td>
+              <td>Temporary credentials token (STS). Only needed for assumed-role / SSO sessions.</td>
+              <td><code>…</code></td>
+            </tr>
+            <tr>
+              <td><code>STORAGE_DRIVER</code></td>
+              <td>Optional</td>
+              <td>Force local disk storage even when S3 is configured. Set to <code>local</code> for offline demos.</td>
+              <td><code>local</code></td>
+            </tr>
+            <tr>
+              <td><code>NEXT_PUBLIC_APP_URL</code></td>
+              <td><span class="good">Required</span> (prod)</td>
+              <td>Public canonical URL embedded in QR codes, invite links, and local upload callbacks. On Vercel set this to your production alias — not a ephemeral <code>*.vercel.app</code> preview URL.</td>
+              <td><code>https://eventsphere-orcin.vercel.app</code></td>
+            </tr>
+            <tr>
+              <td><code>OPENAI_API_KEY</code></td>
+              <td>Optional</td>
+              <td>Enables AI-generated photo captions, event recaps, and “Ask about this event” responses. Without it, heuristic text is returned.</td>
+              <td><code>sk-…</code></td>
+            </tr>
+            <tr>
+              <td><code>OPENAI_MODEL</code></td>
+              <td>Optional</td>
+              <td>OpenAI chat model override. Defaults to <code>gpt-4o-mini</code>.</td>
+              <td><code>gpt-4o-mini</code></td>
+            </tr>
+            <tr>
+              <td><code>NODE_ENV</code></td>
+              <td>Auto</td>
+              <td>Set by Next.js/Vercel. Controls secure cookie flag and Prisma query logging in development.</td>
+              <td><code>production</code></td>
+            </tr>
+            <tr>
+              <td><code>VERCEL_URL</code></td>
+              <td>Auto</td>
+              <td>Set by Vercel on each deployment. Used as fallback for <code>getAppUrl()</code> when <code>NEXT_PUBLIC_APP_URL</code> is unset.</td>
+              <td><code>eventsphere-xxx.vercel.app</code></td>
+            </tr>
+            <tr>
+              <td><code>VERCEL_PROJECT_PRODUCTION_URL</code></td>
+              <td>Auto</td>
+              <td>Production domain alias on Vercel. Second fallback for app URL resolution.</td>
+              <td><code>eventsphere-orcin.vercel.app</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="src">* S3 variables are collectively required for production media storage; omit all of them for local-only disk uploads.</p>
+    </section>
+
+    <!-- 6. Database & migrations -->
+    <section id="database">
+      <h2>6. Database &amp; migrations</h2>
+      <p>
+        EventSphere uses <strong>PostgreSQL</strong> with <strong>Prisma</strong>. The schema lives in
+        <code>web/prisma/schema.prisma</code> and covers users, sessions, events, memberships, media,
+        guestbook, polls, challenges, seating, face collections, feed items, and more.
+      </p>
+
+      <h3>Common Prisma commands</h3>
+      <pre># Generate Prisma client (also runs on npm install)
+npx prisma generate
+
+# Apply pending migrations (production / CI)
 npx prisma migrate deploy
-npm run dev</pre>
-    <p>Open <a href="http://localhost:3000">http://localhost:3000</a>.</p>
 
-    <h2>Core flow</h2>
-    <ol>
-      <li><strong>Create</strong> an event (no signup) — type, name, date</li>
-      <li><strong>Share</strong> the QR / link from the host dashboard</li>
-      <li><strong>Guests</strong> join by name and use the event hub</li>
-      <li><strong>Upgrade</strong> to Essential ($19) or Premium ($39)</li>
-    </ol>
+# Create a new migration during development
+npm run db:migrate
+# equivalent: npx prisma migrate dev
 
-    <h2>Plans</h2>
-    <table>
-      <thead><tr><th></th><th>Essential</th><th>Premium</th><th>Enterprise</th></tr></thead>
-      <tbody>
-        <tr><td>Price</td><td>$19/event</td><td>$39/event</td><td>from $199/mo</td></tr>
-        <tr><td>Guests</td><td>50</td><td>200+</td><td>unlimited</td></tr>
-        <tr><td>Uploads</td><td>500</td><td>unlimited</td><td>unlimited</td></tr>
-        <tr><td>Retention</td><td>7 days</td><td>30 days</td><td>custom</td></tr>
-      </tbody>
-    </table>
+# Push schema without migration files (prototyping only)
+npm run db:push
 
-    <h2>Environment</h2>
-    <pre>DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
-AWS_REGION="ap-southeast-2"
-AWS_S3_BUCKET="your-eventsphere-bucket"
-AWS_ACCESS_KEY_ID="..."
-AWS_SECRET_ACCESS_KEY="..."
-NEXT_PUBLIC_APP_URL="http://localhost:3000"
-# Optional AI captions / recap
-# OPENAI_API_KEY="..."</pre>
-    <p>If <code>AWS_S3_BUCKET</code> is not set, uploads fall back to local disk (<code>.data/uploads</code>).</p>
+# Open Prisma Studio GUI
+npm run db:studio
 
-    <h2>Deploy on Vercel</h2>
-    <ol>
-      <li>Import the GitHub repo in Vercel.</li>
-      <li>Set <strong>Root Directory:</strong> <code>web</code></li>
-      <li>Add <code>DATABASE_URL</code>, AWS vars, and <code>NEXT_PUBLIC_APP_URL</code></li>
-      <li>Deploy. Build runs <code>prisma migrate deploy</code> then <code>next build</code>.</li>
-    </ol>
+# Seed demo data
+npm run db:seed-demo</pre>
 
-    <p style="margin-top:2rem"><a href="https://github.com/Shafeen-Noor/eventsphere/blob/master/README.md">View on GitHub →</a></p>
+      <h3>Migration history</h3>
+      <ul>
+        <li><code>20260726180000_init_postgres</code> — Initial PostgreSQL schema (users, events, media, memberships)</li>
+        <li><code>20260805010000_event_experience</code> — Guest engagement tables (polls, challenges, seating, feed, badges)</li>
+        <li><code>20260805020000_guestbook_poll_fields</code> — Guestbook and poll field extensions</li>
+      </ul>
+
+      <div class="warning">
+        The Vercel build script runs <code>prisma migrate deploy</code> automatically before <code>next build</code>.
+        Ensure <code>DATABASE_URL</code> is set in Vercel environment variables before the first deploy, or the build will fail.
+      </div>
+
+      <h3>Core models</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Model</th><th>Purpose</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><code>User</code></td><td>Host account (optional email/password, OTP verification, plan tier, API token)</td></tr>
+            <tr><td><code>Session</code></td><td>HTTP-only cookie sessions (hashed tokens)</td></tr>
+            <tr><td><code>Event</code></td><td>Event hub — slug, plan limits, atmosphere, retention expiry, settings</td></tr>
+            <tr><td><code>Membership</code></td><td>Guest ↔ event join record with role (organizer / member)</td></tr>
+            <tr><td><code>Media</code></td><td>Photo/video upload metadata, S3 keys, moderation status</td></tr>
+            <tr><td><code>GuestbookEntry</code></td><td>Text messages from guests</td></tr>
+            <tr><td><code>Poll / PollVote</code></td><td>Live polls and guest votes</td></tr>
+            <tr><td><code>FaceCollection / FaceTag</code></td><td>Manual face grouping (Premium+)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 7. Plans & pricing -->
+    <section id="plans">
+      <h2>7. Plans &amp; pricing</h2>
+      <p>
+        Plans are defined in <code>web/src/lib/plans.ts</code>. Limits apply per event at creation and on upgrade.
+        Investor-facing recommended prices differ from current code charges (noted below).
+      </p>
+
+      <div class="warning">
+        <strong>Pricing note:</strong> Marketing materials and the <a href="cac.html">CAC</a> /
+        <a href="ltv.html">LTV</a> models use <strong>Essential $19</strong> and <strong>Premium $39</strong> per event.
+        The codebase currently stores <code>priceCents: 900</code> ($9) and <code>2900</code> ($29) for MVP testing.
+        Enterprise is <strong>$199/mo</strong> in both.
+      </div>
+
+      <h3>Plan comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Plan</th>
+              <th class="num">Recommended price</th>
+              <th class="num">Code price</th>
+              <th class="num">Max guests</th>
+              <th class="num">Max media</th>
+              <th>Retention</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Free</strong></td>
+              <td class="num">$0</td>
+              <td class="num">$0</td>
+              <td class="num">5</td>
+              <td class="num">40</td>
+              <td>24 hours</td>
+            </tr>
+            <tr class="hi">
+              <td><strong>Essential</strong></td>
+              <td class="num">$19 / event</td>
+              <td class="num">$9 / event</td>
+              <td class="num">50</td>
+              <td class="num">500</td>
+              <td>7 days</td>
+            </tr>
+            <tr>
+              <td><strong>Premium</strong></td>
+              <td class="num">$39 / event</td>
+              <td class="num">$29 / event</td>
+              <td class="num">200</td>
+              <td class="num">Unlimited</td>
+              <td>30 days</td>
+            </tr>
+            <tr>
+              <td><strong>Enterprise</strong></td>
+              <td class="num">$199 / mo</td>
+              <td class="num">$199 / mo</td>
+              <td class="num">Unlimited</td>
+              <td class="num">Unlimited</td>
+              <td>1 year (365 days)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Feature matrix</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Free</th>
+              <th>Essential</th>
+              <th>Premium</th>
+              <th>Enterprise</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>EventSphere branding</td><td>✓</td><td>✓</td><td>—</td><td>—</td></tr>
+            <tr><td>Guestbook</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Live feed</td><td>✓</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Slideshow mode</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>ZIP download</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Cover photo &amp; timeline</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Polls &amp; challenges</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Audio memories</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Seating chart</td><td>—</td><td>✓</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Photo voting</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>AI captions &amp; recap</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Multi-host</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Event passcode</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Face grouping</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Analytics dashboard</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>Media moderation</td><td>—</td><td>—</td><td>✓</td><td>✓</td></tr>
+            <tr><td>White-label</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+            <tr><td>API access</td><td>—</td><td>—</td><td>—</td><td>✓</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        Retention can be extended via <code>POST /api/events/[slug]/extend</code> at
+        <strong>$5/month</strong> per extension month (<code>EXTENSION_MONTH_CENTS = 500</code>).
+      </p>
+    </section>
+
+    <!-- 8. Application routes -->
+    <section id="routes">
+      <h2>8. Application routes</h2>
+      <p>All pages live under <code>web/src/app/</code> using the Next.js App Router.</p>
+
+      <h3>Marketing &amp; account pages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Route</th><th>File</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td><code>/</code></td><td><code>page.tsx</code></td><td>Marketing landing — hero, feature grid, create CTA</td></tr>
+            <tr><td><code>/pricing</code></td><td><code>pricing/page.tsx</code></td><td>Plan comparison and upgrade CTAs</td></tr>
+            <tr><td><code>/enterprise</code></td><td><code>enterprise/page.tsx</code></td><td>Enterprise sales page with demo lead form</td></tr>
+            <tr><td><code>/professional</code></td><td><code>professional/page.tsx</code></td><td>Planner / venue partner landing</td></tr>
+            <tr><td><code>/login</code></td><td><code>login/page.tsx</code></td><td>Host sign-in (email + password)</td></tr>
+            <tr><td><code>/signup</code></td><td><code>signup/page.tsx</code></td><td>Host registration with OTP verification flow</td></tr>
+            <tr><td><code>/verify</code></td><td><code>verify/page.tsx</code></td><td>Email OTP verification screen (demo code shown in dev)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Create flow</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Route</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>/create</code></td>
+              <td>Multi-step wizard: event type → name &amp; date → atmosphere theme → plan selection.
+                  Creates event via <code>POST /api/events</code> and sets host cookie session.
+                  No account required for Free tier.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Guest hub — <code>/e/[slug]</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Route</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><code>/e/[slug]</code></td>
+              <td>
+                Main event hub rendered by <code>EventHub</code>. Shows invite card for non-members;
+                full experience (gallery, guestbook, feed, polls, upload) after join.
+                Host dashboard tab visible to organizers.
+              </td>
+            </tr>
+            <tr>
+              <td><code>/e/[slug]/slideshow</code></td>
+              <td>Fullscreen slideshow of approved media (Essential+). Auto-advances with atmosphere theming.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Host dashboard (embedded)</h3>
+      <p>
+        The host dashboard is not a separate route — it is a tab inside <code>/e/[slug]</code> rendered by
+        <code>HostDashboard</code> for users with organizer role. Capabilities include:
+      </p>
+      <ul>
+        <li>QR code and shareable invite link generation</li>
+        <li>Guest count, media stats, and plan usage meters</li>
+        <li>Media moderation queue (Premium+)</li>
+        <li>Analytics summary (Premium+)</li>
+        <li>Upgrade modal → <code>POST /api/events/[slug]/upgrade</code></li>
+        <li>Settings panel (RSVP, uploads, passcode, retention extend)</li>
+        <li>Highlights studio and printable invite export</li>
+      </ul>
+    </section>
+
+    <!-- 9. API reference -->
+    <section id="api">
+      <h2>9. API reference</h2>
+      <p>
+        All endpoints return JSON via helpers in <code>web/src/lib/http.ts</code>.
+        Errors use shape <code>{ error: { code, message } }</code> with appropriate HTTP status codes.
+        Authentication is cookie-based unless noted.
+      </p>
+
+      <h3>Auth — <code>/api/auth/*</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/api/auth/register</code></td><td>Create host account (email, password, display name)</td></tr>
+            <tr><td>POST</td><td><code>/api/auth/login</code></td><td>Sign in; sets session cookie</td></tr>
+            <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>Clear session cookie</td></tr>
+            <tr><td>GET</td><td><code>/api/auth/me</code></td><td>Current user DTO or 401</td></tr>
+            <tr><td>GET</td><td><code>/api/auth/verify-otp</code></td><td>OTP status; re-issues demo code if expired</td></tr>
+            <tr><td>POST</td><td><code>/api/auth/verify-otp</code></td><td>Submit 4-digit OTP to verify email</td></tr>
+            <tr><td>POST</td><td><code>/api/auth/resend-otp</code></td><td>Re-issue OTP for pending verification</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Events — <code>/api/events/*</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/api/events</code></td><td>List events for current host</td></tr>
+            <tr><td>POST</td><td><code>/api/events</code></td><td>Create new event (wizard payload)</td></tr>
+            <tr><td>GET</td><td><code>/api/events/[slug]</code></td><td>Public event DTO with feature flags</td></tr>
+            <tr><td>PATCH</td><td><code>/api/events/[slug]</code></td><td>Update event settings (organizer)</td></tr>
+            <tr><td>DELETE</td><td><code>/api/events/[slug]</code></td><td>Delete event and cascade media (organizer)</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/join</code></td><td>Guest joins event by display name</td></tr>
+            <tr><td>GET/PATCH/DELETE</td><td><code>/api/events/[slug]/members</code></td><td>List, update roles, remove members</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/upgrade</code></td><td>Upgrade plan tier (simulated payment)</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/extend</code></td><td>Extend retention by N months ($5/mo each)</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/rsvp</code></td><td>RSVP list and submit RSVP</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/guestbook</code></td><td>Guestbook entries</td></tr>
+            <tr><td>GET</td><td><code>/api/events/[slug]/feed</code></td><td>Live activity feed</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/polls</code></td><td>Polls CRUD and voting</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/challenges</code></td><td>Photo challenges</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/votes</code></td><td>Photo vote leaderboard (Premium+)</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/seating</code></td><td>Seating chart tables and assignments</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/schedule</code></td><td>Event schedule / timeline items</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/story</code></td><td>Event story highlights reel</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/audio</code></td><td>Audio memory recordings</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/reactions</code></td><td>Emoji reactions on media</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/featured</code></td><td>Host-curated featured media set</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/moderation</code></td><td>Moderation queue approve/reject (Premium+)</td></tr>
+            <tr><td>GET</td><td><code>/api/events/[slug]/analytics</code></td><td>Upload/join/engagement stats (Premium+)</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/recap</code></td><td>AI/heuristic event recap text</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/ask</code></td><td>Natural-language Q&amp;A about the event (Premium+)</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/events/[slug]/faces</code></td><td>Face collection grouping (Premium+; manual tags)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Media — <code>/api/media/*</code> and event media</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>GET</td><td><code>/api/events/[slug]/media</code></td><td>Paginated gallery listing</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/media/uploads</code></td><td>Request presigned upload URL</td></tr>
+            <tr><td>POST</td><td><code>/api/events/[slug]/media/[mediaId]/complete</code></td><td>Finalize upload, generate thumbnail</td></tr>
+            <tr><td>PATCH</td><td><code>/api/media/[mediaId]</code></td><td>Update caption or moderation status</td></tr>
+            <tr><td>DELETE</td><td><code>/api/media/[mediaId]</code></td><td>Delete media object and DB row</td></tr>
+            <tr><td>POST/DELETE</td><td><code>/api/media/[mediaId]/like</code></td><td>Toggle like on media</td></tr>
+            <tr><td>GET/POST</td><td><code>/api/media/[mediaId]/comments</code></td><td>Comments thread</td></tr>
+            <tr><td>POST</td><td><code>/api/media/[mediaId]/report</code></td><td>Report inappropriate media</td></tr>
+            <tr><td>PUT</td><td><code>/api/media/local-upload</code></td><td>Local driver upload sink (dev fallback)</td></tr>
+            <tr><td>GET</td><td><code>/api/media/file</code></td><td>Serve local file by storage key</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Account — <code>/api/account/*</code></h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/api/account/subscribe</code></td><td>Upgrade host account plan (Enterprise; simulated payment)</td></tr>
+            <tr><td>POST</td><td><code>/api/account/api-token</code></td><td>Generate Enterprise API bearer token</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Other</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+          <tbody>
+            <tr><td>POST</td><td><code>/api/demo-leads</code></td><td>Capture enterprise demo request from marketing page</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 10. Storage -->
+    <section id="storage">
+      <h2>10. Storage (S3 vs local fallback)</h2>
+      <p>
+        Media upload flow is orchestrated in <code>web/src/lib/storage.ts</code>. The storage driver is
+        selected automatically at runtime:
+      </p>
+
+      <ol>
+        <li>If <code>STORAGE_DRIVER=local</code> → always use local disk</li>
+        <li>If <code>AWS_S3_BUCKET</code> is set and credentials exist → S3 presigned URLs</li>
+        <li>If bucket is set but no explicit credentials → S3 (uses instance/profile credentials)</li>
+        <li>Otherwise → local disk at <code>web/.data/uploads/</code></li>
+      </ol>
+
+      <h3>Upload flow</h3>
+      <pre>Guest → POST /api/events/[slug]/media/uploads
+     ← { uploadUrl, headers, key, driver }
+
+Guest → PUT uploadUrl (S3 presigned or /api/media/local-upload)
+
+Guest → POST /api/events/[slug]/media/[mediaId]/complete
+     ← thumbnail generated via sharp, feed item created</pre>
+
+      <h3>S3 object key layout</h3>
+      <pre>events/{eventId}/media/{mediaId}/original-{filename}
+events/{eventId}/media/{mediaId}/thumb.webp</pre>
+
+      <h3>Production recommendations</h3>
+      <ul>
+        <li>Create a dedicated S3 bucket with CORS allowing PUT from your app domain</li>
+        <li>IAM policy: <code>s3:PutObject</code>, <code>s3:GetObject</code>, <code>s3:DeleteObject</code>, <code>s3:HeadObject</code> on <code>arn:aws:s3:::bucket/events/*</code></li>
+        <li>Set lifecycle rules to expire objects after plan retention windows</li>
+        <li>Never commit <code>.data/uploads/</code> — it is gitignored</li>
+      </ul>
+    </section>
+
+    <!-- 11. Deployment on Vercel -->
+    <section id="deploy">
+      <h2>11. Deployment on Vercel</h2>
+
+      <h3>Initial setup</h3>
+      <ol>
+        <li>Push the repository to GitHub (<code>Shafeen-Noor/eventsphere</code>).</li>
+        <li>Go to <a href="https://vercel.com/new">vercel.com/new</a> and import the repository.</li>
+        <li>Set <strong>Root Directory</strong> to <code>web</code> (critical — the Next.js app is not at repo root).</li>
+        <li>Framework preset should auto-detect as <strong>Next.js</strong>.</li>
+      </ol>
+
+      <h3>Environment variables (Vercel dashboard → Settings → Environment Variables)</h3>
+      <pre>DATABASE_URL          = postgresql://…?sslmode=require
+AWS_REGION            = ap-southeast-2
+AWS_S3_BUCKET         = your-eventsphere-bucket
+AWS_ACCESS_KEY_ID     = AKIA…
+AWS_SECRET_ACCESS_KEY = …
+NEXT_PUBLIC_APP_URL   = https://eventsphere-orcin.vercel.app
+OPENAI_API_KEY        = sk-…   (optional)</pre>
+
+      <h3>Build configuration</h3>
+      <p>The <code>web/package.json</code> build script handles database migrations automatically:</p>
+      <pre>"build": "prisma generate && prisma migrate deploy && next build"</pre>
+
+      <h3>Post-deploy checklist</h3>
+      <ul>
+        <li>Assign a stable production domain alias in Vercel → Settings → Domains</li>
+        <li>Update <code>NEXT_PUBLIC_APP_URL</code> to match the production alias (not preview URLs)</li>
+        <li>Verify S3 CORS includes the production origin</li>
+        <li>Create a test event and upload a photo end-to-end</li>
+        <li>Confirm QR codes resolve to the production URL</li>
+      </ul>
+
+      <div class="note">
+        Preview deployments inherit <code>VERCEL_URL</code> for app URL fallback, but QR codes generated
+        during preview will point at preview URLs. Always test share links on the production deployment.
+      </div>
+    </section>
+
+    <!-- 12. GitHub Pages -->
+    <section id="pages">
+      <h2>12. GitHub Pages materials hub</h2>
+      <p>
+        Investor and technical materials in <code>docs/</code> are published separately from the Vercel app
+        via GitHub Pages on the <code>gh-pages</code> branch.
+      </p>
+
+      <p><strong>Live hub:</strong> <a href="https://shafeen-noor.github.io/eventsphere/">https://shafeen-noor.github.io/eventsphere/</a></p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Page</th><th>URL</th><th>Contents</th></tr></thead>
+          <tbody>
+            <tr><td>Hub</td><td><a href="https://shafeen-noor.github.io/eventsphere/">index.html</a></td><td>Materials index and live app link</td></tr>
+            <tr><td>MVP</td><td><a href="https://shafeen-noor.github.io/eventsphere/mvp.html">mvp.html</a></td><td>Shipped features and user flows</td></tr>
+            <tr><td>CAC</td><td><a href="https://shafeen-noor.github.io/eventsphere/cac.html">cac.html</a></td><td>Customer acquisition cost by channel</td></tr>
+            <tr><td>LTV</td><td><a href="https://shafeen-noor.github.io/eventsphere/ltv.html">ltv.html</a></td><td>Lifetime value and repeat-event model</td></tr>
+            <tr><td>README</td><td><a href="https://shafeen-noor.github.io/eventsphere/readme.html">readme.html</a></td><td>This technical documentation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>One-time GitHub Pages setup</h3>
+      <ol>
+        <li>Open <a href="https://github.com/Shafeen-Noor/eventsphere/settings/pages">Settings → Pages</a></li>
+        <li>Source: <strong>Deploy from a branch</strong></li>
+        <li>Branch: <code>gh-pages</code> · Folder: <code>/ (root)</code></li>
+        <li>Save — site goes live in ~1 minute</li>
+      </ol>
+      <p class="src">Pushes to <code>docs/</code> on <code>master</code> trigger <code>.github/workflows/pages.yml</code>, which syncs files to <code>gh-pages</code>.</p>
+    </section>
+
+    <!-- 13. Known limitations -->
+    <section id="limitations">
+      <h2>13. Known limitations</h2>
+
+      <div class="warning">
+        <strong>Simulated payments.</strong> Upgrade endpoints (<code>/api/events/[slug]/upgrade</code> and
+        <code>/api/account/subscribe</code>) require <code>confirmPayment: true</code> in the request body
+        but do not integrate with Stripe or any payment processor. The two-step flow (402 → confirm) is a
+        placeholder for future billing integration.
+      </div>
+
+      <div class="warning">
+        <strong>No production face AI.</strong> The “Face grouping” feature (Premium+) supports manual
+        collection creation and tag assignment by organizers/guests. There is no automated face detection
+        or recognition pipeline — no AWS Rekognition, no on-device ML. Tags are user-created with optional
+        bounding box JSON.
+      </div>
+
+      <ul>
+        <li><strong>Email delivery not connected</strong> — OTP codes are shown in the API response and verify page as demo codes; no SMTP/SendGrid integration.</li>
+        <li><strong>Free tier is live</strong> — contrary to early investor models that assumed paid-only GTM; Free tier (5 guests, 40 media, 24h) is active in code.</li>
+        <li><strong>Single-region S3</strong> — no CDN or multi-region replication configured by default.</li>
+        <li><strong>No real-time WebSocket feed</strong> — live feed uses polling, not push subscriptions.</li>
+        <li><strong>Enterprise API token</strong> — token is generated and stored hashed, but external API documentation is minimal.</li>
+        <li><strong>Retention enforcement</strong> — expired events are read-only in UI; S3 lifecycle cleanup is manual.</li>
+      </ul>
+    </section>
+
+    <!-- 14. Troubleshooting -->
+    <section id="troubleshooting">
+      <h2>14. Troubleshooting common issues</h2>
+
+      <h3>Build fails on Vercel with Prisma error</h3>
+      <p><strong>Symptom:</strong> <code>prisma migrate deploy</code> fails during build.</p>
+      <ul>
+        <li>Verify <code>DATABASE_URL</code> is set in Vercel env vars for Production, Preview, and Development</li>
+        <li>Use the Neon <strong>pooled</strong> connection string (<code>-pooler</code> hostname)</li>
+        <li>Ensure the database is reachable (Neon project not suspended)</li>
+      </ul>
+
+      <h3>Uploads fail or images don’t appear</h3>
+      <ul>
+        <li>Check S3 bucket CORS policy allows <code>PUT</code> from your app origin</li>
+        <li>Verify <code>AWS_REGION</code> matches the bucket’s actual region</li>
+        <li>Confirm IAM credentials have write permissions on <code>events/*</code> prefix</li>
+        <li>For local dev without S3: omit AWS vars; files land in <code>.data/uploads/</code> and serve via <code>/api/media/file</code></li>
+        <li>Ensure <code>NEXT_PUBLIC_APP_URL</code> is set — local upload callbacks depend on it</li>
+      </ul>
+
+      <h3>QR codes / invite links point to wrong URL</h3>
+      <ul>
+        <li>Set <code>NEXT_PUBLIC_APP_URL</code> to your stable production alias</li>
+        <li>Do not rely on <code>VERCEL_URL</code> preview domains for share links</li>
+        <li>After changing the env var, redeploy to pick up the new value</li>
+      </ul>
+
+      <h3>“Sign in to continue” when upgrading</h3>
+      <ul>
+        <li>Event upgrades require a registered host account with verified email</li>
+        <li>Complete signup → verify OTP at <code>/verify</code> → retry upgrade</li>
+      </ul>
+
+      <h3>Plan limit errors (402 / PLAN_LIMIT)</h3>
+      <ul>
+        <li>Free tier caps: 5 guests, 40 media, 24-hour retention</li>
+        <li>Upgrade via host dashboard or <code>POST /api/events/[slug]/upgrade</code></li>
+        <li>See <a href="#plans">Plans &amp; pricing</a> for full limits matrix</li>
+      </ul>
+
+      <h3>AI features return generic text</h3>
+      <ul>
+        <li>Set <code>OPENAI_API_KEY</code> in environment</li>
+        <li>Without the key, captions and recaps use deterministic heuristic fallbacks in <code>web/src/lib/ai.ts</code></li>
+      </ul>
+
+      <h3>GitHub Pages 404</h3>
+      <ul>
+        <li>Confirm Pages source is branch <code>gh-pages</code>, folder <code>/ (root)</code></li>
+        <li>See <code>docs/GITHUB-PAGES-SETUP.md</code> for step-by-step fix</li>
+        <li>Wait ~1 minute after saving settings for DNS propagation</li>
+      </ul>
+
+      <h3>Database schema out of sync locally</h3>
+      <pre># Reset and re-apply all migrations (destructive — dev only)
+npx prisma migrate reset
+
+# Or push schema directly (skips migration history)
+npm run db:push</pre>
+    </section>
+
+    <footer>
+      <p>
+        EventSphere technical documentation ·
+        <a href="https://eventsphere-orcin.vercel.app">Live app</a> ·
+        <a href="index.html">Materials hub</a> ·
+        <a href="mvp.html">MVP</a> ·
+        <a href="cac.html">CAC</a> ·
+        <a href="ltv.html">LTV</a> ·
+        <a href="https://github.com/Shafeen-Noor/eventsphere">GitHub</a>
+      </p>
+    </footer>
   </div>
 </body>
 </html>
