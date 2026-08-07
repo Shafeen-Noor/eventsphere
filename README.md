@@ -42,13 +42,13 @@ Open [http://localhost:3000](http://localhost:3000).
 1. **Create** an event (no signup) — type, name, date  
 2. **Share** the QR / link from the host dashboard  
 3. **Guests** join by name and use the event hub  
-4. **Upgrade** to Essential ($9) or Premium ($29) when you hit Free limits  
+4. **Upgrade** to Essential ($19) or Premium ($39) when you hit Free limits  
 
 ### Plans
 
 | | Free | Essential | Premium | Enterprise |
 |---|---|---|---|---|
-| Price | $0 | $9/event | $29/event | from $199/mo |
+| Price | $0 | $19/event | $39/event | from $199/mo |
 | Guests | 5 | 50 | 200+ | unlimited |
 | Uploads | 40 | 500 | unlimited | unlimited |
 | Retention | 24h | 7 days | 30 days | custom |
